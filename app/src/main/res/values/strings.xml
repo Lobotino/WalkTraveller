@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">WalkTraveller</string>
+    <string name="location_updated">Location Updated: %1$s</string>
+    <string name="permissions_denied">Some permissions are denied. Check application settings.</string>
 </resources>
