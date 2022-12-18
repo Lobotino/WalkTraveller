@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
+import org.osmdroid.views.CustomZoomButtonsController
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
 import ru.lobotino.walktraveller.R
@@ -67,6 +68,8 @@ class MainMapFragment : Fragment() {
             mapView = MapView(context).apply {
                 setTileSource(TileSourceFactory.MAPNIK)
                 controller.setZoom(12.5)
+                zoomController.setVisibility(CustomZoomButtonsController.Visibility.NEVER)
+                setMultiTouchControls(true);
             }
             mapViewContainer.addView(mapView)
 
