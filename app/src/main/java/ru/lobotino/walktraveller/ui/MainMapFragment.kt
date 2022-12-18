@@ -21,6 +21,7 @@ import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
 import ru.lobotino.walktraveller.R
 import ru.lobotino.walktraveller.repositories.GeoPermissionsRepository
+import ru.lobotino.walktraveller.repositories.PathInteractor
 import ru.lobotino.walktraveller.services.LocationUpdatesService
 import ru.lobotino.walktraveller.services.LocationUpdatesService.Companion.EXTRA_LOCATION
 import ru.lobotino.walktraveller.usecases.PermissionsInteractor
@@ -65,14 +66,12 @@ class MainMapFragment : Fragment() {
 
             mapView = MapView(context).apply {
                 setTileSource(TileSourceFactory.MAPNIK)
+                controller.setZoom(12.5)
             }
             mapViewContainer.addView(mapView)
-        }
-    }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        initViewModel()
+            initViewModel()
+        }
     }
 
     private fun initViewModel() {
@@ -88,6 +87,8 @@ class MainMapFragment : Fragment() {
                                 )
                             )
                         )
+
+                        setPathInteractor(PathInteractor())
 
                         observePermissionsDeniedResult.onEach {
                             showPermissionsDeniedError()
@@ -105,6 +106,15 @@ class MainMapFragment : Fragment() {
                             mapView?.overlays?.add(Marker(mapView).apply {
                                 position = GeoPoint(newLocation.first, newLocation.second)
                             })
+                        }.launchIn(lifecycleScope)
+
+                        observeMapCenterUpdate.onEach { newCenter ->
+                            mapView?.controller?.setCenter(
+                                GeoPoint(
+                                    newCenter.first,
+                                    newCenter.second
+                                )
+                            )
                         }.launchIn(lifecycleScope)
 
                         onInitFinish()
