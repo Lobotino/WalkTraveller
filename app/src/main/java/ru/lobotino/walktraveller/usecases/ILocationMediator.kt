@@ -4,6 +4,13 @@ import android.location.Location
 
 interface ILocationMediator {
 
-    fun onNewLocation(location: Location) : Pair<Double, Double>
-
+    /**
+     * Mediation for expect real location.
+     *
+     * It could be fake location, for example when your last location change for a 500km per second
+     */
+    fun onNewLocation(
+        newLocation: Location,
+        realLocation: ((Location) -> Unit)? = null
+    )
 }

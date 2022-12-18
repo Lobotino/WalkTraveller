@@ -102,7 +102,9 @@ class MainMapFragment : Fragment() {
                         }.launchIn(lifecycleScope)
 
                         observeLocationUpdate.onEach { newLocation ->
-                            mapView?.overlays?.add(Marker(mapView).apply { position = GeoPoint(newLocation.first, newLocation.second) })
+                            mapView?.overlays?.add(Marker(mapView).apply {
+                                position = GeoPoint(newLocation.first, newLocation.second)
+                            })
                         }.launchIn(lifecycleScope)
 
                         onInitFinish()

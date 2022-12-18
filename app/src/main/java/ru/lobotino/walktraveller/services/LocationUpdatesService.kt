@@ -21,7 +21,9 @@ import ru.lobotino.walktraveller.R
 import ru.lobotino.walktraveller.repositories.*
 import ru.lobotino.walktraveller.repositories.LocationNotificationRepository.Companion.EXTRA_STARTED_FROM_NOTIFICATION
 import ru.lobotino.walktraveller.ui.MainActivity
+import ru.lobotino.walktraveller.usecases.ILocationMediator
 import ru.lobotino.walktraveller.usecases.ILocationNotificationInteractor
+import ru.lobotino.walktraveller.usecases.LocationMediator
 import ru.lobotino.walktraveller.usecases.LocationNotificationInteractor
 
 
@@ -43,12 +45,14 @@ class LocationUpdatesService : Service() {
     private lateinit var locationUpdatesStatesRepository: ILocationUpdatesStatesRepository
     private lateinit var locationUpdatesRepository: ILocationUpdatesRepository
     private lateinit var locationNotificationInteractor: ILocationNotificationInteractor
+    private lateinit var locationMediator: ILocationMediator
 
     override fun onCreate() {
         super.onCreate()
-        initLocationUpdatesRepository()
+        initLocationMediator()
         initLocationNotificationInteractor()
         initLocationUpdatesStatesRepository()
+        initLocationUpdatesRepository()
     }
 
     private fun initLocationUpdatesRepository() {
@@ -94,15 +98,21 @@ class LocationUpdatesService : Service() {
         this.locationUpdatesStatesRepository = LocationUpdatesStatesRepository(applicationContext)
     }
 
-    private fun onNewLocation(location: Location) {
-        lastLocation = location
+    private fun initLocationMediator() {
+        locationMediator = LocationMediator(lastLocation)
+    }
 
-        LocalBroadcastManager.getInstance(applicationContext)
-            .sendBroadcast(Intent(ACTION_BROADCAST).apply {
-                putExtra(EXTRA_LOCATION, location)
-            })
+    private fun onNewLocation(newLocation: Location) {
+        locationMediator.onNewLocation(newLocation) { location ->
+            lastLocation = location
 
-        locationNotificationInteractor.showOnLocationChangeNotification(location)
+            LocalBroadcastManager.getInstance(applicationContext)
+                .sendBroadcast(Intent(ACTION_BROADCAST).apply {
+                    putExtra(EXTRA_LOCATION, location)
+                })
+
+            locationNotificationInteractor.showOnLocationChangeNotification(location)
+        }
     }
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
