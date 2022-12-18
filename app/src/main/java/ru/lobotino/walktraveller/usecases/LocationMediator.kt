@@ -14,7 +14,8 @@ class LocationMediator(private var lastLocation: Location? = null) : ILocationMe
         newLocation: Location,
         realLocation: ((Location) -> Unit)?
     ) {
-        if (lastLocation != null && lastLocation!!.distanceTo(newLocation) < MAX_REAL_DISTANCE_BETWEEN_LOCATIONS_IN_METERS) {
+        if (lastLocation == null || lastLocation!!.distanceTo(newLocation) < MAX_REAL_DISTANCE_BETWEEN_LOCATIONS_IN_METERS) {
+            lastLocation = newLocation
             realLocation?.invoke(newLocation)
         } else {
             Log.d(
