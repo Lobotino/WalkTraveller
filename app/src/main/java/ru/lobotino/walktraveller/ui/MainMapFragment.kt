@@ -10,6 +10,7 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.cardview.widget.CardView
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -20,13 +21,12 @@ import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.CustomZoomButtonsController
 import org.osmdroid.views.MapView
-import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.Polyline
 import ru.lobotino.walktraveller.R
 import ru.lobotino.walktraveller.repositories.GeoPermissionsRepository
-import ru.lobotino.walktraveller.usecases.PathInteractor
 import ru.lobotino.walktraveller.services.LocationUpdatesService
 import ru.lobotino.walktraveller.services.LocationUpdatesService.Companion.EXTRA_LOCATION
+import ru.lobotino.walktraveller.usecases.PathInteractor
 import ru.lobotino.walktraveller.usecases.PermissionsInteractor
 import ru.lobotino.walktraveller.viewmodels.MapViewModel
 
@@ -37,7 +37,13 @@ class MainMapFragment : Fragment() {
     private lateinit var walkStartButton: CardView
     private lateinit var walkStopButton: CardView
 
-    private val commonPathPolyline: Polyline by lazy { Polyline(mapView) }
+    private val commonPathPolyline: Polyline by lazy {
+        Polyline(mapView).apply {
+            outlinePaint.color = ContextCompat.getColor(requireContext(), R.color.common_path)
+        }
+    }
+
+    private var lastPathLocation: Pair<Double, Double>? = null
 
     private var locationUpdatesService: LocationUpdatesService? = null
 
@@ -112,7 +118,7 @@ class MainMapFragment : Fragment() {
                             showPermissionsDeniedError()
                         }.launchIn(lifecycleScope)
 
-                        observeGeoLocationUpdateState.onEach { geoLocationUpdate ->
+                        observeRegularLocationUpdateState.onEach { geoLocationUpdate ->
                             if (geoLocationUpdate) {
                                 locationUpdatesService?.startLocationUpdates()
                             } else {
@@ -120,10 +126,14 @@ class MainMapFragment : Fragment() {
                             }
                         }.launchIn(lifecycleScope)
 
-                        observeLocationUpdate.onEach { newLocation ->
-                            mapView.overlays?.add(Marker(mapView).apply {
-                                position = GeoPoint(newLocation.first, newLocation.second)
-                            })
+                        observeNewPathLocation.onEach { newLocation ->
+                            lastPathLocation?.let { lastPathLocation ->
+                                paintNewPathLine(
+                                    GeoPoint(lastPathLocation.first, lastPathLocation.second),
+                                    GeoPoint(newLocation.first, newLocation.second)
+                                )
+                            }
+                            lastPathLocation = newLocation
                         }.launchIn(lifecycleScope)
 
                         observeMapCenterUpdate.onEach { newCenter ->
@@ -188,14 +198,19 @@ class MainMapFragment : Fragment() {
         }
     }
 
-    private fun paintNewPathLine(from: Location, to: Location) {
+    private fun paintNewPathLine(from: GeoPoint, to: GeoPoint) {
         if (context != null) {
             mapView.overlays?.add(
                 commonPathPolyline.apply {
-                    addPoint(GeoPoint(from.latitude, from.longitude))
-                    addPoint(GeoPoint(to.latitude, to.longitude))
+                    addPoint(from)
+                    addPoint(to)
                 }
             )
+            refreshMapNow()
         }
+    }
+
+    private fun refreshMapNow() {
+        mapView.controller.setCenter(mapView.mapCenter)
     }
 }

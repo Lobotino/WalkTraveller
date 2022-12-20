@@ -17,18 +17,18 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
 
     private val permissionsDeniedSharedFlow =
         MutableSharedFlow<List<String>>(1, 0, BufferOverflow.DROP_OLDEST)
-    private val geoLocationUpdateFlow =
+    private val newPathLocationFlow =
         MutableSharedFlow<Pair<Double, Double>>(1, 0, BufferOverflow.DROP_OLDEST)
     private val mapCenterUpdateFlow =
         MutableSharedFlow<Pair<Double, Double>>(1, 0, BufferOverflow.DROP_OLDEST)
-    private val geoLocationUpdateStateFlow = MutableStateFlow(false)
+    private val regularLocationUpdateStateFlow = MutableStateFlow(false)
     private val writePathState = MutableStateFlow(false)
 
 
     val observePermissionsDeniedResult: Flow<List<String>> = permissionsDeniedSharedFlow
-    val observeLocationUpdate: Flow<Pair<Double, Double>> = geoLocationUpdateFlow
+    val observeNewPathLocation: Flow<Pair<Double, Double>> = newPathLocationFlow
     val observeMapCenterUpdate: Flow<Pair<Double, Double>> = mapCenterUpdateFlow
-    val observeGeoLocationUpdateState: Flow<Boolean> = geoLocationUpdateStateFlow
+    val observeRegularLocationUpdateState: Flow<Boolean> = regularLocationUpdateStateFlow
     val observeWritePathState: Flow<Boolean> = writePathState
 
     fun setPermissionsInteractor(permissionsInteractor: IPermissionsInteractor) {
@@ -48,26 +48,26 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun onGeoLocationUpdaterConnected() {
-        permissionsInteractor?.requestGeoPermissions(allGranted = {
-            geoLocationUpdateStateFlow.tryEmit(true)
-        }, someDenied = { deniedPermissions ->
+        permissionsInteractor?.requestGeoPermissions(someDenied = { deniedPermissions ->
             permissionsDeniedSharedFlow.tryEmit(deniedPermissions)
         })
     }
 
     fun onGeoLocationUpdaterDisconnected() {
-        geoLocationUpdateStateFlow.tryEmit(false)
+        regularLocationUpdateStateFlow.tryEmit(false)
     }
 
     fun onNewLocationReceive(location: Location) {
-        geoLocationUpdateFlow.tryEmit(Pair(location.latitude, location.longitude))
+        newPathLocationFlow.tryEmit(Pair(location.latitude, location.longitude))
     }
 
     fun onStartPathButtonClicked() {
         writePathState.tryEmit(true)
+        regularLocationUpdateStateFlow.tryEmit(true)
     }
 
     fun onStopPathButtonClicked() {
         writePathState.tryEmit(false)
+        regularLocationUpdateStateFlow.tryEmit(false)
     }
 }
