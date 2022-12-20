@@ -17,18 +17,19 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
 
     private val permissionsDeniedSharedFlow =
         MutableSharedFlow<List<String>>(1, 0, BufferOverflow.DROP_OLDEST)
-    val observePermissionsDeniedResult: Flow<List<String>> = permissionsDeniedSharedFlow
-
-    private val geoLocationUpdateStateFlow = MutableStateFlow(false)
-    val observeGeoLocationUpdateState: Flow<Boolean> = geoLocationUpdateStateFlow
-
     private val geoLocationUpdateFlow =
         MutableSharedFlow<Pair<Double, Double>>(1, 0, BufferOverflow.DROP_OLDEST)
-    val observeLocationUpdate: Flow<Pair<Double, Double>> = geoLocationUpdateFlow
-
     private val mapCenterUpdateFlow =
         MutableSharedFlow<Pair<Double, Double>>(1, 0, BufferOverflow.DROP_OLDEST)
+    private val geoLocationUpdateStateFlow = MutableStateFlow(false)
+    private val writePathState = MutableStateFlow(false)
+
+
+    val observePermissionsDeniedResult: Flow<List<String>> = permissionsDeniedSharedFlow
+    val observeLocationUpdate: Flow<Pair<Double, Double>> = geoLocationUpdateFlow
     val observeMapCenterUpdate: Flow<Pair<Double, Double>> = mapCenterUpdateFlow
+    val observeGeoLocationUpdateState: Flow<Boolean> = geoLocationUpdateStateFlow
+    val observeWritePathState: Flow<Boolean> = writePathState
 
     fun setPermissionsInteractor(permissionsInteractor: IPermissionsInteractor) {
         this.permissionsInteractor = permissionsInteractor
@@ -60,5 +61,13 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
 
     fun onNewLocationReceive(location: Location) {
         geoLocationUpdateFlow.tryEmit(Pair(location.latitude, location.longitude))
+    }
+
+    fun onStartPathButtonClicked() {
+        writePathState.tryEmit(true)
+    }
+
+    fun onStopPathButtonClicked() {
+        writePathState.tryEmit(false)
     }
 }
