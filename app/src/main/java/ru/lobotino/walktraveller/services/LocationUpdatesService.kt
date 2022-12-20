@@ -103,6 +103,7 @@ class LocationUpdatesService : Service() {
     }
 
     private fun onNewLocation(newLocation: Location) {
+        Log.d(TAG, "New location: ${newLocation.latitude}, ${newLocation.longitude}")
         locationMediator.onNewLocation(newLocation) { location ->
             lastLocation = location
 
@@ -166,10 +167,15 @@ class LocationUpdatesService : Service() {
         return true
     }
 
+    fun updateLocationNow() {
+        locationUpdatesRepository.updateLocationNow()
+    }
+
     fun startLocationUpdates() {
         Log.i(TAG, "Requesting location updates")
-        locationUpdatesStatesRepository.setRequestingLocationUpdates(true)
         startService(Intent(applicationContext, LocationUpdatesService::class.java))
+        locationUpdatesRepository.startLocationUpdates()
+        locationUpdatesStatesRepository.setRequestingLocationUpdates(true)
     }
 
     fun stopLocationUpdates() {
