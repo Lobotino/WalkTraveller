@@ -2,6 +2,7 @@ package ru.lobotino.walktraveller.repositories
 
 import android.content.Context
 import androidx.appcompat.app.AppCompatActivity
+import ru.lobotino.walktraveller.repositories.interfaces.ILocationUpdatesStatesRepository
 
 class LocationUpdatesStatesRepository(private val appContext: Context) :
     ILocationUpdatesStatesRepository {

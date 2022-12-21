@@ -10,6 +10,7 @@ import android.os.Build
 import android.provider.ContactsContract.Directory.PACKAGE_NAME
 import androidx.core.app.NotificationCompat
 import ru.lobotino.walktraveller.R
+import ru.lobotino.walktraveller.repositories.interfaces.ILocationNotificationRepository
 import java.lang.ref.WeakReference
 import java.text.DateFormat
 import java.util.*

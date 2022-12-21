@@ -6,7 +6,7 @@ import android.app.NotificationManager
 import android.app.Service
 import android.content.Context
 import android.location.Location
-import ru.lobotino.walktraveller.repositories.ILocationNotificationRepository
+import ru.lobotino.walktraveller.repositories.interfaces.ILocationNotificationRepository
 import java.lang.ref.WeakReference
 
 class LocationNotificationInteractor(

@@ -4,6 +4,7 @@ import ru.lobotino.walktraveller.database.AppDatabase
 import ru.lobotino.walktraveller.database.model.PathPointRelation
 import ru.lobotino.walktraveller.database.model.Point
 import ru.lobotino.walktraveller.model.MapPoint
+import ru.lobotino.walktraveller.repositories.interfaces.IPathRepository
 
 class LocalPathRepository(database: AppDatabase) : IPathRepository {
 

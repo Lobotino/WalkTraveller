@@ -7,6 +7,7 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import ru.lobotino.walktraveller.repositories.interfaces.IGeoPermissionsRepository
 
 class GeoPermissionsRepository(fragment: Fragment, private val appContext: Context) :
     IGeoPermissionsRepository {

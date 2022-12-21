@@ -9,6 +9,7 @@ import com.google.android.gms.tasks.OnTokenCanceledListener
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import ru.lobotino.walktraveller.repositories.interfaces.ILocationUpdatesRepository
 
 class LocationUpdatesRepository(
     private val fusedLocationClient: FusedLocationProviderClient

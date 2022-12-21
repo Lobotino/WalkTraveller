@@ -1,4 +1,4 @@
-package ru.lobotino.walktraveller.repositories
+package ru.lobotino.walktraveller.repositories.interfaces
 
 import android.app.Notification
 import android.location.Location

@@ -1,4 +1,4 @@
-package ru.lobotino.walktraveller.repositories
+package ru.lobotino.walktraveller.repositories.interfaces
 
 interface ILocationUpdatesStatesRepository {
 

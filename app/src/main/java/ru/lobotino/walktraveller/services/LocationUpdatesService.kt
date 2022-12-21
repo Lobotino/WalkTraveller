@@ -20,6 +20,8 @@ import kotlinx.coroutines.flow.onEach
 import ru.lobotino.walktraveller.R
 import ru.lobotino.walktraveller.repositories.*
 import ru.lobotino.walktraveller.repositories.LocationNotificationRepository.Companion.EXTRA_STARTED_FROM_NOTIFICATION
+import ru.lobotino.walktraveller.repositories.interfaces.ILocationUpdatesRepository
+import ru.lobotino.walktraveller.repositories.interfaces.ILocationUpdatesStatesRepository
 import ru.lobotino.walktraveller.ui.MainActivity
 import ru.lobotino.walktraveller.usecases.ILocationMediator
 import ru.lobotino.walktraveller.usecases.ILocationNotificationInteractor

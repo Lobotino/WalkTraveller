@@ -1,4 +1,4 @@
-package ru.lobotino.walktraveller.repositories
+package ru.lobotino.walktraveller.repositories.interfaces
 
 import ru.lobotino.walktraveller.model.MapPoint
 
