@@ -1,6 +1,6 @@
 package ru.lobotino.walktraveller.usecases
 
-import ru.lobotino.walktraveller.repositories.IGeoPermissionsRepository
+import ru.lobotino.walktraveller.repositories.interfaces.IGeoPermissionsRepository
 
 class PermissionsInteractor(private val permissionsRepository: IGeoPermissionsRepository) :
     IPermissionsInteractor {

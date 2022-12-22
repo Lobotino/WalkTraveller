@@ -11,9 +11,11 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import ru.lobotino.walktraveller.database.AppDatabase
+import ru.lobotino.walktraveller.database.model.Point
 import ru.lobotino.walktraveller.model.MapPoint
 import ru.lobotino.walktraveller.repositories.LocalPathRepository
 import java.io.IOException
+import java.util.concurrent.CompletableFuture
 
 @RunWith(AndroidJUnit4::class)
 class LocalPathRepositoryTests {
@@ -38,9 +40,27 @@ class LocalPathRepositoryTests {
 
     @Test
     @Throws(Exception::class)
-    fun addNewPathPoints() {
-        val expectedList = listOf(MapPoint(1, 1), MapPoint(2, 2))
-        localPathRepository.addNewPathPoints(1, expectedList)
-        assertThat(localPathRepository.getAllPathPoints(1), equalTo(expectedList))
+    fun createPathWithOnePoints() {
+        val future: CompletableFuture<List<Point>> = CompletableFuture()
+        localPathRepository.createNewPath(MapPoint(1, 1), "red") { resultPathId ->
+            localPathRepository.getAllPathPoints(resultPathId) { resultPoints ->
+                future.complete(resultPoints)
+            }
+        }
+        assertThat(listOf(Point(1, 1, 1)), equalTo(future.get()))
+    }
+
+    @Test
+    @Throws(Exception::class)
+    fun createPathWithTwoPoints() {
+        val future: CompletableFuture<List<Point>> = CompletableFuture()
+        localPathRepository.createNewPath(MapPoint(1, 1), "red") { resultPathId ->
+            localPathRepository.addNewPathPoint(resultPathId, MapPoint(2, 2)) {
+                localPathRepository.getAllPathPoints(resultPathId) { resultPoints ->
+                    future.complete(resultPoints)
+                }
+            }
+        }
+        assertThat(listOf(Point(1, 1, 1), Point(2, 2, 2)), equalTo(future.get()))
     }
 }

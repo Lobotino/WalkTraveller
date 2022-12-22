@@ -17,7 +17,4 @@ interface PointsDao {
 
     @Query("DELETE FROM points WHERE id = :id")
     fun deletePointById(id: Long)
-
-    @Query("DELETE FROM points")
-    fun deleteAllPoints()
 }

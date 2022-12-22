@@ -63,25 +63,4 @@ class PointsDatabaseTests {
         pointsDao.deletePointById(1)
         assertThat(pointsDao.getAllPoints(), equalTo(emptyList()))
     }
-
-
-    @Test
-    @Throws(Exception::class)
-    fun deleteAllPoints() {
-        val insertedPoints =
-            listOf(
-                Point(latitude = 1, longitude = 1),
-                Point(latitude = 2, longitude = 2),
-                Point(latitude = 3, longitude = 3)
-            )
-        pointsDao.insertPoints(insertedPoints)
-
-        assertThat(
-            pointsDao.getAllPoints(),
-            equalTo(listOf(MapPoint(1, 1), MapPoint(2, 2), MapPoint(3, 3)))
-        )
-
-        pointsDao.deleteAllPoints()
-        assertThat(pointsDao.getAllPoints(), equalTo(emptyList()))
-    }
 }

@@ -1,13 +1,14 @@
 package ru.lobotino.walktraveller.repositories.interfaces
 
+import ru.lobotino.walktraveller.database.model.Point
 import ru.lobotino.walktraveller.model.MapPoint
 
 interface IPathRepository {
 
-    fun addNewPathPoints(pathId: Long, points: List<MapPoint>)
+    fun createNewPath(startPoint: MapPoint, pathColor: String, onResult: ((Long) -> Unit)? = null)
 
-    fun getAllPathPoints(pathId: Long): List<MapPoint>
+    fun addNewPathPoint(pathId: Long, point: MapPoint, onResult: ((Long) -> Unit)? = null)
 
-    fun getAllPaths(): List<Long>
+    fun getAllPathPoints(pathId: Long, onResult: (List<Point>) -> Unit)
 
 }
