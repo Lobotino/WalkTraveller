@@ -13,6 +13,11 @@ import androidx.room.ForeignKey.CASCADE
         parentColumns = ["id"],
         childColumns = ["id_point"],
         onDelete = CASCADE
+    ), ForeignKey(
+        entity = Path::class,
+        parentColumns = ["id"],
+        childColumns = ["id_path"],
+        onDelete = CASCADE
     )]
 )
 data class PathPointRelation(
