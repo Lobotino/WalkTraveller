@@ -11,6 +11,10 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import ru.lobotino.walktraveller.database.AppDatabase
+import ru.lobotino.walktraveller.database.dao.PathPointsRelationsDao
+import ru.lobotino.walktraveller.database.dao.PathSegmentRelationsDao
+import ru.lobotino.walktraveller.database.dao.PathsDao
+import ru.lobotino.walktraveller.database.dao.PointsDao
 import ru.lobotino.walktraveller.database.model.Point
 import ru.lobotino.walktraveller.model.MapPoint
 import ru.lobotino.walktraveller.repositories.LocalPathRepository
@@ -23,6 +27,11 @@ class LocalPathRepositoryTests {
     private lateinit var db: AppDatabase
     private lateinit var localPathRepository: LocalPathRepository
 
+    private lateinit var pathsDao: PathsDao
+    private lateinit var pointsDao: PointsDao
+    private lateinit var pathPointsRelationsDao: PathPointsRelationsDao
+    private lateinit var pathSegmentRelationsDao: PathSegmentRelationsDao
+
     @Before
     fun createDb() {
         val context = ApplicationProvider.getApplicationContext<Context>()
@@ -30,6 +39,10 @@ class LocalPathRepositoryTests {
             context, AppDatabase::class.java
         ).build()
         localPathRepository = LocalPathRepository(db)
+        pathsDao = db.getPathsDao()
+        pointsDao = db.getPointsDao()
+        pathPointsRelationsDao = db.getPathPointsRelationsDao()
+        pathSegmentRelationsDao = db.getPathSegmentRelationsDao()
     }
 
     @After
@@ -62,5 +75,25 @@ class LocalPathRepositoryTests {
             }
         }
         assertThat(listOf(Point(1, 1, 1), Point(2, 2, 2)), equalTo(future.get()))
+    }
+
+    @Test
+    @Throws(Exception::class)
+    fun createAndDeletePath() {
+        val future: CompletableFuture<List<Point>> = CompletableFuture()
+        localPathRepository.createNewPath(MapPoint(1, 1), "red") { resultPathId ->
+            localPathRepository.addNewPathPoint(resultPathId, MapPoint(2, 2)) {
+                localPathRepository.deletePath(resultPathId) {
+                    localPathRepository.getAllPathPoints(resultPathId) { resultPoints ->
+                        future.complete(resultPoints)
+                    }
+                }
+            }
+        }
+        assertThat(emptyList(), equalTo(future.get()))
+        assertThat(emptyList(), equalTo(pointsDao.getAllPoints()))
+        assertThat(emptyList(), equalTo(pathsDao.getAllPaths()))
+        assertThat(emptyList(), equalTo(pathPointsRelationsDao.getAllPathPointRelations()))
+        assertThat(emptyList(), equalTo(pathSegmentRelationsDao.getAllPathSegments()))
     }
 }

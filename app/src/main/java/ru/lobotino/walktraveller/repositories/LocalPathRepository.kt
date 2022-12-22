@@ -107,4 +107,14 @@ class LocalPathRepository(database: AppDatabase) : IPathRepository {
             })
         }
     }
+
+    override fun deletePath(pathId: Long, onResult: (() -> Unit)?) {
+        CoroutineScope(Dispatchers.IO).launch {
+            pathsPointsRelationsDao.getAllPathPointsIds(pathId).forEach { pointId ->
+                pointsDao.deletePointById(pointId)
+            }
+            pathsDao.deletePathById(pathId)
+            onResult?.invoke()
+        }
+    }
 }

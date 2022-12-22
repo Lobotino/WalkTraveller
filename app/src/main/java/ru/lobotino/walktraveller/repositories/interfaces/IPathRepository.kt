@@ -11,4 +11,6 @@ interface IPathRepository {
 
     fun getAllPathPoints(pathId: Long, onResult: (List<Point>) -> Unit)
 
+    fun deletePath(pathId: Long, onResult: (() -> Unit)? = null)
+
 }
