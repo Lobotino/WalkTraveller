@@ -23,10 +23,10 @@ import org.osmdroid.views.CustomZoomButtonsController
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Polyline
 import ru.lobotino.walktraveller.R
+import ru.lobotino.walktraveller.repositories.DefaultLocationRepository
 import ru.lobotino.walktraveller.repositories.GeoPermissionsRepository
 import ru.lobotino.walktraveller.services.LocationUpdatesService
 import ru.lobotino.walktraveller.services.LocationUpdatesService.Companion.EXTRA_LOCATION
-import ru.lobotino.walktraveller.usecases.PathInteractor
 import ru.lobotino.walktraveller.usecases.PermissionsInteractor
 import ru.lobotino.walktraveller.viewmodels.MapViewModel
 
@@ -112,7 +112,7 @@ class MainMapFragment : Fragment() {
                             )
                         )
 
-                        setPathInteractor(PathInteractor())
+                        setDefaultLocationRepository(DefaultLocationRepository(requireContext().applicationContext))
 
                         observePermissionsDeniedResult.onEach {
                             showPermissionsDeniedError()
