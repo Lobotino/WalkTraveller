@@ -13,22 +13,23 @@ import ru.lobotino.walktraveller.usecases.IPermissionsInteractor
 
 class MapViewModel(application: Application) : AndroidViewModel(application) {
 
+    private var lastPoint: MapPoint? = null
+
     private var permissionsInteractor: IPermissionsInteractor? = null
     private lateinit var defaultLocationRepository: IDefaultLocationRepository
 
     private val permissionsDeniedSharedFlow =
         MutableSharedFlow<List<String>>(1, 0, BufferOverflow.DROP_OLDEST)
-    private val newPathLocationFlow =
-        MutableSharedFlow<Pair<Double, Double>>(1, 0, BufferOverflow.DROP_OLDEST)
+    private val newPathSegmentFlow =
+        MutableSharedFlow<Pair<MapPoint, MapPoint>>(1, 0, BufferOverflow.DROP_OLDEST)
     private val mapCenterUpdateFlow =
-        MutableSharedFlow<Pair<Double, Double>>(1, 0, BufferOverflow.DROP_OLDEST)
+        MutableSharedFlow<MapPoint>(1, 0, BufferOverflow.DROP_OLDEST)
     private val regularLocationUpdateStateFlow = MutableStateFlow(false)
     private val writePathState = MutableStateFlow(false)
 
-
     val observePermissionsDeniedResult: Flow<List<String>> = permissionsDeniedSharedFlow
-    val observeNewPathLocation: Flow<Pair<Double, Double>> = newPathLocationFlow
-    val observeMapCenterUpdate: Flow<Pair<Double, Double>> = mapCenterUpdateFlow
+    val observeNewPathSegment: Flow<Pair<MapPoint, MapPoint>> = newPathSegmentFlow
+    val observeMapCenterUpdate: Flow<MapPoint> = mapCenterUpdateFlow
     val observeRegularLocationUpdateState: Flow<Boolean> = regularLocationUpdateStateFlow
     val observeWritePathState: Flow<Boolean> = writePathState
 
@@ -59,7 +60,16 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun onNewLocationReceive(location: Location) {
-        newPathLocationFlow.tryEmit(Pair(location.latitude, location.longitude))
+        val newPoint = MapPoint(location.latitude, location.longitude)
+        if (lastPoint != null) {
+            newPathSegmentFlow.tryEmit(
+                Pair(
+                    lastPoint!!,
+                    newPoint
+                )
+            )
+        }
+        lastPoint = newPoint
     }
 
     fun onStartPathButtonClicked() {
@@ -70,5 +80,6 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     fun onStopPathButtonClicked() {
         writePathState.tryEmit(false)
         regularLocationUpdateStateFlow.tryEmit(false)
+        lastPoint = null
     }
 }

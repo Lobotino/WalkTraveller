@@ -2,13 +2,13 @@ package ru.lobotino.walktraveller.repositories
 
 import android.content.Context
 import androidx.appcompat.app.AppCompatActivity
+import ru.lobotino.walktraveller.App.Companion.SHARED_PREFS_TAG
 import ru.lobotino.walktraveller.repositories.interfaces.ILocationUpdatesStatesRepository
 
 class LocationUpdatesStatesRepository(private val appContext: Context) :
     ILocationUpdatesStatesRepository {
 
     companion object {
-        private const val SHARED_PREFS_TAG = "location_shared_prefs"
         private const val KEY_REQUESTING_LOCATION_UPDATES = "requesting_location_updates"
     }
 

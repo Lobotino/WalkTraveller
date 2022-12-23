@@ -5,6 +5,7 @@ import android.app.NotificationManager
 import android.app.Service
 import android.content.Intent
 import android.content.res.Configuration
+import android.graphics.Color
 import android.location.Location
 import android.os.Binder
 import android.os.Build
@@ -12,21 +13,24 @@ import android.os.IBinder
 import android.provider.ContactsContract
 import android.util.Log
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import androidx.room.Room
 import com.google.android.gms.location.LocationServices
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import ru.lobotino.walktraveller.R
-import ru.lobotino.walktraveller.repositories.*
+import ru.lobotino.walktraveller.database.AppDatabase
+import ru.lobotino.walktraveller.model.MapPoint
+import ru.lobotino.walktraveller.repositories.LocalPathRepository
+import ru.lobotino.walktraveller.repositories.LocationNotificationRepository
 import ru.lobotino.walktraveller.repositories.LocationNotificationRepository.Companion.EXTRA_STARTED_FROM_NOTIFICATION
+import ru.lobotino.walktraveller.repositories.LocationUpdatesRepository
+import ru.lobotino.walktraveller.repositories.LocationUpdatesStatesRepository
 import ru.lobotino.walktraveller.repositories.interfaces.ILocationUpdatesRepository
 import ru.lobotino.walktraveller.repositories.interfaces.ILocationUpdatesStatesRepository
 import ru.lobotino.walktraveller.ui.MainActivity
-import ru.lobotino.walktraveller.usecases.ILocationMediator
-import ru.lobotino.walktraveller.usecases.ILocationNotificationInteractor
-import ru.lobotino.walktraveller.usecases.LocationMediator
-import ru.lobotino.walktraveller.usecases.LocationNotificationInteractor
+import ru.lobotino.walktraveller.usecases.*
 
 
 class LocationUpdatesService : Service() {
@@ -35,6 +39,7 @@ class LocationUpdatesService : Service() {
         private val TAG = LocationUpdatesService::class.java.simpleName
         private const val PACKAGE_NAME = ContactsContract.Directory.PACKAGE_NAME
         private const val CHANNEL_ID = "walk_traveller_notifications_channel"
+        private const val PATH_DATABASE_NAME = "walk_traveller"
         const val EXTRA_LOCATION = "$PACKAGE_NAME.location"
         const val ACTION_BROADCAST = "$PACKAGE_NAME.broadcast"
     }
@@ -48,6 +53,7 @@ class LocationUpdatesService : Service() {
     private lateinit var locationUpdatesRepository: ILocationUpdatesRepository
     private lateinit var locationNotificationInteractor: ILocationNotificationInteractor
     private lateinit var locationMediator: ILocationMediator
+    private lateinit var pathInteractor: IPathInteractor
 
     override fun onCreate() {
         super.onCreate()
@@ -55,6 +61,18 @@ class LocationUpdatesService : Service() {
         initLocationNotificationInteractor()
         initLocationUpdatesStatesRepository()
         initLocationUpdatesRepository()
+        initLocalPathRepository()
+    }
+
+    private fun initLocalPathRepository() {
+        pathInteractor = PathInteractor(
+            LocalPathRepository(
+                Room.databaseBuilder(
+                    applicationContext,
+                    AppDatabase::class.java, PATH_DATABASE_NAME
+                ).build()
+            ), listOf(Color.RED.toString(), Color.BLUE.toString(), Color.CYAN.toString()) //TODO
+        )
     }
 
     private fun initLocationUpdatesRepository() {
@@ -108,6 +126,7 @@ class LocationUpdatesService : Service() {
         Log.d(TAG, "New location: ${newLocation.latitude}, ${newLocation.longitude}")
         locationMediator.onNewLocation(newLocation) { location ->
             lastLocation = location
+            pathInteractor.addNewPathPoint(MapPoint(location.latitude, location.longitude))
 
             LocalBroadcastManager.getInstance(applicationContext)
                 .sendBroadcast(Intent(ACTION_BROADCAST).apply {
@@ -183,6 +202,7 @@ class LocationUpdatesService : Service() {
     fun stopLocationUpdates() {
         Log.i(TAG, "Removing location updates")
         try {
+            pathInteractor.finishCurrentPath()
             locationUpdatesRepository.stopLocationUpdates()
             locationUpdatesStatesRepository.setRequestingLocationUpdates(false)
             stopSelf()

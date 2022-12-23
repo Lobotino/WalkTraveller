@@ -43,8 +43,6 @@ class MainMapFragment : Fragment() {
         }
     }
 
-    private var lastPathLocation: Pair<Double, Double>? = null
-
     private var locationUpdatesService: LocationUpdatesService? = null
 
     private val serviceConnection: ServiceConnection = object : ServiceConnection {
@@ -126,21 +124,18 @@ class MainMapFragment : Fragment() {
                             }
                         }.launchIn(lifecycleScope)
 
-                        observeNewPathLocation.onEach { newLocation ->
-                            lastPathLocation?.let { lastPathLocation ->
-                                paintNewPathLine(
-                                    GeoPoint(lastPathLocation.first, lastPathLocation.second),
-                                    GeoPoint(newLocation.first, newLocation.second)
-                                )
-                            }
-                            lastPathLocation = newLocation
+                        observeNewPathSegment.onEach { pathSegment ->
+                            paintNewPathLine(
+                                GeoPoint(pathSegment.first.latitude, pathSegment.first.longitude),
+                                GeoPoint(pathSegment.second.latitude, pathSegment.second.longitude)
+                            )
                         }.launchIn(lifecycleScope)
 
                         observeMapCenterUpdate.onEach { newCenter ->
                             mapView.controller?.setCenter(
                                 GeoPoint(
-                                    newCenter.first,
-                                    newCenter.second
+                                    newCenter.latitude,
+                                    newCenter.longitude
                                 )
                             )
                         }.launchIn(lifecycleScope)

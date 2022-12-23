@@ -1,7 +1,11 @@
 package ru.lobotino.walktraveller.usecases
 
+import ru.lobotino.walktraveller.model.MapPoint
+
 interface IPathInteractor {
 
-    fun getLastPathFinishPosition(): Pair<Double, Double>
+    fun addNewPathPoint(point: MapPoint)
+
+    fun finishCurrentPath()
 
 }
