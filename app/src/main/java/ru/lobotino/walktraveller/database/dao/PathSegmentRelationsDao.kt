@@ -10,12 +10,12 @@ import ru.lobotino.walktraveller.database.model.Point
 interface PathSegmentRelationsDao {
 
     @Query("SELECT * FROM path_segment_relations")
-    fun getAllPathSegments(): List<PathSegmentRelation>
+    suspend fun getAllPathSegments(): List<PathSegmentRelation>
 
     @Query("SELECT * FROM points, path_segment_relations WHERE id_start_point = :pointId and points.id = id_finish_point")
-    fun getNextPathPoint(pointId: Long): Point?
+    suspend fun getNextPathPoint(pointId: Long): Point?
 
     @Insert
-    fun insertPathSegments(segments: List<PathSegmentRelation>)
+    suspend fun insertPathSegments(segments: List<PathSegmentRelation>)
 
 }

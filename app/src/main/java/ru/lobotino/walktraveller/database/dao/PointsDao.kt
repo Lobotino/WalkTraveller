@@ -10,11 +10,14 @@ import ru.lobotino.walktraveller.model.MapPoint
 @Dao
 interface PointsDao {
     @Query("SELECT latitude, longitude FROM points")
-    fun getAllPoints(): List<MapPoint>
+    suspend fun getAllPoints(): List<MapPoint>
+
+    @Query("SELECT * FROM points WHERE id = :pointId")
+    suspend fun getPointById(pointId: Long): Point?
 
     @Insert(onConflict = REPLACE)
-    fun insertPoints(points: List<Point>): List<Long>
+    suspend fun insertPoints(points: List<Point>): List<Long>
 
     @Query("DELETE FROM points WHERE id = :id")
-    fun deletePointById(id: Long)
+    suspend fun deletePointById(id: Long)
 }

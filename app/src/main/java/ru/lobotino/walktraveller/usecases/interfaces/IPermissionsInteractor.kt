@@ -1,4 +1,4 @@
-package ru.lobotino.walktraveller.usecases
+package ru.lobotino.walktraveller.usecases.interfaces
 
 interface IPermissionsInteractor {
 

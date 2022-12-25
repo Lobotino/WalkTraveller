@@ -68,11 +68,7 @@ class LocalPathRepositoryTests {
     fun createPathWithTwoPoints() {
         val future: CompletableFuture<List<Point>> = CompletableFuture()
         localPathRepository.createNewPath(MapPoint(1, 1), "red") { resultPathId ->
-            localPathRepository.addNewPathPoint(resultPathId, MapPoint(2, 2)) {
-                localPathRepository.getAllPathPoints(resultPathId) { resultPoints ->
-                    future.complete(resultPoints)
-                }
-            }
+            localPathRepository.addNewPathPoint(resultPathId, MapPoint(2, 2))
         }
         assertThat(listOf(Point(1, 1, 1), Point(2, 2, 2)), equalTo(future.get()))
     }
@@ -82,13 +78,7 @@ class LocalPathRepositoryTests {
     fun createAndDeletePath() {
         val future: CompletableFuture<List<Point>> = CompletableFuture()
         localPathRepository.createNewPath(MapPoint(1, 1), "red") { resultPathId ->
-            localPathRepository.addNewPathPoint(resultPathId, MapPoint(2, 2)) {
-                localPathRepository.deletePath(resultPathId) {
-                    localPathRepository.getAllPathPoints(resultPathId) { resultPoints ->
-                        future.complete(resultPoints)
-                    }
-                }
-            }
+            localPathRepository.addNewPathPoint(resultPathId, MapPoint(2, 2))
         }
         assertThat(emptyList(), equalTo(future.get()))
         assertThat(emptyList(), equalTo(pointsDao.getAllPoints()))

@@ -3,13 +3,17 @@ package ru.lobotino.walktraveller.viewmodels
 import android.app.Application
 import android.location.Location
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
+import ru.lobotino.walktraveller.model.MapPath
 import ru.lobotino.walktraveller.model.MapPoint
 import ru.lobotino.walktraveller.repositories.interfaces.IDefaultLocationRepository
-import ru.lobotino.walktraveller.usecases.IPermissionsInteractor
+import ru.lobotino.walktraveller.usecases.interfaces.IMapPathsInteractor
+import ru.lobotino.walktraveller.usecases.interfaces.IPermissionsInteractor
 
 class MapViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -18,10 +22,13 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     private var permissionsInteractor: IPermissionsInteractor? = null
     private lateinit var defaultLocationRepository: IDefaultLocationRepository
 
+    private lateinit var mapPathsInteractor: IMapPathsInteractor
+
     private val permissionsDeniedSharedFlow =
         MutableSharedFlow<List<String>>(1, 0, BufferOverflow.DROP_OLDEST)
     private val newPathSegmentFlow =
         MutableSharedFlow<Pair<MapPoint, MapPoint>>(1, 0, BufferOverflow.DROP_OLDEST)
+    private val newPathFlow = MutableSharedFlow<MapPath>(1, 0, BufferOverflow.DROP_OLDEST)
     private val mapCenterUpdateFlow =
         MutableSharedFlow<MapPoint>(1, 0, BufferOverflow.DROP_OLDEST)
     private val regularLocationUpdateStateFlow = MutableStateFlow(false)
@@ -29,6 +36,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
 
     val observePermissionsDeniedResult: Flow<List<String>> = permissionsDeniedSharedFlow
     val observeNewPathSegment: Flow<Pair<MapPoint, MapPoint>> = newPathSegmentFlow
+    val observeNewPath: Flow<MapPath> = newPathFlow
     val observeMapCenterUpdate: Flow<MapPoint> = mapCenterUpdateFlow
     val observeRegularLocationUpdateState: Flow<Boolean> = regularLocationUpdateStateFlow
     val observeWritePathState: Flow<Boolean> = writePathState
@@ -39,6 +47,10 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setDefaultLocationRepository(defaultLocationRepository: IDefaultLocationRepository) {
         this.defaultLocationRepository = defaultLocationRepository
+    }
+
+    fun setMapPathInteractor(mapPathsInteractor: IMapPathsInteractor) {
+        this.mapPathsInteractor = mapPathsInteractor
     }
 
     fun onInitFinish() {
@@ -81,5 +93,13 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
         writePathState.tryEmit(false)
         regularLocationUpdateStateFlow.tryEmit(false)
         lastPoint = null
+    }
+
+    fun onShowAllPathsButtonClicked() {
+        viewModelScope.launch {
+            for (path in mapPathsInteractor.getAllSavedPaths()) {
+                newPathFlow.tryEmit(path)
+            }
+        }
     }
 }

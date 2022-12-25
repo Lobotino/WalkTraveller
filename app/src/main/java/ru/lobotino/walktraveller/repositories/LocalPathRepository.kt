@@ -1,8 +1,5 @@
 package ru.lobotino.walktraveller.repositories
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import ru.lobotino.walktraveller.database.AppDatabase
 import ru.lobotino.walktraveller.database.model.Path
 import ru.lobotino.walktraveller.database.model.PathPointRelation
@@ -18,40 +15,35 @@ class LocalPathRepository(database: AppDatabase) : IPathRepository {
     private val pathsDao = database.getPathsDao()
     private val pathSegmentsDao = database.getPathSegmentRelationsDao()
 
-    override fun createNewPath(
+    override suspend fun createNewPath(
         startPoint: MapPoint,
-        pathColor: String,
-        onResult: ((Long) -> Unit)?
-    ) {
-        CoroutineScope(Dispatchers.IO).launch {
-            insertNewPoint(startPoint).let { insertedPointId ->
-                pathsDao.insertPaths(
-                    listOf(
-                        Path(
-                            startPointId = insertedPointId,
-                            color = pathColor
-                        )
+        pathColor: String
+    ): Long {
+        insertNewPoint(startPoint).let { insertedPointId ->
+            pathsDao.insertPaths(
+                listOf(
+                    Path(
+                        startPointId = insertedPointId,
+                        color = pathColor
                     )
-                ).let { insertedPathsIds ->
-                    val insertedPathId = insertedPathsIds[0]
-                    insertNewPathPointRelation(insertedPathId, insertedPointId)
-                    onResult?.invoke(insertedPathId)
-                }
+                )
+            ).let { insertedPathsIds ->
+                val insertedPathId = insertedPathsIds[0]
+                insertNewPathPointRelation(insertedPathId, insertedPointId)
+                return insertedPathId
             }
         }
     }
 
-    override fun addNewPathPoint(pathId: Long, point: MapPoint, onResult: ((Long) -> Unit)?) {
-        CoroutineScope(Dispatchers.IO).launch {
-            insertNewPoint(point).let { insertedPointId ->
-                insertNewPathPointRelation(pathId, insertedPointId)
-                insertNewPathSegment(pathId, insertedPointId)
-                onResult?.invoke(insertedPointId)
-            }
+    override suspend fun addNewPathPoint(pathId: Long, point: MapPoint): Long {
+        insertNewPoint(point).let { insertedPointId ->
+            insertNewPathPointRelation(pathId, insertedPointId)
+            insertNewPathSegment(pathId, insertedPointId)
+            return insertedPointId
         }
     }
 
-    private fun insertNewPoint(mapPoint: MapPoint): Long {
+    private suspend fun insertNewPoint(mapPoint: MapPoint): Long {
         return pointsDao.insertPoints(
             listOf(
                 Point(
@@ -62,7 +54,7 @@ class LocalPathRepository(database: AppDatabase) : IPathRepository {
         )[0]
     }
 
-    private fun insertNewPathPointRelation(pathId: Long, pointId: Long) {
+    private suspend fun insertNewPathPointRelation(pathId: Long, pointId: Long) {
         pathsPointsRelationsDao.insertPathPointsRelations(
             listOf(
                 PathPointRelation(
@@ -73,7 +65,7 @@ class LocalPathRepository(database: AppDatabase) : IPathRepository {
         )
     }
 
-    private fun insertNewPathSegment(pathId: Long, newPointId: Long) {
+    private suspend fun insertNewPathSegment(pathId: Long, newPointId: Long) {
         var finishPoint: Point? = pathsDao.getPathStartPoint(pathId)
         var nextPoint: Point? = finishPoint
         while (nextPoint != null) {
@@ -96,25 +88,45 @@ class LocalPathRepository(database: AppDatabase) : IPathRepository {
         }
     }
 
-    override fun getAllPathPoints(pathId: Long, onResult: (List<Point>) -> Unit) {
-        CoroutineScope(Dispatchers.IO).launch {
-            onResult(ArrayList<Point>().apply {
-                var nextPoint: Point? = pathsDao.getPathStartPoint(pathId)
-                while (nextPoint != null) {
-                    add(nextPoint)
-                    nextPoint = pathSegmentsDao.getNextPathPoint(nextPoint.id)
-                }
-            })
+    override suspend fun getAllPaths(): List<Path> {
+        return pathsDao.getAllPaths()
+    }
+
+    override suspend fun getAllPathPoints(pathId: Long): List<Point> {
+        return ArrayList<Point>().apply {
+            var nextPoint: Point? = pathsDao.getPathStartPoint(pathId)
+            while (nextPoint != null) {
+                add(nextPoint)
+                nextPoint = pathSegmentsDao.getNextPathPoint(nextPoint.id)
+            }
         }
     }
 
-    override fun deletePath(pathId: Long, onResult: (() -> Unit)?) {
-        CoroutineScope(Dispatchers.IO).launch {
-            pathsPointsRelationsDao.getAllPathPointsIds(pathId).forEach { pointId ->
-                pointsDao.deletePointById(pointId)
+    override suspend fun getAllPathSegments(
+        pathId: Long
+    ): List<Pair<Point, Point>> {
+        val path = pathsDao.getPathById(pathId)
+        return if (path == null) {
+            emptyList()
+        } else {
+            return ArrayList<Pair<Point, Point>>().apply {
+                var currentPoint = pointsDao.getPointById(path.startPointId)
+                if (currentPoint != null) {
+                    var nextPoint = pathSegmentsDao.getNextPathPoint(currentPoint.id)
+                    while (nextPoint != null) {
+                        add(Pair(currentPoint!!, nextPoint))
+                        currentPoint = nextPoint
+                        nextPoint = pathSegmentsDao.getNextPathPoint(nextPoint.id)
+                    }
+                }
             }
-            pathsDao.deletePathById(pathId)
-            onResult?.invoke()
         }
+    }
+
+    override suspend fun deletePath(pathId: Long) {
+        pathsPointsRelationsDao.getAllPathPointsIds(pathId).forEach { pointId ->
+            pointsDao.deletePointById(pointId)
+        }
+        pathsDao.deletePathById(pathId)
     }
 }

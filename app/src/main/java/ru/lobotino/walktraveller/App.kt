@@ -9,6 +9,7 @@ class App : Application() {
 
     companion object {
         const val SHARED_PREFS_TAG = "walk_traveller_shared_prefs"
+        const val PATH_DATABASE_NAME = "walk_traveller"
     }
 
     override fun onCreate() {

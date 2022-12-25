@@ -15,6 +15,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import androidx.room.Room
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
@@ -22,11 +23,16 @@ import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.CustomZoomButtonsController
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Polyline
+import ru.lobotino.walktraveller.App.Companion.PATH_DATABASE_NAME
 import ru.lobotino.walktraveller.R
+import ru.lobotino.walktraveller.database.AppDatabase
+import ru.lobotino.walktraveller.model.MapPath
 import ru.lobotino.walktraveller.repositories.DefaultLocationRepository
 import ru.lobotino.walktraveller.repositories.GeoPermissionsRepository
+import ru.lobotino.walktraveller.repositories.LocalPathRepository
 import ru.lobotino.walktraveller.services.LocationUpdatesService
 import ru.lobotino.walktraveller.services.LocationUpdatesService.Companion.EXTRA_LOCATION
+import ru.lobotino.walktraveller.usecases.LocalMapPathsInteractor
 import ru.lobotino.walktraveller.usecases.PermissionsInteractor
 import ru.lobotino.walktraveller.viewmodels.MapViewModel
 
@@ -36,12 +42,9 @@ class MainMapFragment : Fragment() {
     private lateinit var viewModel: MapViewModel
     private lateinit var walkStartButton: CardView
     private lateinit var walkStopButton: CardView
+    private lateinit var showAllPathsButton: CardView
 
-    private val commonPathPolyline: Polyline by lazy {
-        Polyline(mapView).apply {
-            outlinePaint.color = ContextCompat.getColor(requireContext(), R.color.common_path)
-        }
-    }
+    private var currentPathPolyline: Polyline? = null
 
     private var locationUpdatesService: LocationUpdatesService? = null
 
@@ -78,7 +81,7 @@ class MainMapFragment : Fragment() {
                 setTileSource(TileSourceFactory.MAPNIK)
                 controller.setZoom(12.5)
                 zoomController.setVisibility(CustomZoomButtonsController.Visibility.NEVER)
-                setMultiTouchControls(true);
+                setMultiTouchControls(true)
             }
             mapViewContainer.addView(mapView)
 
@@ -90,6 +93,11 @@ class MainMapFragment : Fragment() {
             walkStopButton = view.findViewById<CardView>(R.id.walk_stop_button)
                 .apply {
                     setOnClickListener { viewModel.onStopPathButtonClicked() }
+                }
+
+            showAllPathsButton = view.findViewById<CardView>(R.id.show_all_map_paths)
+                .apply {
+                    setOnClickListener { viewModel.onShowAllPathsButtonClicked() }
                 }
 
             initViewModel()
@@ -112,6 +120,17 @@ class MainMapFragment : Fragment() {
 
                         setDefaultLocationRepository(DefaultLocationRepository(requireContext().applicationContext))
 
+                        setMapPathInteractor(
+                            LocalMapPathsInteractor(
+                                LocalPathRepository(
+                                    Room.databaseBuilder(
+                                        requireContext().applicationContext,
+                                        AppDatabase::class.java, PATH_DATABASE_NAME
+                                    ).build()
+                                )
+                            )
+                        )
+
                         observePermissionsDeniedResult.onEach {
                             showPermissionsDeniedError()
                         }.launchIn(lifecycleScope)
@@ -129,6 +148,10 @@ class MainMapFragment : Fragment() {
                                 GeoPoint(pathSegment.first.latitude, pathSegment.first.longitude),
                                 GeoPoint(pathSegment.second.latitude, pathSegment.second.longitude)
                             )
+                        }.launchIn(lifecycleScope)
+
+                        observeNewPath.onEach { path ->
+                            paintNewCommonPath(path)
                         }.launchIn(lifecycleScope)
 
                         observeMapCenterUpdate.onEach { newCenter ->
@@ -193,15 +216,32 @@ class MainMapFragment : Fragment() {
         }
     }
 
+    private fun paintNewCommonPath(path: MapPath) {
+        if (context != null) {
+            mapView.overlays.add(Polyline(mapView).apply {
+                outlinePaint.strokeWidth = 1.5f
+                outlinePaint.color =
+                    ContextCompat.getColor(requireContext(), R.color.common_path)
+                setPoints(path.pathPoints.map { point ->
+                    GeoPoint(
+                        point.latitude,
+                        point.longitude
+                    )
+                })
+            })
+        }
+    }
+
     private fun paintNewPathLine(from: GeoPoint, to: GeoPoint) {
         if (context != null) {
-            mapView.overlays?.add(
-                commonPathPolyline.apply {
+            currentPathPolyline?.apply {
+                if (points.isEmpty()) {
                     addPoint(from)
-                    addPoint(to)
                 }
-            )
-            refreshMapNow()
+                addPoint(to)
+            }?.also {
+                refreshMapNow()
+            }
         }
     }
 

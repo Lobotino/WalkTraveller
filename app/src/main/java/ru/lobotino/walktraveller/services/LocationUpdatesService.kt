@@ -19,6 +19,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import ru.lobotino.walktraveller.App.Companion.PATH_DATABASE_NAME
 import ru.lobotino.walktraveller.R
 import ru.lobotino.walktraveller.database.AppDatabase
 import ru.lobotino.walktraveller.model.MapPoint
@@ -31,6 +32,9 @@ import ru.lobotino.walktraveller.repositories.interfaces.ILocationUpdatesReposit
 import ru.lobotino.walktraveller.repositories.interfaces.ILocationUpdatesStatesRepository
 import ru.lobotino.walktraveller.ui.MainActivity
 import ru.lobotino.walktraveller.usecases.*
+import ru.lobotino.walktraveller.usecases.interfaces.ILocationMediator
+import ru.lobotino.walktraveller.usecases.interfaces.ILocationNotificationInteractor
+import ru.lobotino.walktraveller.usecases.interfaces.IPathInteractor
 
 
 class LocationUpdatesService : Service() {
@@ -39,7 +43,6 @@ class LocationUpdatesService : Service() {
         private val TAG = LocationUpdatesService::class.java.simpleName
         private const val PACKAGE_NAME = ContactsContract.Directory.PACKAGE_NAME
         private const val CHANNEL_ID = "walk_traveller_notifications_channel"
-        private const val PATH_DATABASE_NAME = "walk_traveller"
         const val EXTRA_LOCATION = "$PACKAGE_NAME.location"
         const val ACTION_BROADCAST = "$PACKAGE_NAME.broadcast"
     }

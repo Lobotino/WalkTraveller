@@ -9,12 +9,12 @@ import ru.lobotino.walktraveller.database.model.PathPointRelation
 interface PathPointsRelationsDao {
 
     @Query("SELECT * FROM path_point_relations")
-    fun getAllPathPointRelations(): List<PathPointRelation>
+    suspend fun getAllPathPointRelations(): List<PathPointRelation>
 
     @Query("SELECT id_point FROM path_point_relations WHERE id_path = :pathId")
-    fun getAllPathPointsIds(pathId: Long): List<Long>
+    suspend fun getAllPathPointsIds(pathId: Long): List<Long>
 
     @Insert
-    fun insertPathPointsRelations(pathPointRelations: List<PathPointRelation>)
+    suspend fun insertPathPointsRelations(pathPointRelations: List<PathPointRelation>)
 
 }

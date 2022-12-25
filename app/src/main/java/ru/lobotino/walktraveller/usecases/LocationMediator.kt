@@ -2,6 +2,7 @@ package ru.lobotino.walktraveller.usecases
 
 import android.location.Location
 import android.util.Log
+import ru.lobotino.walktraveller.usecases.interfaces.ILocationMediator
 
 class LocationMediator(private var lastLocation: Location? = null) : ILocationMediator {
 
