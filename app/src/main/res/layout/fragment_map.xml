@@ -13,14 +13,12 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        tools:background="@android:color/holo_green_dark" />
+        tools:background="@color/dark_green" />
 
     <androidx.cardview.widget.CardView
         android:id="@+id/buttons_holder"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:clickable="true"
-        android:focusable="true"
         app:cardBackgroundColor="@color/light_gray"
         app:cardCornerRadius="0dp"
         app:cardElevation="4dp"
@@ -64,6 +62,15 @@
                 android:layout_margin="10dp"
                 android:src="@drawable/ic_baseline_flag_24" />
 
+            <com.google.android.material.progressindicator.CircularProgressIndicator
+                android:id="@+id/walk_stop_accept_progress"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                app:indicatorColor="@android:color/white"
+                app:indicatorSize="60dp"
+                app:trackThickness="5dp" />
+
         </androidx.cardview.widget.CardView>
     </androidx.cardview.widget.CardView>
 
@@ -94,7 +101,7 @@
             android:layout_gravity="center"
             android:indeterminate="true"
             android:visibility="gone"
-            app:indicatorColor="@android:color/holo_green_light"
+            app:indicatorColor="@color/light_green"
             app:indicatorSize="26dp"
             app:trackThickness="3dp" />
 

@@ -5,6 +5,7 @@ import android.location.Location
 import android.os.Bundle
 import android.os.IBinder
 import android.view.LayoutInflater
+import android.view.MotionEvent.*
 import android.view.View
 import android.view.View.GONE
 import android.view.View.VISIBLE
@@ -20,6 +21,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.room.Room
 import com.google.android.material.progressindicator.CircularProgressIndicator
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
@@ -48,6 +50,7 @@ class MainMapFragment : Fragment() {
     private lateinit var viewModel: MapViewModel
     private lateinit var walkStartButton: CardView
     private lateinit var walkStopButton: CardView
+    private lateinit var walkStopAcceptProgress: CircularProgressIndicator
     private lateinit var showPathsButton: CardView
     private lateinit var showPathsProgress: CircularProgressIndicator
     private lateinit var showPathsDefaultImage: ImageView
@@ -55,6 +58,8 @@ class MainMapFragment : Fragment() {
     private var currentPathPolyline: Polyline? = null
 
     private var locationUpdatesService: LocationUpdatesService? = null
+
+    private var stopAcceptProgressJob: Job? = null
 
     private val serviceConnection: ServiceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName, service: IBinder) {
@@ -83,6 +88,13 @@ class MainMapFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         return inflater.inflate(R.layout.fragment_map, container, false).also { view ->
+            initViews(view)
+            initViewModel()
+        }
+    }
+
+    private fun initViews(rootLayout: View) {
+        rootLayout.let { view ->
             val mapViewContainer = view.findViewById<FrameLayout>(R.id.map_view_container)
 
             mapView = MapView(context).apply {
@@ -98,10 +110,35 @@ class MainMapFragment : Fragment() {
                     setOnClickListener { viewModel.onStartPathButtonClicked() }
                 }
 
+            walkStopAcceptProgress = view.findViewById(R.id.walk_stop_accept_progress)
+
             walkStopButton = view.findViewById<CardView>(R.id.walk_stop_button)
                 .apply {
-                    setOnClickListener { viewModel.onStopPathButtonClicked() }
+                    setOnTouchListener { _, event ->
+                        when (event.action) {
+                            ACTION_DOWN -> {
+                                isPressed = true
+                                walkStopAcceptProgressStart {
+                                    isPressed = false
+                                    performClick()
+                                }
+                                true
+                            }
+                            ACTION_UP -> {
+                                tryCancelWalkStopAcceptProgress().also { canceled ->
+                                    if (canceled) {
+                                        isPressed = false
+                                    }
+                                }
+                            }
+                            else -> {
+                                false
+                            }
+                        }
+                    }
                 }
+
+            walkStopButton.setOnClickListener { viewModel.onStopPathButtonClicked() }
 
             showPathsButton = view.findViewById<CardView>(R.id.show_paths_button)
                 .apply {
@@ -110,8 +147,6 @@ class MainMapFragment : Fragment() {
 
             showPathsProgress = view.findViewById(R.id.show_paths_progress)
             showPathsDefaultImage = view.findViewById(R.id.show_paths_default_image)
-
-            initViewModel()
         }
     }
 
@@ -306,5 +341,32 @@ class MainMapFragment : Fragment() {
 
     private fun refreshMapNow() {
         mapView.controller.setCenter(mapView.mapCenter)
+    }
+
+    private fun walkStopAcceptProgressStart(onFinished: () -> Unit) {
+        stopAcceptProgressJob = CoroutineScope(Dispatchers.Default).launch {
+            while (walkStopAcceptProgress.progress != 100) {
+                delay(9)
+                withContext(Dispatchers.Main) {
+                    walkStopAcceptProgress.progress += 1
+                }
+            }
+            withContext(Dispatchers.Main) {
+                onFinished()
+            }
+        }
+    }
+
+    /**
+     * @return success of canceling
+     */
+    private fun tryCancelWalkStopAcceptProgress(): Boolean {
+        return if (stopAcceptProgressJob != null) {
+            stopAcceptProgressJob!!.cancel()
+            walkStopAcceptProgress.progress = 0
+            true
+        } else {
+            false
+        }
     }
 }
