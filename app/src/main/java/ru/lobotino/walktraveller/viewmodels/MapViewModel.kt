@@ -4,6 +4,7 @@ import android.app.Application
 import android.location.Location
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -13,12 +14,14 @@ import kotlinx.coroutines.launch
 import ru.lobotino.walktraveller.model.MapPath
 import ru.lobotino.walktraveller.model.MapPoint
 import ru.lobotino.walktraveller.repositories.interfaces.IDefaultLocationRepository
-import ru.lobotino.walktraveller.ui.MapUiState
+import ru.lobotino.walktraveller.ui.model.MapUiState
+import ru.lobotino.walktraveller.ui.model.ShowPathsButtonState
 import ru.lobotino.walktraveller.usecases.interfaces.IMapPathsInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IPermissionsInteractor
 
 class MapViewModel(application: Application) : AndroidViewModel(application) {
 
+    private var downloadAllPathsJob: Job? = null
     private var lastPoint: MapPoint? = null
 
     private var permissionsInteractor: IPermissionsInteractor? = null
@@ -40,7 +43,8 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
                 isWritePath = false,
                 isPathFinished = false,
                 needToClearMapNow = false,
-                mapCenter = null
+                mapCenter = null,
+                showPathsButtonState = ShowPathsButtonState.DEFAULT
             )
         )
 
@@ -127,9 +131,35 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun onShowAllPathsButtonClicked() {
-        viewModelScope.launch {
-            for (path in mapPathsInteractor.getAllSavedPaths()) {
-                newPathFlow.tryEmit(path)
+        if (downloadAllPathsJob?.isActive == true || mapUiStateFlow.value.showPathsButtonState == ShowPathsButtonState.LOADING) {
+            downloadAllPathsJob?.cancel()
+            downloadAllPathsJob = null
+            mapUiStateFlow.update { uiState ->
+                uiState.copy(
+                    needToClearMapNow = false,
+                    mapCenter = null,
+                    showPathsButtonState = ShowPathsButtonState.DEFAULT
+                )
+            }
+        } else {
+            mapUiStateFlow.update { uiState ->
+                uiState.copy(
+                    needToClearMapNow = true,
+                    mapCenter = null,
+                    showPathsButtonState = ShowPathsButtonState.LOADING
+                )
+            }
+            downloadAllPathsJob = viewModelScope.launch {
+                for (path in mapPathsInteractor.getAllSavedPaths()) {
+                    newPathFlow.tryEmit(path)
+                }
+                mapUiStateFlow.update { uiState ->
+                    uiState.copy(
+                        needToClearMapNow = false,
+                        mapCenter = null,
+                        showPathsButtonState = ShowPathsButtonState.DEFAULT
+                    )
+                }
             }
         }
     }

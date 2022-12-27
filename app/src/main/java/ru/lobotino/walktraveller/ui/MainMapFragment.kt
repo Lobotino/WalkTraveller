@@ -6,8 +6,11 @@ import android.os.Bundle
 import android.os.IBinder
 import android.view.LayoutInflater
 import android.view.View
+import android.view.View.GONE
+import android.view.View.VISIBLE
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.Toast
 import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
@@ -16,6 +19,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.room.Room
+import com.google.android.material.progressindicator.CircularProgressIndicator
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
@@ -32,6 +36,8 @@ import ru.lobotino.walktraveller.repositories.GeoPermissionsRepository
 import ru.lobotino.walktraveller.repositories.LocalPathRepository
 import ru.lobotino.walktraveller.services.LocationUpdatesService
 import ru.lobotino.walktraveller.services.LocationUpdatesService.Companion.EXTRA_LOCATION
+import ru.lobotino.walktraveller.ui.model.MapUiState
+import ru.lobotino.walktraveller.ui.model.ShowPathsButtonState
 import ru.lobotino.walktraveller.usecases.LocalMapPathsInteractor
 import ru.lobotino.walktraveller.usecases.PermissionsInteractor
 import ru.lobotino.walktraveller.viewmodels.MapViewModel
@@ -42,7 +48,9 @@ class MainMapFragment : Fragment() {
     private lateinit var viewModel: MapViewModel
     private lateinit var walkStartButton: CardView
     private lateinit var walkStopButton: CardView
-    private lateinit var showAllPathsButton: CardView
+    private lateinit var showPathsButton: CardView
+    private lateinit var showPathsProgress: CircularProgressIndicator
+    private lateinit var showPathsDefaultImage: ImageView
 
     private var currentPathPolyline: Polyline? = null
 
@@ -95,10 +103,13 @@ class MainMapFragment : Fragment() {
                     setOnClickListener { viewModel.onStopPathButtonClicked() }
                 }
 
-            showAllPathsButton = view.findViewById<CardView>(R.id.show_all_map_paths)
+            showPathsButton = view.findViewById<CardView>(R.id.show_paths_button)
                 .apply {
                     setOnClickListener { viewModel.onShowAllPathsButtonClicked() }
                 }
+
+            showPathsProgress = view.findViewById(R.id.show_paths_progress)
+            showPathsDefaultImage = view.findViewById(R.id.show_paths_default_image)
 
             initViewModel()
         }
@@ -200,15 +211,26 @@ class MainMapFragment : Fragment() {
         }
 
         if (mapUiState.isWritePath) {
-            walkStartButton.visibility = View.GONE
-            walkStopButton.visibility = View.VISIBLE
+            walkStartButton.visibility = GONE
+            walkStopButton.visibility = VISIBLE
         } else {
-            walkStartButton.visibility = View.VISIBLE
-            walkStopButton.visibility = View.GONE
+            walkStartButton.visibility = VISIBLE
+            walkStopButton.visibility = GONE
         }
 
         if (mapUiState.isPathFinished) {
             setLastPathFinished()
+        }
+
+        when (mapUiState.showPathsButtonState) {
+            ShowPathsButtonState.DEFAULT -> {
+                showPathsDefaultImage.visibility = VISIBLE
+                showPathsProgress.visibility = GONE
+            }
+            ShowPathsButtonState.LOADING -> {
+                showPathsDefaultImage.visibility = GONE
+                showPathsProgress.visibility = VISIBLE
+            }
         }
 
         if (mapUiState.mapCenter != null) {

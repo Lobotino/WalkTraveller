@@ -68,7 +68,7 @@
     </androidx.cardview.widget.CardView>
 
     <androidx.cardview.widget.CardView
-        android:id="@+id/show_all_map_paths"
+        android:id="@+id/show_paths_button"
         android:layout_width="40dp"
         android:layout_height="40dp"
         android:layout_gravity="center"
@@ -80,11 +80,23 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <ImageView
+            android:id="@+id/show_paths_default_image"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_gravity="center"
             android:layout_margin="6dp"
             android:src="@drawable/ic_baseline_grid_4x4_24" />
+
+        <com.google.android.material.progressindicator.CircularProgressIndicator
+            android:id="@+id/show_paths_progress"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:indeterminate="true"
+            android:visibility="gone"
+            app:indicatorColor="@android:color/holo_green_light"
+            app:indicatorSize="26dp"
+            app:trackThickness="3dp" />
 
     </androidx.cardview.widget.CardView>
 
