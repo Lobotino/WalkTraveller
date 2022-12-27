@@ -130,9 +130,10 @@ class MainMapFragment : Fragment() {
                                         isPressed = false
                                     }
                                 }
+                                true
                             }
                             else -> {
-                                false
+                                true
                             }
                         }
                     }
