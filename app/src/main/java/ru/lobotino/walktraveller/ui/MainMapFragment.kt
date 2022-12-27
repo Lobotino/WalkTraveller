@@ -135,14 +135,6 @@ class MainMapFragment : Fragment() {
                             showPermissionsDeniedError()
                         }.launchIn(lifecycleScope)
 
-                        observeRegularLocationUpdateState.onEach { geoLocationUpdate ->
-                            if (geoLocationUpdate) {
-                                locationUpdatesService?.startLocationUpdates()
-                            } else {
-                                locationUpdatesService?.stopLocationUpdates()
-                            }
-                        }.launchIn(lifecycleScope)
-
                         observeNewPathSegment.onEach { pathSegment ->
                             paintNewPathLine(
                                 GeoPoint(pathSegment.first.latitude, pathSegment.first.longitude),
@@ -154,21 +146,8 @@ class MainMapFragment : Fragment() {
                             paintNewCommonPath(path)
                         }.launchIn(lifecycleScope)
 
-                        observeMapCenterUpdate.onEach { newCenter ->
-                            mapView.controller?.setCenter(
-                                GeoPoint(
-                                    newCenter.latitude,
-                                    newCenter.longitude
-                                )
-                            )
-                        }.launchIn(lifecycleScope)
-
-                        observeWritePathState.onEach { writePathState ->
-                            walkStartButton.visibility =
-                                if (!writePathState) View.VISIBLE else View.GONE
-                            walkStopButton.visibility =
-                                if (writePathState) View.VISIBLE else View.GONE
-                        }.launchIn(lifecycleScope)
+                        observeMapUiState.onEach { mapUiState -> updateMapUiState(mapUiState) }
+                            .launchIn(lifecycleScope)
 
                         onInitFinish()
                     }
@@ -206,6 +185,41 @@ class MainMapFragment : Fragment() {
         super.onPause()
     }
 
+    private fun updateMapUiState(mapUiState: MapUiState) {
+        if (mapUiState.needToClearMapNow) {
+            clearMap()
+        }
+
+        if (mapUiState.isWritePath) {
+            locationUpdatesService?.startLocationUpdates()
+            walkStartButton.visibility = View.GONE
+            walkStopButton.visibility = View.VISIBLE
+        } else {
+            walkStartButton.visibility = View.VISIBLE
+            walkStopButton.visibility = View.GONE
+        }
+
+        if (mapUiState.isPathFinished) {
+            locationUpdatesService?.stopLocationUpdates()
+            setLastPathFinished()
+        }
+
+        if (mapUiState.mapCenter != null) {
+            mapView.controller?.setCenter(
+                GeoPoint(
+                    mapUiState.mapCenter.latitude,
+                    mapUiState.mapCenter.longitude
+                )
+            )
+        } else {
+            refreshMapNow()
+        }
+    }
+
+    private fun clearMap() {
+        mapView.overlays.clear()
+    }
+
     private fun showPermissionsDeniedError() {
         if (context != null) {
             Toast.makeText(
@@ -219,9 +233,9 @@ class MainMapFragment : Fragment() {
     private fun paintNewCommonPath(path: MapPath) {
         if (context != null) {
             mapView.overlays.add(Polyline(mapView).apply {
-                outlinePaint.strokeWidth = 1.5f
                 outlinePaint.color =
                     ContextCompat.getColor(requireContext(), R.color.common_path)
+
                 setPoints(path.pathPoints.map { point ->
                     GeoPoint(
                         point.latitude,
@@ -234,15 +248,31 @@ class MainMapFragment : Fragment() {
 
     private fun paintNewPathLine(from: GeoPoint, to: GeoPoint) {
         if (context != null) {
-            currentPathPolyline?.apply {
+            if (currentPathPolyline == null) {
+                currentPathPolyline = Polyline(mapView).apply {
+                    outlinePaint.apply {
+                        color = ContextCompat.getColor(requireContext(), R.color.current_path)
+                    }
+                }
+                mapView.overlays.add(currentPathPolyline)
+            }
+
+            currentPathPolyline!!.apply {
                 if (points.isEmpty()) {
                     addPoint(from)
                 }
                 addPoint(to)
-            }?.also {
+            }.also {
                 refreshMapNow()
             }
         }
+    }
+
+    private fun setLastPathFinished() {
+        currentPathPolyline?.outlinePaint?.color =
+            ContextCompat.getColor(requireContext(), R.color.finished_path)
+
+        currentPathPolyline = null
     }
 
     private fun refreshMapNow() {

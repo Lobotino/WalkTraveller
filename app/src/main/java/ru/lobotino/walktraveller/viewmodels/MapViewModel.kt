@@ -8,10 +8,12 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import ru.lobotino.walktraveller.model.MapPath
 import ru.lobotino.walktraveller.model.MapPoint
 import ru.lobotino.walktraveller.repositories.interfaces.IDefaultLocationRepository
+import ru.lobotino.walktraveller.ui.MapUiState
 import ru.lobotino.walktraveller.usecases.interfaces.IMapPathsInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IPermissionsInteractor
 
@@ -29,17 +31,21 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     private val newPathSegmentFlow =
         MutableSharedFlow<Pair<MapPoint, MapPoint>>(1, 0, BufferOverflow.DROP_OLDEST)
     private val newPathFlow = MutableSharedFlow<MapPath>(1, 0, BufferOverflow.DROP_OLDEST)
-    private val mapCenterUpdateFlow =
-        MutableSharedFlow<MapPoint>(1, 0, BufferOverflow.DROP_OLDEST)
-    private val regularLocationUpdateStateFlow = MutableStateFlow(false)
-    private val writePathState = MutableStateFlow(false)
+
+    private val mapUiStateFlow =
+        MutableStateFlow(
+            MapUiState(
+                isWritePath = false,
+                isPathFinished = false,
+                needToClearMapNow = false,
+                mapCenter = null
+            )
+        )
 
     val observePermissionsDeniedResult: Flow<List<String>> = permissionsDeniedSharedFlow
     val observeNewPathSegment: Flow<Pair<MapPoint, MapPoint>> = newPathSegmentFlow
     val observeNewPath: Flow<MapPath> = newPathFlow
-    val observeMapCenterUpdate: Flow<MapPoint> = mapCenterUpdateFlow
-    val observeRegularLocationUpdateState: Flow<Boolean> = regularLocationUpdateStateFlow
-    val observeWritePathState: Flow<Boolean> = writePathState
+    val observeMapUiState: Flow<MapUiState> = mapUiStateFlow
 
     fun setPermissionsInteractor(permissionsInteractor: IPermissionsInteractor) {
         this.permissionsInteractor = permissionsInteractor
@@ -58,7 +64,9 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
             permissionsDeniedSharedFlow.tryEmit(deniedPermissions)
         })
 
-        mapCenterUpdateFlow.tryEmit(defaultLocationRepository.getDefaultUserLocation())
+        mapUiStateFlow.update { uiState ->
+            uiState.copy(mapCenter = defaultLocationRepository.getDefaultUserLocation())
+        }
     }
 
     fun onGeoLocationUpdaterConnected() {
@@ -68,7 +76,13 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun onGeoLocationUpdaterDisconnected() {
-        regularLocationUpdateStateFlow.tryEmit(false)
+        mapUiStateFlow.update { uiState ->
+            uiState.copy(
+                isWritePath = false,
+                isPathFinished = false,
+                mapCenter = null
+            )
+        }
     }
 
     fun onNewLocationReceive(location: Location) {
@@ -85,13 +99,25 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun onStartPathButtonClicked() {
-        writePathState.tryEmit(true)
-        regularLocationUpdateStateFlow.tryEmit(true)
+        mapUiStateFlow.update { uiState ->
+            uiState.copy(
+                isWritePath = true,
+                isPathFinished = false,
+                needToClearMapNow = true,
+                mapCenter = null
+            )
+        }
     }
 
     fun onStopPathButtonClicked() {
-        writePathState.tryEmit(false)
-        regularLocationUpdateStateFlow.tryEmit(false)
+        mapUiStateFlow.update { uiState ->
+            uiState.copy(
+                isWritePath = false,
+                isPathFinished = true,
+                needToClearMapNow = false,
+                mapCenter = null
+            )
+        }
         lastPoint = null
     }
 
