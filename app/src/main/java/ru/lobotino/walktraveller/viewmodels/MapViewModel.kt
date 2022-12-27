@@ -32,6 +32,8 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
         MutableSharedFlow<Pair<MapPoint, MapPoint>>(1, 0, BufferOverflow.DROP_OLDEST)
     private val newPathFlow = MutableSharedFlow<MapPath>(1, 0, BufferOverflow.DROP_OLDEST)
 
+    private val regularLocationUpdateStateFlow = MutableStateFlow(false)
+
     private val mapUiStateFlow =
         MutableStateFlow(
             MapUiState(
@@ -46,6 +48,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     val observeNewPathSegment: Flow<Pair<MapPoint, MapPoint>> = newPathSegmentFlow
     val observeNewPath: Flow<MapPath> = newPathFlow
     val observeMapUiState: Flow<MapUiState> = mapUiStateFlow
+    val observeRegularLocationUpdate: Flow<Boolean> = regularLocationUpdateStateFlow
 
     fun setPermissionsInteractor(permissionsInteractor: IPermissionsInteractor) {
         this.permissionsInteractor = permissionsInteractor
@@ -99,6 +102,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun onStartPathButtonClicked() {
+        regularLocationUpdateStateFlow.tryEmit(true)
         mapUiStateFlow.update { uiState ->
             uiState.copy(
                 isWritePath = true,
@@ -110,6 +114,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun onStopPathButtonClicked() {
+        regularLocationUpdateStateFlow.tryEmit(false)
         mapUiStateFlow.update { uiState ->
             uiState.copy(
                 isWritePath = false,

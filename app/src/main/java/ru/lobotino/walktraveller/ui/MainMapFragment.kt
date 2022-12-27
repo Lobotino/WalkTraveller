@@ -146,8 +146,17 @@ class MainMapFragment : Fragment() {
                             paintNewCommonPath(path)
                         }.launchIn(lifecycleScope)
 
-                        observeMapUiState.onEach { mapUiState -> updateMapUiState(mapUiState) }
-                            .launchIn(lifecycleScope)
+                        observeMapUiState.onEach { mapUiState ->
+                            updateMapUiState(mapUiState)
+                        }.launchIn(lifecycleScope)
+
+                        observeRegularLocationUpdate.onEach { needToUpdateLocation ->
+                            if (needToUpdateLocation) {
+                                locationUpdatesService?.startLocationUpdates()
+                            } else {
+                                locationUpdatesService?.stopLocationUpdates()
+                            }
+                        }.launchIn(lifecycleScope)
 
                         onInitFinish()
                     }
@@ -191,7 +200,6 @@ class MainMapFragment : Fragment() {
         }
 
         if (mapUiState.isWritePath) {
-            locationUpdatesService?.startLocationUpdates()
             walkStartButton.visibility = View.GONE
             walkStopButton.visibility = View.VISIBLE
         } else {
@@ -200,7 +208,6 @@ class MainMapFragment : Fragment() {
         }
 
         if (mapUiState.isPathFinished) {
-            locationUpdatesService?.stopLocationUpdates()
             setLastPathFinished()
         }
 
