@@ -24,7 +24,7 @@ class PathInteractor(
             } else {
                 val newPathColor = pathColorsList[Random.nextInt(0, pathColorsList.size)] //TODO
 
-                pathRepository.createNewPath(
+                currentPathId = pathRepository.createNewPath(
                     point,
                     newPathColor
                 )
