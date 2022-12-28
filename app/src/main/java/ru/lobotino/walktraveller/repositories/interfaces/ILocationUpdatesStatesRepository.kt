@@ -4,6 +4,6 @@ interface ILocationUpdatesStatesRepository {
 
     fun setRequestingLocationUpdates(requestingLocationUpdates: Boolean)
 
-    fun requestingLocationUpdates(): Boolean
+    fun isRequestingLocationUpdates(): Boolean
 
 }

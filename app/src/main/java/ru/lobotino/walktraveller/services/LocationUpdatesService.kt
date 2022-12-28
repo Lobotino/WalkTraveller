@@ -4,6 +4,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.res.Configuration
 import android.graphics.Color
 import android.location.Location
@@ -50,6 +51,7 @@ class LocationUpdatesService : Service() {
     }
 
     private val binder: IBinder = LocalBinder()
+    private lateinit var sharedPreferences: SharedPreferences
 
     private var changingConfiguration = false
     private var lastLocation: Location? = null
@@ -62,11 +64,19 @@ class LocationUpdatesService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        initSharedPreferences()
         initLocationMediator()
         initLocationNotificationInteractor()
         initLocationUpdatesStatesRepository()
         initLocationUpdatesRepository()
         initLocalPathRepository()
+    }
+
+    private fun initSharedPreferences() {
+        sharedPreferences = applicationContext.getSharedPreferences(
+            App.SHARED_PREFS_TAG,
+            AppCompatActivity.MODE_PRIVATE
+        )
     }
 
     private fun initLocalPathRepository() {
@@ -76,10 +86,7 @@ class LocationUpdatesService : Service() {
                     applicationContext,
                     AppDatabase::class.java, PATH_DATABASE_NAME
                 ).build(),
-                applicationContext.getSharedPreferences(
-                    App.SHARED_PREFS_TAG,
-                    AppCompatActivity.MODE_PRIVATE
-                )
+                sharedPreferences
             ), listOf(Color.RED.toString(), Color.BLUE.toString(), Color.CYAN.toString()) //TODO
         )
     }
@@ -124,7 +131,7 @@ class LocationUpdatesService : Service() {
     }
 
     private fun initLocationUpdatesStatesRepository() {
-        this.locationUpdatesStatesRepository = LocationUpdatesStatesRepository(applicationContext)
+        this.locationUpdatesStatesRepository = LocationUpdatesStatesRepository(sharedPreferences)
     }
 
     private fun initLocationMediator() {
@@ -187,7 +194,7 @@ class LocationUpdatesService : Service() {
     override fun onUnbind(intent: Intent): Boolean {
         Log.i(TAG, "Last client unbound from service")
 
-        if (!changingConfiguration && locationUpdatesStatesRepository.requestingLocationUpdates()) {
+        if (!changingConfiguration && locationUpdatesStatesRepository.isRequestingLocationUpdates()) {
             Log.i(TAG, "Starting foreground service")
             startForeground(
                 locationNotificationInteractor.getNotificationId(),
@@ -195,6 +202,11 @@ class LocationUpdatesService : Service() {
             )
         }
         return true
+    }
+
+    override fun onDestroy() {
+        locationUpdatesStatesRepository.setRequestingLocationUpdates(false)
+        super.onDestroy()
     }
 
     fun updateLocationNow() {

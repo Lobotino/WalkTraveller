@@ -40,6 +40,7 @@ import ru.lobotino.walktraveller.model.MapPath
 import ru.lobotino.walktraveller.repositories.DefaultLocationRepository
 import ru.lobotino.walktraveller.repositories.GeoPermissionsRepository
 import ru.lobotino.walktraveller.repositories.LocalPathRepository
+import ru.lobotino.walktraveller.repositories.LocationUpdatesStatesRepository
 import ru.lobotino.walktraveller.services.LocationUpdatesService
 import ru.lobotino.walktraveller.services.LocationUpdatesService.Companion.EXTRA_LOCATION
 import ru.lobotino.walktraveller.ui.model.MapUiState
@@ -64,6 +65,8 @@ class MainMapFragment : Fragment() {
     private var locationUpdatesService: LocationUpdatesService? = null
 
     private var stopAcceptProgressJob: Job? = null
+
+    private lateinit var sharedPreferences: SharedPreferences
 
     private val serviceConnection: ServiceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName, service: IBinder) {
@@ -166,6 +169,11 @@ class MainMapFragment : Fragment() {
             viewModel =
                 ViewModelProvider.AndroidViewModelFactory.getInstance(requireActivity().application)
                     .create(MapViewModel::class.java).apply {
+                        sharedPreferences = requireContext().getSharedPreferences(
+                            App.SHARED_PREFS_TAG,
+                            AppCompatActivity.MODE_PRIVATE
+                        )
+
                         setPermissionsInteractor(
                             PermissionsInteractor(
                                 GeoPermissionsRepository(
@@ -175,7 +183,13 @@ class MainMapFragment : Fragment() {
                             )
                         )
 
-                        setDefaultLocationRepository(DefaultLocationRepository(requireContext().applicationContext))
+                        setDefaultLocationRepository(DefaultLocationRepository(sharedPreferences))
+
+                        setLocationUpdatesStatesRepository(
+                            LocationUpdatesStatesRepository(
+                                sharedPreferences
+                            )
+                        )
 
                         setMapPathInteractor(
                             LocalMapPathsInteractor(
@@ -184,10 +198,7 @@ class MainMapFragment : Fragment() {
                                         requireContext().applicationContext,
                                         AppDatabase::class.java, PATH_DATABASE_NAME
                                     ).build(),
-                                    requireContext().getSharedPreferences(
-                                        App.SHARED_PREFS_TAG,
-                                        AppCompatActivity.MODE_PRIVATE
-                                    )
+                                    sharedPreferences
                                 )
                             )
                         )

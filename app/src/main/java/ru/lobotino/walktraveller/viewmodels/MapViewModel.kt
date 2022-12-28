@@ -15,6 +15,7 @@ import ru.lobotino.walktraveller.database.model.EntityPoint
 import ru.lobotino.walktraveller.model.MapPath
 import ru.lobotino.walktraveller.model.MapPoint
 import ru.lobotino.walktraveller.repositories.interfaces.IDefaultLocationRepository
+import ru.lobotino.walktraveller.repositories.interfaces.ILocationUpdatesStatesRepository
 import ru.lobotino.walktraveller.ui.model.MapUiState
 import ru.lobotino.walktraveller.ui.model.ShowPathsButtonState
 import ru.lobotino.walktraveller.usecases.interfaces.IMapPathsInteractor
@@ -29,6 +30,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
 
     private var permissionsInteractor: IPermissionsInteractor? = null
     private lateinit var defaultLocationRepository: IDefaultLocationRepository
+    private lateinit var locationUpdatesStatesRepository: ILocationUpdatesStatesRepository
 
     private lateinit var mapPathsInteractor: IMapPathsInteractor
 
@@ -63,6 +65,10 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setDefaultLocationRepository(defaultLocationRepository: IDefaultLocationRepository) {
         this.defaultLocationRepository = defaultLocationRepository
+    }
+
+    fun setLocationUpdatesStatesRepository(locationUpdatesStatesRepository: ILocationUpdatesStatesRepository) {
+        this.locationUpdatesStatesRepository = locationUpdatesStatesRepository
     }
 
     fun setMapPathInteractor(mapPathsInteractor: IMapPathsInteractor) {
@@ -161,12 +167,22 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun updateNewPointsIfNeeded() {
+        var needToUpdateAllPath = false
+        if (locationUpdatesStatesRepository.isRequestingLocationUpdates() && !mapUiStateFlow.value.isWritePath) {
+            mapUiStateFlow.update { uiState -> uiState.copy(isWritePath = true) }
+            regularLocationUpdateStateFlow.tryEmit(true)
+            needToUpdateAllPath = true
+        }
+
         if (mapUiStateFlow.value.isWritePath) {
             updateCurrentSavedPath?.cancel()
             updateCurrentSavedPath = viewModelScope.launch {
                 mapPathsInteractor.getLastSavedPath()?.let { lastSavedPath ->
-                    drawUnpaintedYetPathSegments(lastSavedPath.pathPoints)
                     mapUiStateFlow.update { uiState -> uiState.copy(needToClearMapNow = true) }
+                    if (needToUpdateAllPath) {
+                        lastPaintedPoint = lastSavedPath.pathPoints.first().toMapPoint()
+                    }
+                    drawUnpaintedYetPathSegments(lastSavedPath.pathPoints)
                 }
             }
         }

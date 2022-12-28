@@ -1,12 +1,10 @@
 package ru.lobotino.walktraveller.repositories
 
-import android.content.Context
-import androidx.appcompat.app.AppCompatActivity
-import ru.lobotino.walktraveller.App.Companion.SHARED_PREFS_TAG
+import android.content.SharedPreferences
 import ru.lobotino.walktraveller.model.MapPoint
 import ru.lobotino.walktraveller.repositories.interfaces.IDefaultLocationRepository
 
-class DefaultLocationRepository(appContext: Context) : IDefaultLocationRepository {
+class DefaultLocationRepository(private val sharedPreferences: SharedPreferences) : IDefaultLocationRepository {
 
     companion object {
         private const val DEFAULT_CITY_LATITUDE = 55.1540200
@@ -14,11 +12,6 @@ class DefaultLocationRepository(appContext: Context) : IDefaultLocationRepositor
         private const val DEFAULT_USER_LATITUDE_TAG = "default_user_latitude"
         private const val DEFAULT_USER_LONGITUDE_TAG = "default_user_longitude"
     }
-
-    private val sharedPreferences = appContext.getSharedPreferences(
-        SHARED_PREFS_TAG,
-        AppCompatActivity.MODE_PRIVATE
-    )
 
     override fun getDefaultUserLocation(): MapPoint {
         return MapPoint(
