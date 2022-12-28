@@ -12,7 +12,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import ru.lobotino.walktraveller.database.AppDatabase
 import ru.lobotino.walktraveller.database.dao.PointsDao
-import ru.lobotino.walktraveller.database.model.Point
+import ru.lobotino.walktraveller.database.model.EntityPoint
 import ru.lobotino.walktraveller.model.MapPoint
 import java.io.IOException
 
@@ -41,9 +41,9 @@ class PointsDatabaseTests {
     fun writePointsAndReadInList() {
         val insertedPoints =
             listOf(
-                Point(latitude = 1, longitude = 1),
-                Point(latitude = 2, longitude = 2),
-                Point(latitude = 3, longitude = 3)
+                EntityPoint(latitude = 1, longitude = 1),
+                EntityPoint(latitude = 2, longitude = 2),
+                EntityPoint(latitude = 3, longitude = 3)
             )
         pointsDao.insertPoints(insertedPoints)
         val actualPointsList = pointsDao.getAllPoints()
@@ -57,7 +57,7 @@ class PointsDatabaseTests {
     @Test
     @Throws(Exception::class)
     fun deletePointById() {
-        pointsDao.insertPoints(listOf(Point(1, 1, 1)))
+        pointsDao.insertPoints(listOf(EntityPoint(1, 1, 1)))
         assertThat(pointsDao.getAllPoints(), equalTo(listOf(MapPoint(1, 1))))
 
         pointsDao.deletePointById(1)

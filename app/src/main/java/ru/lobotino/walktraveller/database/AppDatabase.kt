@@ -6,13 +6,13 @@ import ru.lobotino.walktraveller.database.dao.PathPointsRelationsDao
 import ru.lobotino.walktraveller.database.dao.PathSegmentRelationsDao
 import ru.lobotino.walktraveller.database.dao.PathsDao
 import ru.lobotino.walktraveller.database.dao.PointsDao
-import ru.lobotino.walktraveller.database.model.Path
-import ru.lobotino.walktraveller.database.model.PathPointRelation
-import ru.lobotino.walktraveller.database.model.PathSegmentRelation
-import ru.lobotino.walktraveller.database.model.Point
+import ru.lobotino.walktraveller.database.model.EntityPath
+import ru.lobotino.walktraveller.database.model.EntityPathPointRelation
+import ru.lobotino.walktraveller.database.model.EntityPathSegment
+import ru.lobotino.walktraveller.database.model.EntityPoint
 
 @Database(
-    entities = [Point::class, Path::class, PathPointRelation::class, PathSegmentRelation::class],
+    entities = [EntityPoint::class, EntityPath::class, EntityPathPointRelation::class, EntityPathSegment::class],
     version = 1
 )
 abstract class AppDatabase : RoomDatabase() {

@@ -14,9 +14,9 @@ import ru.lobotino.walktraveller.database.AppDatabase
 import ru.lobotino.walktraveller.database.dao.PathPointsRelationsDao
 import ru.lobotino.walktraveller.database.dao.PathsDao
 import ru.lobotino.walktraveller.database.dao.PointsDao
-import ru.lobotino.walktraveller.database.model.Path
-import ru.lobotino.walktraveller.database.model.PathPointRelation
-import ru.lobotino.walktraveller.database.model.Point
+import ru.lobotino.walktraveller.database.model.EntityPath
+import ru.lobotino.walktraveller.database.model.EntityPathPointRelation
+import ru.lobotino.walktraveller.database.model.EntityPoint
 import java.io.IOException
 
 @RunWith(AndroidJUnit4::class)
@@ -46,9 +46,9 @@ class PathPointRelationDatabaseTests {
     @Test
     @Throws(Exception::class)
     fun insertNewPathPoints() {
-        pathsDao.insertPaths(listOf(Path(1, 1, "red"), Path(2, 2, "blue")))
-        pointsDao.insertPoints(listOf(Point(1, 1, 1), Point(2, 2, 2), Point(3, 3, 3)))
-        val insertedPathPoints = listOf(PathPointRelation(1, 1), PathPointRelation(2, 2))
+        pathsDao.insertPaths(listOf(EntityPath(1, 1, "red"), EntityPath(2, 2, "blue")))
+        pointsDao.insertPoints(listOf(EntityPoint(1, 1, 1), EntityPoint(2, 2, 2), EntityPoint(3, 3, 3)))
+        val insertedPathPoints = listOf(EntityPathPointRelation(1, 1), EntityPathPointRelation(2, 2))
         pathsPointsRelationsDao.insertPathPointsRelations(insertedPathPoints)
         assertThat(pathsPointsRelationsDao.getAllPathPointRelations(), equalTo(insertedPathPoints))
     }
@@ -56,14 +56,14 @@ class PathPointRelationDatabaseTests {
     @Test
     @Throws(Exception::class)
     fun insertNewPathPointsAndGetPaths() {
-        pathsDao.insertPaths(listOf(Path(1, 1, "red"), Path(2, 2, "blue")))
-        pointsDao.insertPoints(listOf(Point(1, 1, 1), Point(2, 2, 2), Point(3, 3, 3)))
-        val insertedPathPoints = listOf(PathPointRelation(1, 1), PathPointRelation(2, 2))
+        pathsDao.insertPaths(listOf(EntityPath(1, 1, "red"), EntityPath(2, 2, "blue")))
+        pointsDao.insertPoints(listOf(EntityPoint(1, 1, 1), EntityPoint(2, 2, 2), EntityPoint(3, 3, 3)))
+        val insertedPathPoints = listOf(EntityPathPointRelation(1, 1), EntityPathPointRelation(2, 2))
         pathsPointsRelationsDao.insertPathPointsRelations(insertedPathPoints)
         assertThat(
             pathsPointsRelationsDao.getAllPathPointRelations(), equalTo(
                 listOf(
-                    PathPointRelation(1, 1), PathPointRelation(2, 2)
+                    EntityPathPointRelation(1, 1), EntityPathPointRelation(2, 2)
                 )
             )
         )
@@ -72,19 +72,19 @@ class PathPointRelationDatabaseTests {
     @Test
     @Throws(Exception::class)
     fun deletePointWithCascadePathDelete() {
-        pathsDao.insertPaths(listOf(Path(1, 1, "red"), Path(2, 2, "blue")))
-        pointsDao.insertPoints(listOf(Point(1, 1, 1), Point(2, 2, 2), Point(3, 3, 3)))
+        pathsDao.insertPaths(listOf(EntityPath(1, 1, "red"), EntityPath(2, 2, "blue")))
+        pointsDao.insertPoints(listOf(EntityPoint(1, 1, 1), EntityPoint(2, 2, 2), EntityPoint(3, 3, 3)))
         pathsPointsRelationsDao.insertPathPointsRelations(
             listOf(
-                PathPointRelation(1, 1),
-                PathPointRelation(1, 2),
-                PathPointRelation(2, 2)
+                EntityPathPointRelation(1, 1),
+                EntityPathPointRelation(1, 2),
+                EntityPathPointRelation(2, 2)
             )
         )
         pointsDao.deletePointById(2)
         assertThat(
             pathsPointsRelationsDao.getAllPathPointRelations(),
-            equalTo(listOf(PathPointRelation(1, 1)))
+            equalTo(listOf(EntityPathPointRelation(1, 1)))
         )
     }
 }

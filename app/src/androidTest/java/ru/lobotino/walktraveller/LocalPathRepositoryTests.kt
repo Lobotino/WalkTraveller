@@ -15,7 +15,7 @@ import ru.lobotino.walktraveller.database.dao.PathPointsRelationsDao
 import ru.lobotino.walktraveller.database.dao.PathSegmentRelationsDao
 import ru.lobotino.walktraveller.database.dao.PathsDao
 import ru.lobotino.walktraveller.database.dao.PointsDao
-import ru.lobotino.walktraveller.database.model.Point
+import ru.lobotino.walktraveller.database.model.EntityPoint
 import ru.lobotino.walktraveller.model.MapPoint
 import ru.lobotino.walktraveller.repositories.LocalPathRepository
 import java.io.IOException
@@ -54,29 +54,29 @@ class LocalPathRepositoryTests {
     @Test
     @Throws(Exception::class)
     fun createPathWithOnePoints() {
-        val future: CompletableFuture<List<Point>> = CompletableFuture()
+        val future: CompletableFuture<List<EntityPoint>> = CompletableFuture()
         localPathRepository.createNewPath(MapPoint(1, 1), "red") { resultPathId ->
             localPathRepository.getAllPathPoints(resultPathId) { resultPoints ->
                 future.complete(resultPoints)
             }
         }
-        assertThat(listOf(Point(1, 1, 1)), equalTo(future.get()))
+        assertThat(listOf(EntityPoint(1, 1, 1)), equalTo(future.get()))
     }
 
     @Test
     @Throws(Exception::class)
     fun createPathWithTwoPoints() {
-        val future: CompletableFuture<List<Point>> = CompletableFuture()
+        val future: CompletableFuture<List<EntityPoint>> = CompletableFuture()
         localPathRepository.createNewPath(MapPoint(1, 1), "red") { resultPathId ->
             localPathRepository.addNewPathPoint(resultPathId, MapPoint(2, 2))
         }
-        assertThat(listOf(Point(1, 1, 1), Point(2, 2, 2)), equalTo(future.get()))
+        assertThat(listOf(EntityPoint(1, 1, 1), EntityPoint(2, 2, 2)), equalTo(future.get()))
     }
 
     @Test
     @Throws(Exception::class)
     fun createAndDeletePath() {
-        val future: CompletableFuture<List<Point>> = CompletableFuture()
+        val future: CompletableFuture<List<EntityPoint>> = CompletableFuture()
         localPathRepository.createNewPath(MapPoint(1, 1), "red") { resultPathId ->
             localPathRepository.addNewPathPoint(resultPathId, MapPoint(2, 2))
         }

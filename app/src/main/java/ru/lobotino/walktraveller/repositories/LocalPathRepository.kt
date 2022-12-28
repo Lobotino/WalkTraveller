@@ -1,11 +1,12 @@
 package ru.lobotino.walktraveller.repositories
 
 import ru.lobotino.walktraveller.database.AppDatabase
-import ru.lobotino.walktraveller.database.model.Path
-import ru.lobotino.walktraveller.database.model.PathPointRelation
-import ru.lobotino.walktraveller.database.model.PathSegmentRelation
-import ru.lobotino.walktraveller.database.model.Point
+import ru.lobotino.walktraveller.database.model.EntityPath
+import ru.lobotino.walktraveller.database.model.EntityPathPointRelation
+import ru.lobotino.walktraveller.database.model.EntityPathSegment
+import ru.lobotino.walktraveller.database.model.EntityPoint
 import ru.lobotino.walktraveller.model.MapPoint
+import ru.lobotino.walktraveller.model.PathSegment
 import ru.lobotino.walktraveller.repositories.interfaces.IPathRepository
 
 class LocalPathRepository(database: AppDatabase) : IPathRepository {
@@ -22,7 +23,7 @@ class LocalPathRepository(database: AppDatabase) : IPathRepository {
         insertNewPoint(startPoint).let { insertedPointId ->
             pathsDao.insertPaths(
                 listOf(
-                    Path(
+                    EntityPath(
                         startPointId = insertedPointId,
                         color = pathColor
                     )
@@ -46,7 +47,7 @@ class LocalPathRepository(database: AppDatabase) : IPathRepository {
     private suspend fun insertNewPoint(mapPoint: MapPoint): Long {
         return pointsDao.insertPoints(
             listOf(
-                Point(
+                EntityPoint(
                     latitude = mapPoint.latitude,
                     longitude = mapPoint.longitude
                 )
@@ -57,7 +58,7 @@ class LocalPathRepository(database: AppDatabase) : IPathRepository {
     private suspend fun insertNewPathPointRelation(pathId: Long, pointId: Long) {
         pathsPointsRelationsDao.insertPathPointsRelations(
             listOf(
-                PathPointRelation(
+                EntityPathPointRelation(
                     pathId,
                     pointId
                 )
@@ -66,8 +67,8 @@ class LocalPathRepository(database: AppDatabase) : IPathRepository {
     }
 
     private suspend fun insertNewPathSegment(pathId: Long, newPointId: Long) {
-        var finishPoint: Point? = pathsDao.getPathStartPoint(pathId)
-        var nextPoint: Point? = finishPoint
+        var finishPoint: EntityPoint? = pathsDao.getPathStartPoint(pathId)
+        var nextPoint: EntityPoint? = finishPoint
         while (nextPoint != null) {
             nextPoint = pathSegmentsDao.getNextPathPoint(nextPoint.id)
             if (nextPoint != null) {
@@ -77,7 +78,7 @@ class LocalPathRepository(database: AppDatabase) : IPathRepository {
         if (finishPoint != null) {
             pathSegmentsDao.insertPathSegments(
                 listOf(
-                    PathSegmentRelation(
+                    EntityPathSegment(
                         finishPoint.id,
                         newPointId
                     )
@@ -88,13 +89,13 @@ class LocalPathRepository(database: AppDatabase) : IPathRepository {
         }
     }
 
-    override suspend fun getAllPaths(): List<Path> {
+    override suspend fun getAllPaths(): List<EntityPath> {
         return pathsDao.getAllPaths()
     }
 
-    override suspend fun getAllPathPoints(pathId: Long): List<Point> {
-        return ArrayList<Point>().apply {
-            var nextPoint: Point? = pathsDao.getPathStartPoint(pathId)
+    override suspend fun getAllPathPoints(pathId: Long): List<EntityPoint> {
+        return ArrayList<EntityPoint>().apply {
+            var nextPoint: EntityPoint? = pathsDao.getPathStartPoint(pathId)
             while (nextPoint != null) {
                 add(nextPoint)
                 nextPoint = pathSegmentsDao.getNextPathPoint(nextPoint.id)
@@ -104,12 +105,12 @@ class LocalPathRepository(database: AppDatabase) : IPathRepository {
 
     override suspend fun getAllPathSegments(
         pathId: Long
-    ): List<Pair<Point, Point>> {
+    ): List<Pair<EntityPoint, EntityPoint>> {
         val path = pathsDao.getPathById(pathId)
         return if (path == null) {
             emptyList()
         } else {
-            return ArrayList<Pair<Point, Point>>().apply {
+            return ArrayList<Pair<EntityPoint, EntityPoint>>().apply {
                 var currentPoint = pointsDao.getPointById(path.startPointId)
                 if (currentPoint != null) {
                     var nextPoint = pathSegmentsDao.getNextPathPoint(currentPoint.id)

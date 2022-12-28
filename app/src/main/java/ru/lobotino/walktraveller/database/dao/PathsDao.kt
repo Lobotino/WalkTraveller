@@ -3,23 +3,23 @@ package ru.lobotino.walktraveller.database.dao
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
-import ru.lobotino.walktraveller.database.model.Path
-import ru.lobotino.walktraveller.database.model.Point
+import ru.lobotino.walktraveller.database.model.EntityPath
+import ru.lobotino.walktraveller.database.model.EntityPoint
 
 @Dao
 interface PathsDao {
 
     @Query("SELECT * FROM paths")
-    suspend fun getAllPaths(): List<Path>
+    suspend fun getAllPaths(): List<EntityPath>
 
     @Query("SELECT * FROM paths WHERE id = :pathId")
-    suspend fun getPathById(pathId: Long): Path?
+    suspend fun getPathById(pathId: Long): EntityPath?
 
     @Query("SELECT points.id, latitude, longitude FROM points, paths WHERE paths.id = :pathId and points.id = start_point_id")
-    suspend fun getPathStartPoint(pathId: Long): Point?
+    suspend fun getPathStartPoint(pathId: Long): EntityPoint?
 
     @Insert
-    suspend fun insertPaths(paths: List<Path>): List<Long>
+    suspend fun insertPaths(paths: List<EntityPath>): List<Long>
 
     @Query("DELETE FROM paths WHERE id = :pathId")
     suspend fun deletePathById(pathId: Long)

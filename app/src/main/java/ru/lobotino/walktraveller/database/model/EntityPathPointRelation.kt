@@ -9,18 +9,18 @@ import androidx.room.ForeignKey.CASCADE
     tableName = "path_point_relations",
     primaryKeys = ["id_path", "id_point"],
     foreignKeys = [ForeignKey(
-        entity = Point::class,
+        entity = EntityPoint::class,
         parentColumns = ["id"],
         childColumns = ["id_point"],
         onDelete = CASCADE
     ), ForeignKey(
-        entity = Path::class,
+        entity = EntityPath::class,
         parentColumns = ["id"],
         childColumns = ["id_path"],
         onDelete = CASCADE
     )]
 )
-data class PathPointRelation(
+data class EntityPathPointRelation(
     @ColumnInfo(name = "id_path") val pathId: Long,
     @ColumnInfo(name = "id_point") val pointId: Long
 )

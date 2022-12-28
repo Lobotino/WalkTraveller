@@ -1,6 +1,6 @@
 package ru.lobotino.walktraveller.model
 
-import ru.lobotino.walktraveller.database.model.Path
-import ru.lobotino.walktraveller.database.model.Point
+import ru.lobotino.walktraveller.database.model.EntityPath
+import ru.lobotino.walktraveller.database.model.EntityPoint
 
-data class MapPath(val pathInfo: Path, val pathPoints: List<Point>)
+data class MapPath(val pathInfo: EntityPath, val pathPoints: List<EntityPoint>)
