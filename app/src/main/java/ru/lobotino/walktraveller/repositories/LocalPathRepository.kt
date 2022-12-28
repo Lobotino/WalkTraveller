@@ -1,15 +1,22 @@
 package ru.lobotino.walktraveller.repositories
 
+import android.content.SharedPreferences
 import ru.lobotino.walktraveller.database.AppDatabase
 import ru.lobotino.walktraveller.database.model.EntityPath
 import ru.lobotino.walktraveller.database.model.EntityPathPointRelation
 import ru.lobotino.walktraveller.database.model.EntityPathSegment
 import ru.lobotino.walktraveller.database.model.EntityPoint
 import ru.lobotino.walktraveller.model.MapPoint
-import ru.lobotino.walktraveller.model.PathSegment
 import ru.lobotino.walktraveller.repositories.interfaces.IPathRepository
 
-class LocalPathRepository(database: AppDatabase) : IPathRepository {
+class LocalPathRepository(
+    database: AppDatabase,
+    private val sharedPreferences: SharedPreferences
+) : IPathRepository {
+
+    companion object {
+        private const val KEY_LAST_PATH_ID = "last_path_id"
+    }
 
     private val pathsPointsRelationsDao = database.getPathPointsRelationsDao()
     private val pointsDao = database.getPointsDao()
@@ -30,6 +37,7 @@ class LocalPathRepository(database: AppDatabase) : IPathRepository {
                 )
             ).let { insertedPathsIds ->
                 val insertedPathId = insertedPathsIds[0]
+                setLastPathId(insertedPathId)
                 insertNewPathPointRelation(insertedPathId, insertedPointId)
                 return insertedPathId
             }
@@ -103,6 +111,24 @@ class LocalPathRepository(database: AppDatabase) : IPathRepository {
         }
     }
 
+    override suspend fun getLastPathInfo(): EntityPath? {
+        val pathId = getLastPathId()
+        return if (pathId != null) pathsDao.getPathById(pathId) else null
+    }
+
+    override suspend fun getLastPathPoints(): List<EntityPoint> {
+        return ArrayList<EntityPoint>().apply {
+            val pathId = getLastPathId()
+            if (pathId != null) {
+                var nextPoint: EntityPoint? = pathsDao.getPathStartPoint(pathId)
+                while (nextPoint != null) {
+                    add(nextPoint)
+                    nextPoint = pathSegmentsDao.getNextPathPoint(nextPoint.id)
+                }
+            }
+        }
+    }
+
     override suspend fun getAllPathSegments(
         pathId: Long
     ): List<Pair<EntityPoint, EntityPoint>> {
@@ -129,5 +155,17 @@ class LocalPathRepository(database: AppDatabase) : IPathRepository {
             pointsDao.deletePointById(pointId)
         }
         pathsDao.deletePathById(pathId)
+    }
+
+    private fun getLastPathId(): Long? {
+        val lastPathId = sharedPreferences.getLong(KEY_LAST_PATH_ID, -1L)
+        return if (lastPathId == -1L) null else lastPathId
+    }
+
+    private fun setLastPathId(pathId: Long) {
+        sharedPreferences.edit().apply {
+            putLong(KEY_LAST_PATH_ID, pathId)
+            apply()
+        }
     }
 }

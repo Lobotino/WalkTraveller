@@ -4,6 +4,8 @@ import ru.lobotino.walktraveller.model.MapPath
 
 interface IMapPathsInteractor {
 
-    suspend fun getAllSavedPaths() : List<MapPath>
+    suspend fun getAllSavedPaths(): List<MapPath>
+
+    suspend fun getLastSavedPath(): MapPath?
 
 }

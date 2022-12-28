@@ -6,7 +6,8 @@ import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
 import android.view.LayoutInflater
-import android.view.MotionEvent.*
+import android.view.MotionEvent.ACTION_DOWN
+import android.view.MotionEvent.ACTION_UP
 import android.view.View
 import android.view.View.GONE
 import android.view.View.VISIBLE
@@ -14,6 +15,7 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
@@ -30,6 +32,7 @@ import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.CustomZoomButtonsController
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Polyline
+import ru.lobotino.walktraveller.App
 import ru.lobotino.walktraveller.App.Companion.PATH_DATABASE_NAME
 import ru.lobotino.walktraveller.R
 import ru.lobotino.walktraveller.database.AppDatabase
@@ -180,7 +183,11 @@ class MainMapFragment : Fragment() {
                                     Room.databaseBuilder(
                                         requireContext().applicationContext,
                                         AppDatabase::class.java, PATH_DATABASE_NAME
-                                    ).build()
+                                    ).build(),
+                                    requireContext().getSharedPreferences(
+                                        App.SHARED_PREFS_TAG,
+                                        AppCompatActivity.MODE_PRIVATE
+                                    )
                                 )
                             )
                         )
@@ -233,6 +240,7 @@ class MainMapFragment : Fragment() {
 
     override fun onResume() {
         mapView.onResume()
+        viewModel.updateNewPointsIfNeeded()
         LocalBroadcastManager.getInstance(requireContext()).registerReceiver(
             locationChangeReceiver,
             IntentFilter(LocationUpdatesService.ACTION_BROADCAST)

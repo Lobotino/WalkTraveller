@@ -27,4 +27,17 @@ class LocalMapPathsInteractor(
             }
         }
     }
+
+    override suspend fun getLastSavedPath(): MapPath? {
+        return coroutineScope {
+            val pathInfo = withContext(defaultDispatcher) { localPathRepository.getLastPathInfo() }
+            if (pathInfo != null) {
+                MapPath(
+                    pathInfo,
+                    withContext(defaultDispatcher) { localPathRepository.getLastPathPoints() })
+            } else {
+                null
+            }
+        }
+    }
 }

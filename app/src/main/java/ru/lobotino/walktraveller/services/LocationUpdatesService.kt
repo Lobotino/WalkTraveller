@@ -12,6 +12,7 @@ import android.os.Build
 import android.os.IBinder
 import android.provider.ContactsContract
 import android.util.Log
+import androidx.appcompat.app.AppCompatActivity
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.room.Room
 import com.google.android.gms.location.LocationServices
@@ -19,6 +20,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import ru.lobotino.walktraveller.App
 import ru.lobotino.walktraveller.App.Companion.PATH_DATABASE_NAME
 import ru.lobotino.walktraveller.R
 import ru.lobotino.walktraveller.database.AppDatabase
@@ -73,7 +75,11 @@ class LocationUpdatesService : Service() {
                 Room.databaseBuilder(
                     applicationContext,
                     AppDatabase::class.java, PATH_DATABASE_NAME
-                ).build()
+                ).build(),
+                applicationContext.getSharedPreferences(
+                    App.SHARED_PREFS_TAG,
+                    AppCompatActivity.MODE_PRIVATE
+                )
             ), listOf(Color.RED.toString(), Color.BLUE.toString(), Color.CYAN.toString()) //TODO
         )
     }

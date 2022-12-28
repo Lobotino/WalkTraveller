@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import ru.lobotino.walktraveller.database.model.EntityPoint
 import ru.lobotino.walktraveller.model.MapPath
 import ru.lobotino.walktraveller.model.MapPoint
 import ru.lobotino.walktraveller.repositories.interfaces.IDefaultLocationRepository
@@ -18,11 +19,13 @@ import ru.lobotino.walktraveller.ui.model.MapUiState
 import ru.lobotino.walktraveller.ui.model.ShowPathsButtonState
 import ru.lobotino.walktraveller.usecases.interfaces.IMapPathsInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IPermissionsInteractor
+import ru.lobotino.walktraveller.utils.ext.toMapPoint
 
 class MapViewModel(application: Application) : AndroidViewModel(application) {
 
+    private var updateCurrentSavedPath: Job? = null
     private var downloadAllPathsJob: Job? = null
-    private var lastPoint: MapPoint? = null
+    private var lastPaintedPoint: MapPoint? = null
 
     private var permissionsInteractor: IPermissionsInteractor? = null
     private lateinit var defaultLocationRepository: IDefaultLocationRepository
@@ -93,16 +96,9 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun onNewLocationReceive(location: Location) {
-        val newPoint = MapPoint(location.latitude, location.longitude)
-        if (lastPoint != null) {
-            newPathSegmentFlow.tryEmit(
-                Pair(
-                    lastPoint!!,
-                    newPoint
-                )
-            )
+        if (updateCurrentSavedPath == null || !updateCurrentSavedPath!!.isActive) {
+            drawNewSegmentToPoint(MapPoint(location.latitude, location.longitude))
         }
-        lastPoint = newPoint
     }
 
     fun onStartPathButtonClicked() {
@@ -127,7 +123,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
                 mapCenter = null
             )
         }
-        lastPoint = null
+        lastPaintedPoint = null
     }
 
     fun onShowAllPathsButtonClicked() {
@@ -159,6 +155,43 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
                         mapCenter = null,
                         showPathsButtonState = ShowPathsButtonState.DEFAULT
                     )
+                }
+            }
+        }
+    }
+
+    fun updateNewPointsIfNeeded() {
+        if (mapUiStateFlow.value.isWritePath) {
+            updateCurrentSavedPath?.cancel()
+            updateCurrentSavedPath = viewModelScope.launch {
+                mapPathsInteractor.getLastSavedPath()?.let { lastSavedPath ->
+                    drawUnpaintedYetPathSegments(lastSavedPath.pathPoints)
+                    mapUiStateFlow.update { uiState -> uiState.copy(needToClearMapNow = true) }
+                }
+            }
+        }
+    }
+
+    private fun drawNewSegmentToPoint(newPoint: MapPoint) {
+        if (lastPaintedPoint != null) {
+            newPathSegmentFlow.tryEmit(
+                Pair(
+                    lastPaintedPoint!!,
+                    newPoint
+                )
+            )
+        }
+        lastPaintedPoint = newPoint
+    }
+
+    private fun drawUnpaintedYetPathSegments(allPathPoints: List<EntityPoint>) {
+        var needToDraw = false
+        for (point in allPathPoints) {
+            if (needToDraw) {
+                drawNewSegmentToPoint(point.toMapPoint())
+            } else {
+                if (point.toMapPoint() == lastPaintedPoint) {
+                    needToDraw = true
                 }
             }
         }
