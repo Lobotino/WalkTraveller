@@ -2,6 +2,7 @@ package ru.lobotino.walktraveller.ui
 
 import android.content.*
 import android.location.Location
+import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
 import android.view.LayoutInflater
@@ -75,7 +76,13 @@ class MainMapFragment : Fragment() {
 
     private val locationChangeReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            val location = intent.getParcelableExtra<Location>(EXTRA_LOCATION)
+            val location = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                intent.getParcelableExtra(EXTRA_LOCATION, Location::class.java)
+            } else {
+                @Suppress("DEPRECATION")
+                intent.getParcelableExtra(EXTRA_LOCATION)
+            }
+
             if (location != null) {
                 viewModel.onNewLocationReceive(location)
             }
