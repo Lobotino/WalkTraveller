@@ -6,7 +6,6 @@ import android.app.Service
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.res.Configuration
-import android.graphics.Color
 import android.location.Location
 import android.os.Binder
 import android.os.Build
@@ -21,23 +20,21 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import ru.lobotino.walktraveller.App
 import ru.lobotino.walktraveller.App.Companion.PATH_DATABASE_NAME
 import ru.lobotino.walktraveller.R
 import ru.lobotino.walktraveller.database.AppDatabase
 import ru.lobotino.walktraveller.model.MapPoint
-import ru.lobotino.walktraveller.repositories.LocalPathRepository
-import ru.lobotino.walktraveller.repositories.LocationNotificationRepository
+import ru.lobotino.walktraveller.repositories.*
 import ru.lobotino.walktraveller.repositories.LocationNotificationRepository.Companion.EXTRA_STARTED_FROM_NOTIFICATION
-import ru.lobotino.walktraveller.repositories.LocationUpdatesRepository
-import ru.lobotino.walktraveller.repositories.LocationUpdatesStatesRepository
 import ru.lobotino.walktraveller.repositories.interfaces.ILocationUpdatesRepository
 import ru.lobotino.walktraveller.repositories.interfaces.ILocationUpdatesStatesRepository
 import ru.lobotino.walktraveller.ui.MainActivity
 import ru.lobotino.walktraveller.usecases.*
 import ru.lobotino.walktraveller.usecases.interfaces.ILocationMediator
 import ru.lobotino.walktraveller.usecases.interfaces.ILocationNotificationInteractor
-import ru.lobotino.walktraveller.usecases.interfaces.IPathInteractor
+import ru.lobotino.walktraveller.usecases.interfaces.ICurrentPathInteractor
 
 
 class LocationUpdatesService : Service() {
@@ -60,7 +57,7 @@ class LocationUpdatesService : Service() {
     private lateinit var locationUpdatesRepository: ILocationUpdatesRepository
     private lateinit var locationNotificationInteractor: ILocationNotificationInteractor
     private lateinit var locationMediator: ILocationMediator
-    private lateinit var pathInteractor: IPathInteractor
+    private lateinit var pathInteractor: ICurrentPathInteractor
 
     override fun onCreate() {
         super.onCreate()
@@ -80,14 +77,15 @@ class LocationUpdatesService : Service() {
     }
 
     private fun initLocalPathRepository() {
-        pathInteractor = PathInteractor(
+        pathInteractor = CurrentPathInteractor(
             LocalPathRepository(
                 Room.databaseBuilder(
                     applicationContext,
                     AppDatabase::class.java, PATH_DATABASE_NAME
                 ).build(),
                 sharedPreferences
-            ), listOf(Color.RED.toString(), Color.BLUE.toString(), Color.CYAN.toString()) //TODO
+            ),
+            PathRatingRepository(sharedPreferences)
         )
     }
 
@@ -142,7 +140,10 @@ class LocationUpdatesService : Service() {
         Log.d(TAG, "New location: ${newLocation.latitude}, ${newLocation.longitude}")
         locationMediator.onNewLocation(newLocation) { location ->
             lastLocation = location
-            pathInteractor.addNewPathPoint(MapPoint(location.latitude, location.longitude))
+
+            CoroutineScope(Dispatchers.Default).launch {
+                pathInteractor.addNewPathPoint(MapPoint(location.latitude, location.longitude))
+            }
 
             LocalBroadcastManager.getInstance(applicationContext)
                 .sendBroadcast(Intent(ACTION_BROADCAST).apply {

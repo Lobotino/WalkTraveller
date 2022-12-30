@@ -38,27 +38,27 @@ class PointsDatabaseTests {
 
     @Test
     @Throws(Exception::class)
-    fun writePointsAndReadInList() {
+    suspend fun writePointsAndReadInList() {
         val insertedPoints =
             listOf(
-                EntityPoint(latitude = 1, longitude = 1),
-                EntityPoint(latitude = 2, longitude = 2),
-                EntityPoint(latitude = 3, longitude = 3)
+                EntityPoint(latitude = 1.0, longitude = 1.0),
+                EntityPoint(latitude = 2.0, longitude = 2.0),
+                EntityPoint(latitude = 3.0, longitude = 3.0)
             )
         pointsDao.insertPoints(insertedPoints)
         val actualPointsList = pointsDao.getAllPoints()
 
         assertThat(
             actualPointsList,
-            equalTo(listOf(MapPoint(1, 1), MapPoint(2, 2), MapPoint(3, 3)))
+            equalTo(listOf(MapPoint(1.0, 1.0), MapPoint(2.0, 2.0), MapPoint(3.0, 3.0)))
         )
     }
 
     @Test
     @Throws(Exception::class)
-    fun deletePointById() {
-        pointsDao.insertPoints(listOf(EntityPoint(1, 1, 1)))
-        assertThat(pointsDao.getAllPoints(), equalTo(listOf(MapPoint(1, 1))))
+    suspend fun deletePointById() {
+        pointsDao.insertPoints(listOf(EntityPoint(1, 1.0, 1.0)))
+        assertThat(pointsDao.getAllPoints(), equalTo(listOf(MapPoint(1.0, 1.0))))
 
         pointsDao.deletePointById(1)
         assertThat(pointsDao.getAllPoints(), equalTo(emptyList()))

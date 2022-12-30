@@ -41,23 +41,23 @@ class PathsDatabaseTests {
 
     @Test
     @Throws(Exception::class)
-    fun insertPathAndGetById() {
-        pointsDao.insertPoints(listOf(EntityPoint(1, 1, 1)))
+    suspend fun insertPathAndGetById() {
+        pointsDao.insertPoints(listOf(EntityPoint(1, 1.0, 1.0)))
 
-        pathsDao.insertPaths(listOf(EntityPath(1, 1, "red")))
+        pathsDao.insertPaths(listOf(EntityPath(1, 1)))
 
         assertThat(
             pathsDao.getPathById(1),
-            equalTo(EntityPath(1, 1, "red"))
+            equalTo(EntityPath(1, 1))
         )
     }
 
     @Test
     @Throws(Exception::class)
-    fun insertPathsAndGetAll() {
-        pointsDao.insertPoints(listOf(EntityPoint(1, 1, 1), EntityPoint(2, 2, 2)))
+    suspend fun insertPathsAndGetAll() {
+        pointsDao.insertPoints(listOf(EntityPoint(1, 1.0, 1.0), EntityPoint(2, 2.0, 2.0)))
 
-        val insertedPaths = listOf(EntityPath(1, 1, "red"), EntityPath(2, 2, "blue"))
+        val insertedPaths = listOf(EntityPath(1, 1), EntityPath(2, 2))
         pathsDao.insertPaths(insertedPaths)
 
         assertThat(
@@ -68,31 +68,31 @@ class PathsDatabaseTests {
 
     @Test
     @Throws(Exception::class)
-    fun insertPathAndGetStartPoint() {
-        pointsDao.insertPoints(listOf(EntityPoint(1, 1, 1)))
+    suspend fun insertPathAndGetStartPoint() {
+        pointsDao.insertPoints(listOf(EntityPoint(1, 1.0, 1.0)))
 
-        val insertedPaths = listOf(EntityPath(1, 1, "red"))
+        val insertedPaths = listOf(EntityPath(1, 1))
         pathsDao.insertPaths(insertedPaths)
 
         assertThat(
             pathsDao.getPathStartPoint(1),
-            equalTo(EntityPoint(1, 1, 1))
+            equalTo(EntityPoint(1, 1.0, 1.0))
         )
     }
 
     @Test
     @Throws(Exception::class)
-    fun deletePathsAndGetAll() {
-        pointsDao.insertPoints(listOf(EntityPoint(1, 1, 1), EntityPoint(2, 2, 2)))
+    suspend fun deletePathsAndGetAll() {
+        pointsDao.insertPoints(listOf(EntityPoint(1, 1.0, 1.0), EntityPoint(2, 2.0, 2.0)))
 
-        val insertedPaths = listOf(EntityPath(1, 1, "red"), EntityPath(2, 2, "blue"))
+        val insertedPaths = listOf(EntityPath(1, 1), EntityPath(2, 2))
         pathsDao.insertPaths(insertedPaths)
 
         pathsDao.deletePathById(1)
 
         assertThat(
             pathsDao.getAllPaths(),
-            equalTo(listOf(EntityPath(2, 2, "blue")))
+            equalTo(listOf(EntityPath(2, 2)))
         )
     }
 }

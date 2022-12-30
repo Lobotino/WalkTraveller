@@ -2,9 +2,9 @@ package ru.lobotino.walktraveller.usecases.interfaces
 
 import ru.lobotino.walktraveller.model.MapPoint
 
-interface IPathInteractor {
+interface ICurrentPathInteractor {
 
-    fun addNewPathPoint(point: MapPoint)
+    suspend fun addNewPathPoint(point: MapPoint)
 
     fun finishCurrentPath()
 

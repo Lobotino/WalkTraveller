@@ -3,12 +3,13 @@ package ru.lobotino.walktraveller.repositories.interfaces
 import ru.lobotino.walktraveller.database.model.EntityPath
 import ru.lobotino.walktraveller.database.model.EntityPoint
 import ru.lobotino.walktraveller.model.MapPoint
+import ru.lobotino.walktraveller.model.SegmentRating
 
 interface IPathRepository {
 
-    suspend fun createNewPath(startPoint: MapPoint, pathColor: String): Long
+    suspend fun createNewPath(startPoint: MapPoint): Long
 
-    suspend fun addNewPathPoint(pathId: Long, point: MapPoint): Long
+    suspend fun addNewPathPoint(pathId: Long, point: MapPoint, segmentRating: SegmentRating = SegmentRating.NORMAL): Long
 
     suspend fun getAllPaths(): List<EntityPath>
 

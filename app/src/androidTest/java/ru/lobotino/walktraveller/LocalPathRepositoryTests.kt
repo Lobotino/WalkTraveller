@@ -1,10 +1,13 @@
 package ru.lobotino.walktraveller
 
 import android.content.Context
+import androidx.appcompat.app.AppCompatActivity
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.matcher.ViewMatchers.assertThat
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.hamcrest.CoreMatchers.equalTo
 import org.junit.After
 import org.junit.Before
@@ -38,7 +41,10 @@ class LocalPathRepositoryTests {
         db = Room.inMemoryDatabaseBuilder(
             context, AppDatabase::class.java
         ).build()
-        localPathRepository = LocalPathRepository(db)
+        localPathRepository = LocalPathRepository(db, context.getSharedPreferences(
+            "test_shared_prefs",
+            AppCompatActivity.MODE_PRIVATE
+        ))
         pathsDao = db.getPathsDao()
         pointsDao = db.getPointsDao()
         pathPointsRelationsDao = db.getPathPointsRelationsDao()
@@ -53,34 +59,45 @@ class LocalPathRepositoryTests {
 
     @Test
     @Throws(Exception::class)
-    fun createPathWithOnePoints() {
+    suspend fun createPathWithOnePoints() {
         val future: CompletableFuture<List<EntityPoint>> = CompletableFuture()
-        localPathRepository.createNewPath(MapPoint(1, 1), "red") { resultPathId ->
-            localPathRepository.getAllPathPoints(resultPathId) { resultPoints ->
+        localPathRepository.createNewPath(MapPoint(1.0, 1.0)).let { resultPathId ->
+            localPathRepository.getAllPathPoints(resultPathId).let { resultPoints ->
                 future.complete(resultPoints)
             }
         }
-        assertThat(listOf(EntityPoint(1, 1, 1)), equalTo(future.get()))
+        assertThat(listOf(EntityPoint(1, 1.0, 1.0)), equalTo(withContext(Dispatchers.IO) {
+            future.get()
+        }))
     }
 
     @Test
     @Throws(Exception::class)
-    fun createPathWithTwoPoints() {
+    suspend fun createPathWithTwoPoints() {
         val future: CompletableFuture<List<EntityPoint>> = CompletableFuture()
-        localPathRepository.createNewPath(MapPoint(1, 1), "red") { resultPathId ->
-            localPathRepository.addNewPathPoint(resultPathId, MapPoint(2, 2))
+        localPathRepository.createNewPath(MapPoint(1.0, 1.0)).let { resultPathId ->
+            localPathRepository.addNewPathPoint(resultPathId, MapPoint(2.0, 2.0))
         }
-        assertThat(listOf(EntityPoint(1, 1, 1), EntityPoint(2, 2, 2)), equalTo(future.get()))
+        assertThat(
+            listOf(EntityPoint(1, 1.0, 1.0), EntityPoint(2, 2.0, 2.0)), equalTo(
+                withContext(
+                    Dispatchers.IO
+                ) {
+                    future.get()
+                })
+        )
     }
 
     @Test
     @Throws(Exception::class)
-    fun createAndDeletePath() {
+    suspend fun createAndDeletePath() {
         val future: CompletableFuture<List<EntityPoint>> = CompletableFuture()
-        localPathRepository.createNewPath(MapPoint(1, 1), "red") { resultPathId ->
-            localPathRepository.addNewPathPoint(resultPathId, MapPoint(2, 2))
+        localPathRepository.createNewPath(MapPoint(1.0, 1.0)).let { resultPathId ->
+            localPathRepository.addNewPathPoint(resultPathId, MapPoint(2.0, 2.0))
         }
-        assertThat(emptyList(), equalTo(future.get()))
+        assertThat(emptyList(), equalTo(withContext(Dispatchers.IO) {
+            future.get()
+        }))
         assertThat(emptyList(), equalTo(pointsDao.getAllPoints()))
         assertThat(emptyList(), equalTo(pathsDao.getAllPaths()))
         assertThat(emptyList(), equalTo(pathPointsRelationsDao.getAllPathPointRelations()))

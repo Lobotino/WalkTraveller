@@ -45,20 +45,34 @@ class PathPointRelationDatabaseTests {
 
     @Test
     @Throws(Exception::class)
-    fun insertNewPathPoints() {
-        pathsDao.insertPaths(listOf(EntityPath(1, 1, "red"), EntityPath(2, 2, "blue")))
-        pointsDao.insertPoints(listOf(EntityPoint(1, 1, 1), EntityPoint(2, 2, 2), EntityPoint(3, 3, 3)))
-        val insertedPathPoints = listOf(EntityPathPointRelation(1, 1), EntityPathPointRelation(2, 2))
+    suspend fun insertNewPathPoints() {
+        pathsDao.insertPaths(listOf(EntityPath(1, 1), EntityPath(2, 2)))
+        pointsDao.insertPoints(
+            listOf(
+                EntityPoint(1, 1.0, 1.0),
+                EntityPoint(2, 2.0, 2.0),
+                EntityPoint(3, 3.0, 3.0)
+            )
+        )
+        val insertedPathPoints =
+            listOf(EntityPathPointRelation(1, 1), EntityPathPointRelation(2, 2))
         pathsPointsRelationsDao.insertPathPointsRelations(insertedPathPoints)
         assertThat(pathsPointsRelationsDao.getAllPathPointRelations(), equalTo(insertedPathPoints))
     }
 
     @Test
     @Throws(Exception::class)
-    fun insertNewPathPointsAndGetPaths() {
-        pathsDao.insertPaths(listOf(EntityPath(1, 1, "red"), EntityPath(2, 2, "blue")))
-        pointsDao.insertPoints(listOf(EntityPoint(1, 1, 1), EntityPoint(2, 2, 2), EntityPoint(3, 3, 3)))
-        val insertedPathPoints = listOf(EntityPathPointRelation(1, 1), EntityPathPointRelation(2, 2))
+    suspend fun insertNewPathPointsAndGetPaths() {
+        pathsDao.insertPaths(listOf(EntityPath(1, 1), EntityPath(2, 2)))
+        pointsDao.insertPoints(
+            listOf(
+                EntityPoint(1, 1.0, 1.0),
+                EntityPoint(2, 2.0, 2.0),
+                EntityPoint(3, 3.0, 3.0)
+            )
+        )
+        val insertedPathPoints =
+            listOf(EntityPathPointRelation(1, 1), EntityPathPointRelation(2, 2))
         pathsPointsRelationsDao.insertPathPointsRelations(insertedPathPoints)
         assertThat(
             pathsPointsRelationsDao.getAllPathPointRelations(), equalTo(
@@ -71,9 +85,15 @@ class PathPointRelationDatabaseTests {
 
     @Test
     @Throws(Exception::class)
-    fun deletePointWithCascadePathDelete() {
-        pathsDao.insertPaths(listOf(EntityPath(1, 1, "red"), EntityPath(2, 2, "blue")))
-        pointsDao.insertPoints(listOf(EntityPoint(1, 1, 1), EntityPoint(2, 2, 2), EntityPoint(3, 3, 3)))
+    suspend fun deletePointWithCascadePathDelete() {
+        pathsDao.insertPaths(listOf(EntityPath(1, 1), EntityPath(2, 2)))
+        pointsDao.insertPoints(
+            listOf(
+                EntityPoint(1, 1.0, 1.0),
+                EntityPoint(2, 2.0, 2.0),
+                EntityPoint(3, 3.0, 3.0)
+            )
+        )
         pathsPointsRelationsDao.insertPathPointsRelations(
             listOf(
                 EntityPathPointRelation(1, 1),

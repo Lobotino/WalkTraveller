@@ -5,7 +5,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 
 @Entity(
-    tableName = "path_segment_relations",
+    tableName = "path_segments",
     primaryKeys = ["id_start_point", "id_finish_point"],
     foreignKeys = [ForeignKey(
         entity = EntityPoint::class,
@@ -21,5 +21,7 @@ import androidx.room.ForeignKey
 )
 data class EntityPathSegment(
     @ColumnInfo(name = "id_start_point") val startPointId: Long,
-    @ColumnInfo(name = "id_finish_point") val finishPointId: Long
+    @ColumnInfo(name = "id_finish_point") val finishPointId: Long,
+    val rating: Int,
+    val timestamp: Long
 )

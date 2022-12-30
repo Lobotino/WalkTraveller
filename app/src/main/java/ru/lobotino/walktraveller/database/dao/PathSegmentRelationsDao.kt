@@ -9,10 +9,10 @@ import ru.lobotino.walktraveller.database.model.EntityPoint
 @Dao
 interface PathSegmentRelationsDao {
 
-    @Query("SELECT * FROM path_segment_relations")
+    @Query("SELECT * FROM path_segments")
     suspend fun getAllPathSegments(): List<EntityPathSegment>
 
-    @Query("SELECT * FROM points, path_segment_relations WHERE id_start_point = :pointId and points.id = id_finish_point")
+    @Query("SELECT * FROM points, path_segments WHERE path_segments.id_start_point = :pointId and points.id = path_segments.id_finish_point")
     suspend fun getNextPathPoint(pointId: Long): EntityPoint?
 
     @Insert

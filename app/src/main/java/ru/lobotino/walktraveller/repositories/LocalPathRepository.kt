@@ -7,7 +7,10 @@ import ru.lobotino.walktraveller.database.model.EntityPathPointRelation
 import ru.lobotino.walktraveller.database.model.EntityPathSegment
 import ru.lobotino.walktraveller.database.model.EntityPoint
 import ru.lobotino.walktraveller.model.MapPoint
+import ru.lobotino.walktraveller.model.SegmentRating
 import ru.lobotino.walktraveller.repositories.interfaces.IPathRepository
+import java.sql.Timestamp
+import java.util.*
 
 class LocalPathRepository(
     database: AppDatabase,
@@ -24,30 +27,27 @@ class LocalPathRepository(
     private val pathSegmentsDao = database.getPathSegmentRelationsDao()
 
     override suspend fun createNewPath(
-        startPoint: MapPoint,
-        pathColor: String
+        startPoint: MapPoint
     ): Long {
         insertNewPoint(startPoint).let { insertedPointId ->
-            pathsDao.insertPaths(
-                listOf(
-                    EntityPath(
-                        startPointId = insertedPointId,
-                        color = pathColor
-                    )
-                )
-            ).let { insertedPathsIds ->
-                val insertedPathId = insertedPathsIds[0]
-                setLastPathId(insertedPathId)
-                insertNewPathPointRelation(insertedPathId, insertedPointId)
-                return insertedPathId
-            }
+            pathsDao.insertPaths(listOf(EntityPath(startPointId = insertedPointId)))
+                .let { insertedPathsIds ->
+                    val insertedPathId = insertedPathsIds[0]
+                    setLastPathId(insertedPathId)
+                    insertNewPathPointRelation(insertedPathId, insertedPointId)
+                    return insertedPathId
+                }
         }
     }
 
-    override suspend fun addNewPathPoint(pathId: Long, point: MapPoint): Long {
+    override suspend fun addNewPathPoint(
+        pathId: Long,
+        point: MapPoint,
+        segmentRating: SegmentRating
+    ): Long {
         insertNewPoint(point).let { insertedPointId ->
             insertNewPathPointRelation(pathId, insertedPointId)
-            insertNewPathSegment(pathId, insertedPointId)
+            insertNewPathSegment(pathId, insertedPointId, segmentRating)
             return insertedPointId
         }
     }
@@ -74,27 +74,38 @@ class LocalPathRepository(
         )
     }
 
-    private suspend fun insertNewPathSegment(pathId: Long, newPointId: Long) {
-        var finishPoint: EntityPoint? = pathsDao.getPathStartPoint(pathId)
-        var nextPoint: EntityPoint? = finishPoint
-        while (nextPoint != null) {
-            nextPoint = pathSegmentsDao.getNextPathPoint(nextPoint.id)
-            if (nextPoint != null) {
-                finishPoint = nextPoint
-            }
-        }
-        if (finishPoint != null) {
+    private suspend fun insertNewPathSegment(
+        pathId: Long,
+        newPointId: Long,
+        segmentRating: SegmentRating
+    ) {
+        val pathFinishPoint = getPathFinishPoint(pathId)
+        if (pathFinishPoint != null) {
             pathSegmentsDao.insertPathSegments(
                 listOf(
                     EntityPathSegment(
-                        finishPoint.id,
-                        newPointId
+                        startPointId = pathFinishPoint.id,
+                        finishPointId = newPointId,
+                        rating = segmentRating.ordinal,
+                        timestamp = Timestamp(Date().time).time
                     )
                 )
             )
         } else {
             throw RuntimeException("Trying to add next point to path without start point!")
         }
+    }
+
+    private suspend fun getPathFinishPoint(pathId: Long): EntityPoint? {
+        var pathFinishPoint: EntityPoint? = pathsDao.getPathStartPoint(pathId)
+        var nextPoint: EntityPoint? = pathFinishPoint
+        while (nextPoint != null) {
+            nextPoint = pathSegmentsDao.getNextPathPoint(nextPoint.id)
+            if (nextPoint != null) {
+                pathFinishPoint = nextPoint
+            }
+        }
+        return pathFinishPoint
     }
 
     override suspend fun getAllPaths(): List<EntityPath> {
