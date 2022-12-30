@@ -37,6 +37,7 @@ import ru.lobotino.walktraveller.App.Companion.PATH_DATABASE_NAME
 import ru.lobotino.walktraveller.R
 import ru.lobotino.walktraveller.database.AppDatabase
 import ru.lobotino.walktraveller.model.MapPath
+import ru.lobotino.walktraveller.model.SegmentRating
 import ru.lobotino.walktraveller.repositories.DefaultLocationRepository
 import ru.lobotino.walktraveller.repositories.GeoPermissionsRepository
 import ru.lobotino.walktraveller.repositories.LocalPathRepository
@@ -48,6 +49,7 @@ import ru.lobotino.walktraveller.ui.model.ShowPathsButtonState
 import ru.lobotino.walktraveller.usecases.LocalMapPathsInteractor
 import ru.lobotino.walktraveller.usecases.PermissionsInteractor
 import ru.lobotino.walktraveller.viewmodels.MapViewModel
+import ru.lobotino.walktraveller.model.SegmentRating.*
 
 class MainMapFragment : Fragment() {
 
@@ -55,6 +57,10 @@ class MainMapFragment : Fragment() {
     private lateinit var viewModel: MapViewModel
     private lateinit var walkStartButton: CardView
     private lateinit var walkStopButton: CardView
+    private lateinit var ratingBadlyButton: CardView
+    private lateinit var ratingNormalButton: CardView
+    private lateinit var ratingGoodButton: CardView
+    private lateinit var ratingPerfectButton: CardView
     private lateinit var walkStopAcceptProgress: CircularProgressIndicator
     private lateinit var showPathsButton: CardView
     private lateinit var showPathsProgress: CircularProgressIndicator
@@ -121,6 +127,26 @@ class MainMapFragment : Fragment() {
             walkStartButton = view.findViewById<CardView>(R.id.walk_start_button)
                 .apply {
                     setOnClickListener { viewModel.onStartPathButtonClicked() }
+                }
+
+            ratingBadlyButton = view.findViewById<CardView>(R.id.rating_badly)
+                .apply {
+                    setOnClickListener { viewModel.onRatingButtonClicked(BADLY) }
+                }
+
+            ratingNormalButton = view.findViewById<CardView>(R.id.rating_normal)
+                .apply {
+                    setOnClickListener { viewModel.onRatingButtonClicked(NORMAL) }
+                }
+
+            ratingGoodButton = view.findViewById<CardView>(R.id.rating_good)
+                .apply {
+                    setOnClickListener { viewModel.onRatingButtonClicked(GOOD) }
+                }
+
+            ratingPerfectButton = view.findViewById<CardView>(R.id.rating_perfect)
+                .apply {
+                    setOnClickListener { viewModel.onRatingButtonClicked(PERFECT) }
                 }
 
             walkStopAcceptProgress = view.findViewById(R.id.walk_stop_accept_progress)
@@ -275,9 +301,17 @@ class MainMapFragment : Fragment() {
         if (mapUiState.isWritePath) {
             walkStartButton.visibility = GONE
             walkStopButton.visibility = VISIBLE
+            ratingBadlyButton.visibility = VISIBLE
+            ratingNormalButton.visibility = VISIBLE
+            ratingGoodButton.visibility = VISIBLE
+            ratingPerfectButton.visibility = VISIBLE
         } else {
             walkStartButton.visibility = VISIBLE
             walkStopButton.visibility = GONE
+            ratingBadlyButton.visibility = GONE
+            ratingNormalButton.visibility = GONE
+            ratingGoodButton.visibility = GONE
+            ratingPerfectButton.visibility = GONE
         }
 
         if (mapUiState.isPathFinished) {

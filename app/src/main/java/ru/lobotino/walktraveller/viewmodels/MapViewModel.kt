@@ -14,6 +14,7 @@ import kotlinx.coroutines.launch
 import ru.lobotino.walktraveller.database.model.EntityPoint
 import ru.lobotino.walktraveller.model.MapPath
 import ru.lobotino.walktraveller.model.MapPoint
+import ru.lobotino.walktraveller.model.SegmentRating
 import ru.lobotino.walktraveller.repositories.interfaces.IDefaultLocationRepository
 import ru.lobotino.walktraveller.repositories.interfaces.ILocationUpdatesStatesRepository
 import ru.lobotino.walktraveller.ui.model.MapUiState
@@ -164,6 +165,10 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
                 }
             }
         }
+    }
+
+    fun onRatingButtonClicked(ratingGiven: SegmentRating) {
+
     }
 
     fun updateNewPointsIfNeeded() {
