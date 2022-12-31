@@ -1,6 +1,10 @@
 package ru.lobotino.walktraveller.ui
 
 import android.content.*
+import android.graphics.DashPathEffect
+import android.graphics.Paint
+import android.graphics.PathEffect
+import android.graphics.Shader
 import android.location.Location
 import android.os.Build
 import android.os.Bundle
@@ -67,7 +71,9 @@ class MainMapFragment : Fragment() {
     private lateinit var showPathsProgress: CircularProgressIndicator
     private lateinit var showPathsDefaultImage: ImageView
 
+    private val currentPathPolylines = ArrayList<Polyline>()
     private var currentPathPolyline: Polyline? = null
+    private var lastCurrentPathRating: SegmentRating? = null
 
     private var locationUpdatesService: LocationUpdatesService? = null
 
@@ -237,10 +243,7 @@ class MainMapFragment : Fragment() {
                         }.launchIn(lifecycleScope)
 
                         observeNewPathSegment.onEach { pathSegment ->
-                            paintNewPathLine(
-                                pathSegment.startPoint.toGeoPoint(),
-                                pathSegment.finishPoint.toGeoPoint()
-                            )
+                            paintNewCurrentPathSegment(pathSegment)
                         }.launchIn(lifecycleScope)
 
                         observeNewCommonPath.onEach { path ->
@@ -412,26 +415,24 @@ class MainMapFragment : Fragment() {
         }
     }
 
-    private fun paintNewPathLine(from: GeoPoint, to: GeoPoint) {
-        if (context != null) {
-            if (currentPathPolyline == null) {
-                currentPathPolyline = Polyline(mapView).apply {
-                    outlinePaint.apply {
-                        color = ContextCompat.getColor(requireContext(), R.color.current_path)
-                    }
-                }
+    private fun paintNewCurrentPathSegment(pathSegment: MapPathSegment) {
+        if (currentPathPolyline == null) {
+            currentPathPolyline = createRatingSegmentPolyline(pathSegment)
+            lastCurrentPathRating = pathSegment.rating
+            mapView.overlays.add(currentPathPolyline)
+            currentPathPolylines.add(currentPathPolyline!!)
+        } else {
+            if (pathSegment.rating == lastCurrentPathRating) {
+                currentPathPolyline!!.addPoint(pathSegment.finishPoint.toGeoPoint())
+            } else {
+                currentPathPolyline = createRatingSegmentPolyline(pathSegment)
+                lastCurrentPathRating = pathSegment.rating
                 mapView.overlays.add(currentPathPolyline)
-            }
-
-            currentPathPolyline!!.apply {
-                if (points.isEmpty()) {
-                    addPoint(from)
-                }
-                addPoint(to)
-            }.also {
-                refreshMapNow()
+                currentPathPolylines.add(currentPathPolyline!!)
             }
         }
+
+        refreshMapNow()
     }
 
     @ColorInt
@@ -454,10 +455,9 @@ class MainMapFragment : Fragment() {
     }
 
     private fun setLastPathFinished() {
-        currentPathPolyline?.outlinePaint?.color =
-            ContextCompat.getColor(requireContext(), R.color.finished_path)
-
+        currentPathPolylines.clear()
         currentPathPolyline = null
+        lastCurrentPathRating = null
     }
 
     private fun refreshMapNow() {
