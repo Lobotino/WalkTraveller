@@ -67,7 +67,7 @@ class LocalMapPathsInteractor(
                 MapRatingPath(
                     pathStartPoint.toMapPoint(),
                     ArrayList<MapPathSegment>().apply {
-                        for (entityPathSegment in withContext(defaultDispatcher) { localPathRepository.getLastPathSegments() }) {
+                        for (entityPathSegment in withContext(defaultDispatcher) { localPathRepository.getAllPathSegments(path.id) }) {
                             val getStartPoint =
                                 async(defaultDispatcher) {
                                     localPathRepository.getPointInfo(

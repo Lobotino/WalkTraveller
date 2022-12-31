@@ -27,7 +27,7 @@ import ru.lobotino.walktraveller.usecases.interfaces.IPermissionsInteractor
 class MapViewModel(application: Application) : AndroidViewModel(application) {
 
     private var updateCurrentSavedPath: Job? = null
-    private var downloadAllPathsJob: Job? = null
+    private var downloadAllRatingPathsJob: Job? = null
     private var lastPaintedPoint: MapPoint? = null
 
     private var permissionsInteractor: IPermissionsInteractor? = null
@@ -142,9 +142,9 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun onShowAllPathsButtonClicked() {
-        if (downloadAllPathsJob?.isActive == true || mapUiStateFlow.value.showPathsButtonState == ShowPathsButtonState.LOADING) {
-            downloadAllPathsJob?.cancel()
-            downloadAllPathsJob = null
+        if (downloadAllRatingPathsJob?.isActive == true || mapUiStateFlow.value.showPathsButtonState == ShowPathsButtonState.LOADING) {
+            downloadAllRatingPathsJob?.cancel()
+            downloadAllRatingPathsJob = null
             mapUiStateFlow.update { uiState ->
                 uiState.copy(
                     needToClearMapNow = false,
@@ -160,9 +160,9 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
                     showPathsButtonState = ShowPathsButtonState.LOADING
                 )
             }
-            downloadAllPathsJob = viewModelScope.launch {
-                for (path in mapPathsInteractor.getAllSavedCommonPaths()) {
-                    newCommonPathFlow.tryEmit(path)
+            downloadAllRatingPathsJob = viewModelScope.launch {
+                for (path in mapPathsInteractor.getAllSavedRatingPaths()) {
+                    newRatingPathFlow.tryEmit(path)
                 }
                 mapUiStateFlow.update { uiState ->
                     uiState.copy(

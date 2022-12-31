@@ -15,6 +15,7 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.Toast
+import androidx.annotation.ColorInt
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
@@ -36,8 +37,10 @@ import ru.lobotino.walktraveller.App
 import ru.lobotino.walktraveller.App.Companion.PATH_DATABASE_NAME
 import ru.lobotino.walktraveller.R
 import ru.lobotino.walktraveller.database.AppDatabase
+import ru.lobotino.walktraveller.model.SegmentRating
 import ru.lobotino.walktraveller.model.SegmentRating.*
 import ru.lobotino.walktraveller.model.map.MapCommonPath
+import ru.lobotino.walktraveller.model.map.MapPathSegment
 import ru.lobotino.walktraveller.model.map.MapRatingPath
 import ru.lobotino.walktraveller.repositories.*
 import ru.lobotino.walktraveller.services.LocationUpdatesService
@@ -46,6 +49,7 @@ import ru.lobotino.walktraveller.ui.model.MapUiState
 import ru.lobotino.walktraveller.ui.model.ShowPathsButtonState
 import ru.lobotino.walktraveller.usecases.LocalMapPathsInteractor
 import ru.lobotino.walktraveller.usecases.PermissionsInteractor
+import ru.lobotino.walktraveller.utils.ext.toGeoPoint
 import ru.lobotino.walktraveller.viewmodels.MapViewModel
 
 class MainMapFragment : Fragment() {
@@ -234,8 +238,8 @@ class MainMapFragment : Fragment() {
 
                         observeNewPathSegment.onEach { pathSegment ->
                             paintNewPathLine(
-                                GeoPoint(pathSegment.startPoint.latitude, pathSegment.startPoint.longitude),
-                                GeoPoint(pathSegment.finishPoint.latitude, pathSegment.finishPoint.longitude)
+                                pathSegment.startPoint.toGeoPoint(),
+                                pathSegment.finishPoint.toGeoPoint()
                             )
                         }.launchIn(lifecycleScope)
 
@@ -375,7 +379,37 @@ class MainMapFragment : Fragment() {
     }
 
     private fun paintNewRatingPath(path: MapRatingPath) {
-        //TODO
+        val resultPolylineList = ArrayList<Polyline>()
+        var lastAddedPolyline: Polyline? = null
+        var lastSegmentRating: SegmentRating? = null
+        for (segment in path.pathSegments) {
+            if (lastAddedPolyline == null) {
+                lastAddedPolyline = createRatingSegmentPolyline(segment)
+                lastSegmentRating = segment.rating
+                resultPolylineList.add(lastAddedPolyline)
+            } else {
+                if (segment.rating == lastSegmentRating) {
+                    lastAddedPolyline.addPoint(segment.finishPoint.toGeoPoint())
+                } else {
+                    lastAddedPolyline = createRatingSegmentPolyline(segment)
+                    lastSegmentRating = segment.rating
+                    resultPolylineList.add(lastAddedPolyline)
+                }
+            }
+        }
+        mapView.overlays.addAll(resultPolylineList)
+    }
+
+    private fun createRatingSegmentPolyline(pathSegment: MapPathSegment): Polyline {
+        return Polyline(mapView).apply {
+            outlinePaint.apply {
+                addPoint(pathSegment.startPoint.toGeoPoint())
+                addPoint(pathSegment.finishPoint.toGeoPoint())
+                getRatingColor(pathSegment.rating)?.let { ratingColor ->
+                    color = ratingColor
+                }
+            }
+        }
     }
 
     private fun paintNewPathLine(from: GeoPoint, to: GeoPoint) {
@@ -398,6 +432,25 @@ class MainMapFragment : Fragment() {
                 refreshMapNow()
             }
         }
+    }
+
+    @ColorInt
+    private fun getRatingColor(segmentRating: SegmentRating): Int? {
+        context?.let { context ->
+            when (segmentRating) {
+                BADLY -> return@getRatingColor ContextCompat.getColor(context, R.color.rating_badly)
+                NORMAL -> return@getRatingColor ContextCompat.getColor(
+                    context,
+                    R.color.rating_normal
+                )
+                GOOD -> return@getRatingColor ContextCompat.getColor(context, R.color.rating_good)
+                PERFECT -> return@getRatingColor ContextCompat.getColor(
+                    context,
+                    R.color.rating_perfect
+                )
+            }
+        }
+        return null
     }
 
     private fun setLastPathFinished() {
