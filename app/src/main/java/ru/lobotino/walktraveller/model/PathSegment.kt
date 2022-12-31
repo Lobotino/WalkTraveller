@@ -5,5 +5,6 @@ import ru.lobotino.walktraveller.database.model.EntityPoint
 data class PathSegment(
     val startPoint: EntityPoint,
     val finishPoint: EntityPoint,
-    val color: String
+    val rating: SegmentRating,
+    val timestamp: Long
 )

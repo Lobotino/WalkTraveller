@@ -25,7 +25,7 @@ import ru.lobotino.walktraveller.App
 import ru.lobotino.walktraveller.App.Companion.PATH_DATABASE_NAME
 import ru.lobotino.walktraveller.R
 import ru.lobotino.walktraveller.database.AppDatabase
-import ru.lobotino.walktraveller.model.MapPoint
+import ru.lobotino.walktraveller.model.map.MapPoint
 import ru.lobotino.walktraveller.repositories.*
 import ru.lobotino.walktraveller.repositories.LocationNotificationRepository.Companion.EXTRA_STARTED_FROM_NOTIFICATION
 import ru.lobotino.walktraveller.repositories.interfaces.ILocationUpdatesRepository

@@ -1,12 +1,13 @@
 package ru.lobotino.walktraveller.repositories
 
 import android.content.SharedPreferences
+import android.util.Log
 import ru.lobotino.walktraveller.database.AppDatabase
 import ru.lobotino.walktraveller.database.model.EntityPath
 import ru.lobotino.walktraveller.database.model.EntityPathPointRelation
 import ru.lobotino.walktraveller.database.model.EntityPathSegment
 import ru.lobotino.walktraveller.database.model.EntityPoint
-import ru.lobotino.walktraveller.model.MapPoint
+import ru.lobotino.walktraveller.model.map.MapPoint
 import ru.lobotino.walktraveller.model.SegmentRating
 import ru.lobotino.walktraveller.repositories.interfaces.IPathRepository
 import java.sql.Timestamp
@@ -18,6 +19,7 @@ class LocalPathRepository(
 ) : IPathRepository {
 
     companion object {
+        private val TAG = LocalPathRepository::class.java.canonicalName
         private const val KEY_LAST_PATH_ID = "last_path_id"
     }
 
@@ -127,32 +129,41 @@ class LocalPathRepository(
         return if (pathId != null) pathsDao.getPathById(pathId) else null
     }
 
-    override suspend fun getLastPathPoints(): List<EntityPoint> {
-        return ArrayList<EntityPoint>().apply {
+    override suspend fun getLastPathSegments(): List<EntityPathSegment> {
+        return ArrayList<EntityPathSegment>().apply {
             val pathId = getLastPathId()
             if (pathId != null) {
-                var nextPoint: EntityPoint? = pathsDao.getPathStartPoint(pathId)
-                while (nextPoint != null) {
-                    add(nextPoint)
-                    nextPoint = pathSegmentsDao.getNextPathPoint(nextPoint.id)
-                }
+                getAllPathSegments(pathId)
             }
         }
     }
 
+    override suspend fun getPointInfo(pointId: Long): EntityPoint? {
+        return pointsDao.getPointById(pointId)
+    }
+
     override suspend fun getAllPathSegments(
         pathId: Long
-    ): List<Pair<EntityPoint, EntityPoint>> {
+    ): List<EntityPathSegment> {
         val path = pathsDao.getPathById(pathId)
         return if (path == null) {
             emptyList()
         } else {
-            return ArrayList<Pair<EntityPoint, EntityPoint>>().apply {
+            return ArrayList<EntityPathSegment>().apply {
                 var currentPoint = pointsDao.getPointById(path.startPointId)
                 if (currentPoint != null) {
                     var nextPoint = pathSegmentsDao.getNextPathPoint(currentPoint.id)
                     while (nextPoint != null) {
-                        add(Pair(currentPoint!!, nextPoint))
+                        val nextPathSegment =
+                            pathSegmentsDao.getPathSegmentByPoints(currentPoint!!.id, nextPoint.id)
+                        if (nextPathSegment != null) {
+                            add(nextPathSegment)
+                        } else {
+                            Log.w(
+                                TAG,
+                                "Path segment with points ids: ${currentPoint.id}, ${nextPoint.id} is null!"
+                            )
+                        }
                         currentPoint = nextPoint
                         nextPoint = pathSegmentsDao.getNextPathPoint(nextPoint.id)
                     }

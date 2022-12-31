@@ -1,6 +1,6 @@
 package ru.lobotino.walktraveller.repositories.interfaces
 
-import ru.lobotino.walktraveller.model.MapPoint
+import ru.lobotino.walktraveller.model.map.MapPoint
 
 interface IDefaultLocationRepository {
 

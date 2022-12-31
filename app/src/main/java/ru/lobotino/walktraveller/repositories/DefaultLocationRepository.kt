@@ -1,7 +1,7 @@
 package ru.lobotino.walktraveller.repositories
 
 import android.content.SharedPreferences
-import ru.lobotino.walktraveller.model.MapPoint
+import ru.lobotino.walktraveller.model.map.MapPoint
 import ru.lobotino.walktraveller.repositories.interfaces.IDefaultLocationRepository
 
 class DefaultLocationRepository(private val sharedPreferences: SharedPreferences) : IDefaultLocationRepository {

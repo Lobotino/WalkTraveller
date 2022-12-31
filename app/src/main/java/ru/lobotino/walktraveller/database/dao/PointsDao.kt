@@ -5,7 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy.REPLACE
 import androidx.room.Query
 import ru.lobotino.walktraveller.database.model.EntityPoint
-import ru.lobotino.walktraveller.model.MapPoint
+import ru.lobotino.walktraveller.model.map.MapPoint
 
 @Dao
 interface PointsDao {

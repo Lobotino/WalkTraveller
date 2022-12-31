@@ -11,17 +11,18 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import ru.lobotino.walktraveller.database.model.EntityPoint
-import ru.lobotino.walktraveller.model.MapPath
-import ru.lobotino.walktraveller.model.MapPoint
+import ru.lobotino.walktraveller.model.map.MapPoint
 import ru.lobotino.walktraveller.model.SegmentRating
+import ru.lobotino.walktraveller.model.map.MapCommonPath
+import ru.lobotino.walktraveller.model.map.MapPathSegment
+import ru.lobotino.walktraveller.model.map.MapRatingPath
 import ru.lobotino.walktraveller.repositories.interfaces.IDefaultLocationRepository
 import ru.lobotino.walktraveller.repositories.interfaces.ILocationUpdatesStatesRepository
+import ru.lobotino.walktraveller.repositories.interfaces.IPathRatingRepository
 import ru.lobotino.walktraveller.ui.model.MapUiState
 import ru.lobotino.walktraveller.ui.model.ShowPathsButtonState
 import ru.lobotino.walktraveller.usecases.interfaces.IMapPathsInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IPermissionsInteractor
-import ru.lobotino.walktraveller.utils.ext.toMapPoint
 
 class MapViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -32,14 +33,16 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     private var permissionsInteractor: IPermissionsInteractor? = null
     private lateinit var defaultLocationRepository: IDefaultLocationRepository
     private lateinit var locationUpdatesStatesRepository: ILocationUpdatesStatesRepository
+    private lateinit var pathRatingRepository: IPathRatingRepository
 
     private lateinit var mapPathsInteractor: IMapPathsInteractor
 
     private val permissionsDeniedSharedFlow =
         MutableSharedFlow<List<String>>(1, 0, BufferOverflow.DROP_OLDEST)
     private val newPathSegmentFlow =
-        MutableSharedFlow<Pair<MapPoint, MapPoint>>(1, 0, BufferOverflow.DROP_OLDEST)
-    private val newPathFlow = MutableSharedFlow<MapPath>(1, 0, BufferOverflow.DROP_OLDEST)
+        MutableSharedFlow<MapPathSegment>(1, 0, BufferOverflow.DROP_OLDEST)
+    private val newCommonPathFlow = MutableSharedFlow<MapCommonPath>(1, 0, BufferOverflow.DROP_OLDEST)
+    private val newRatingPathFlow = MutableSharedFlow<MapRatingPath>(1, 0, BufferOverflow.DROP_OLDEST)
 
     private val regularLocationUpdateStateFlow = MutableStateFlow(false)
 
@@ -55,13 +58,18 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
         )
 
     val observePermissionsDeniedResult: Flow<List<String>> = permissionsDeniedSharedFlow
-    val observeNewPathSegment: Flow<Pair<MapPoint, MapPoint>> = newPathSegmentFlow
-    val observeNewPath: Flow<MapPath> = newPathFlow
+    val observeNewPathSegment: Flow<MapPathSegment> = newPathSegmentFlow
+    val observeNewCommonPath: Flow<MapCommonPath> = newCommonPathFlow
+    val observeNewRatingPath: Flow<MapRatingPath> = newRatingPathFlow
     val observeMapUiState: Flow<MapUiState> = mapUiStateFlow
     val observeRegularLocationUpdate: Flow<Boolean> = regularLocationUpdateStateFlow
 
     fun setPermissionsInteractor(permissionsInteractor: IPermissionsInteractor) {
         this.permissionsInteractor = permissionsInteractor
+    }
+
+    fun setMapPathInteractor(mapPathsInteractor: IMapPathsInteractor) {
+        this.mapPathsInteractor = mapPathsInteractor
     }
 
     fun setDefaultLocationRepository(defaultLocationRepository: IDefaultLocationRepository) {
@@ -72,8 +80,8 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
         this.locationUpdatesStatesRepository = locationUpdatesStatesRepository
     }
 
-    fun setMapPathInteractor(mapPathsInteractor: IMapPathsInteractor) {
-        this.mapPathsInteractor = mapPathsInteractor
+    fun setPathRatingRepository(pathRatingRepository: IPathRatingRepository) {
+        this.pathRatingRepository = pathRatingRepository
     }
 
     fun onInitFinish() {
@@ -104,7 +112,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
 
     fun onNewLocationReceive(location: Location) {
         if (updateCurrentSavedPath == null || !updateCurrentSavedPath!!.isActive) {
-            drawNewSegmentToPoint(MapPoint(location.latitude, location.longitude))
+            drawNewSegmentToPoint(MapPoint(location.latitude, location.longitude), pathRatingRepository.getCurrentRating())
         }
     }
 
@@ -153,8 +161,8 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
                 )
             }
             downloadAllPathsJob = viewModelScope.launch {
-                for (path in mapPathsInteractor.getAllSavedPaths()) {
-                    newPathFlow.tryEmit(path)
+                for (path in mapPathsInteractor.getAllSavedCommonPaths()) {
+                    newCommonPathFlow.tryEmit(path)
                 }
                 mapUiStateFlow.update { uiState ->
                     uiState.copy(
@@ -168,7 +176,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun onRatingButtonClicked(ratingGiven: SegmentRating) {
-
+        pathRatingRepository.setCurrentRating(ratingGiven)
     }
 
     fun updateNewPointsIfNeeded() {
@@ -182,36 +190,34 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
         if (mapUiStateFlow.value.isWritePath) {
             updateCurrentSavedPath?.cancel()
             updateCurrentSavedPath = viewModelScope.launch {
-                mapPathsInteractor.getLastSavedPath()?.let { lastSavedPath ->
+                mapPathsInteractor.getLastSavedRatingPath()?.let { lastSavedPath ->
                     mapUiStateFlow.update { uiState -> uiState.copy(needToClearMapNow = true) }
                     if (needToUpdateAllPath) {
-                        lastPaintedPoint = lastSavedPath.pathPoints.first().toMapPoint()
+                        lastPaintedPoint =
+                            lastSavedPath.pathSegments.first().startPoint
                     }
-                    drawUnpaintedYetPathSegments(lastSavedPath.pathPoints)
+                    drawUnpaintedYetPathSegments(lastSavedPath.pathSegments)
                 }
             }
         }
     }
 
-    private fun drawNewSegmentToPoint(newPoint: MapPoint) {
+    private fun drawNewSegmentToPoint(newPoint: MapPoint, segmentRating: SegmentRating) {
         if (lastPaintedPoint != null) {
             newPathSegmentFlow.tryEmit(
-                Pair(
-                    lastPaintedPoint!!,
-                    newPoint
-                )
+                MapPathSegment(lastPaintedPoint!!, newPoint, segmentRating)
             )
         }
         lastPaintedPoint = newPoint
     }
 
-    private fun drawUnpaintedYetPathSegments(allPathPoints: List<EntityPoint>) {
+    private fun drawUnpaintedYetPathSegments(allPathSegments: List<MapPathSegment>) {
         var needToDraw = false
-        for (point in allPathPoints) {
+        for (segment in allPathSegments) {
             if (needToDraw) {
-                drawNewSegmentToPoint(point.toMapPoint())
+                newPathSegmentFlow.tryEmit(segment)
             } else {
-                if (point.toMapPoint() == lastPaintedPoint) {
+                if (segment.finishPoint == lastPaintedPoint) {
                     needToDraw = true
                 }
             }

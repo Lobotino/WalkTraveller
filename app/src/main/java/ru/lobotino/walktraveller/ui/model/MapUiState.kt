@@ -1,6 +1,6 @@
 package ru.lobotino.walktraveller.ui.model
 
-import ru.lobotino.walktraveller.model.MapPoint
+import ru.lobotino.walktraveller.model.map.MapPoint
 
 data class MapUiState(
     val isWritePath: Boolean,

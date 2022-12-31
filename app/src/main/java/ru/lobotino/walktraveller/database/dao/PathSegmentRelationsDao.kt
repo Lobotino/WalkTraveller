@@ -15,6 +15,9 @@ interface PathSegmentRelationsDao {
     @Query("SELECT * FROM points, path_segments WHERE path_segments.id_start_point = :pointId and points.id = path_segments.id_finish_point")
     suspend fun getNextPathPoint(pointId: Long): EntityPoint?
 
+    @Query("SELECT * FROM path_segments WHERE id_start_point = :startPointId and id_finish_point = :finishPointId")
+    suspend fun getPathSegmentByPoints(startPointId: Long, finishPointId: Long): EntityPathSegment?
+
     @Insert
     suspend fun insertPathSegments(segments: List<EntityPathSegment>)
 

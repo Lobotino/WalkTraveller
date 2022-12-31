@@ -13,7 +13,7 @@ import org.junit.runner.RunWith
 import ru.lobotino.walktraveller.database.AppDatabase
 import ru.lobotino.walktraveller.database.dao.PointsDao
 import ru.lobotino.walktraveller.database.model.EntityPoint
-import ru.lobotino.walktraveller.model.MapPoint
+import ru.lobotino.walktraveller.model.map.MapPoint
 import java.io.IOException
 
 @RunWith(AndroidJUnit4::class)

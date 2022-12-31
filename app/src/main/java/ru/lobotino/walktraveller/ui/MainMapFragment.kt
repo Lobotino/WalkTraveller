@@ -36,12 +36,10 @@ import ru.lobotino.walktraveller.App
 import ru.lobotino.walktraveller.App.Companion.PATH_DATABASE_NAME
 import ru.lobotino.walktraveller.R
 import ru.lobotino.walktraveller.database.AppDatabase
-import ru.lobotino.walktraveller.model.MapPath
-import ru.lobotino.walktraveller.model.SegmentRating
-import ru.lobotino.walktraveller.repositories.DefaultLocationRepository
-import ru.lobotino.walktraveller.repositories.GeoPermissionsRepository
-import ru.lobotino.walktraveller.repositories.LocalPathRepository
-import ru.lobotino.walktraveller.repositories.LocationUpdatesStatesRepository
+import ru.lobotino.walktraveller.model.SegmentRating.*
+import ru.lobotino.walktraveller.model.map.MapCommonPath
+import ru.lobotino.walktraveller.model.map.MapRatingPath
+import ru.lobotino.walktraveller.repositories.*
 import ru.lobotino.walktraveller.services.LocationUpdatesService
 import ru.lobotino.walktraveller.services.LocationUpdatesService.Companion.EXTRA_LOCATION
 import ru.lobotino.walktraveller.ui.model.MapUiState
@@ -49,7 +47,6 @@ import ru.lobotino.walktraveller.ui.model.ShowPathsButtonState
 import ru.lobotino.walktraveller.usecases.LocalMapPathsInteractor
 import ru.lobotino.walktraveller.usecases.PermissionsInteractor
 import ru.lobotino.walktraveller.viewmodels.MapViewModel
-import ru.lobotino.walktraveller.model.SegmentRating.*
 
 class MainMapFragment : Fragment() {
 
@@ -209,14 +206,6 @@ class MainMapFragment : Fragment() {
                             )
                         )
 
-                        setDefaultLocationRepository(DefaultLocationRepository(sharedPreferences))
-
-                        setLocationUpdatesStatesRepository(
-                            LocationUpdatesStatesRepository(
-                                sharedPreferences
-                            )
-                        )
-
                         setMapPathInteractor(
                             LocalMapPathsInteractor(
                                 LocalPathRepository(
@@ -229,19 +218,33 @@ class MainMapFragment : Fragment() {
                             )
                         )
 
+                        setDefaultLocationRepository(DefaultLocationRepository(sharedPreferences))
+
+                        setLocationUpdatesStatesRepository(
+                            LocationUpdatesStatesRepository(
+                                sharedPreferences
+                            )
+                        )
+
+                        setPathRatingRepository(PathRatingRepository(sharedPreferences))
+
                         observePermissionsDeniedResult.onEach {
                             showPermissionsDeniedError()
                         }.launchIn(lifecycleScope)
 
                         observeNewPathSegment.onEach { pathSegment ->
                             paintNewPathLine(
-                                GeoPoint(pathSegment.first.latitude, pathSegment.first.longitude),
-                                GeoPoint(pathSegment.second.latitude, pathSegment.second.longitude)
+                                GeoPoint(pathSegment.startPoint.latitude, pathSegment.startPoint.longitude),
+                                GeoPoint(pathSegment.finishPoint.latitude, pathSegment.finishPoint.longitude)
                             )
                         }.launchIn(lifecycleScope)
 
-                        observeNewPath.onEach { path ->
+                        observeNewCommonPath.onEach { path ->
                             paintNewCommonPath(path)
+                        }.launchIn(lifecycleScope)
+
+                        observeNewRatingPath.onEach { path ->
+                            paintNewRatingPath(path)
                         }.launchIn(lifecycleScope)
 
                         observeMapUiState.onEach { mapUiState ->
@@ -355,7 +358,7 @@ class MainMapFragment : Fragment() {
         }
     }
 
-    private fun paintNewCommonPath(path: MapPath) {
+    private fun paintNewCommonPath(path: MapCommonPath) {
         if (context != null) {
             mapView.overlays.add(Polyline(mapView).apply {
                 outlinePaint.color =
@@ -369,6 +372,10 @@ class MainMapFragment : Fragment() {
                 })
             })
         }
+    }
+
+    private fun paintNewRatingPath(path: MapRatingPath) {
+        //TODO
     }
 
     private fun paintNewPathLine(from: GeoPoint, to: GeoPoint) {

@@ -19,7 +19,7 @@ import ru.lobotino.walktraveller.database.dao.PathSegmentRelationsDao
 import ru.lobotino.walktraveller.database.dao.PathsDao
 import ru.lobotino.walktraveller.database.dao.PointsDao
 import ru.lobotino.walktraveller.database.model.EntityPoint
-import ru.lobotino.walktraveller.model.MapPoint
+import ru.lobotino.walktraveller.model.map.MapPoint
 import ru.lobotino.walktraveller.repositories.LocalPathRepository
 import java.io.IOException
 import java.util.concurrent.CompletableFuture
