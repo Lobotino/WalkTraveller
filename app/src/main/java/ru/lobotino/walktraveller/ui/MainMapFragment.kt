@@ -1,10 +1,7 @@
 package ru.lobotino.walktraveller.ui
 
 import android.content.*
-import android.graphics.DashPathEffect
-import android.graphics.Paint
-import android.graphics.PathEffect
-import android.graphics.Shader
+import android.content.res.ColorStateList
 import android.location.Location
 import android.os.Build
 import android.os.Bundle
@@ -23,6 +20,7 @@ import androidx.annotation.ColorInt
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
+import androidx.core.widget.ImageViewCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -55,6 +53,7 @@ import ru.lobotino.walktraveller.usecases.LocalMapPathsInteractor
 import ru.lobotino.walktraveller.usecases.PermissionsInteractor
 import ru.lobotino.walktraveller.utils.ext.toGeoPoint
 import ru.lobotino.walktraveller.viewmodels.MapViewModel
+import kotlin.properties.Delegates
 
 class MainMapFragment : Fragment() {
 
@@ -62,14 +61,25 @@ class MainMapFragment : Fragment() {
     private lateinit var viewModel: MapViewModel
     private lateinit var walkStartButton: CardView
     private lateinit var walkStopButton: CardView
+    private lateinit var ratingButtonsHolder: View
     private lateinit var ratingBadlyButton: CardView
     private lateinit var ratingNormalButton: CardView
     private lateinit var ratingGoodButton: CardView
     private lateinit var ratingPerfectButton: CardView
+    private lateinit var ratingBadlyButtonStar: ImageView
+    private lateinit var ratingNormalButtonStar: ImageView
+    private lateinit var ratingGoodButtonStar: ImageView
+    private lateinit var ratingPerfectButtonStar: ImageView
     private lateinit var walkStopAcceptProgress: CircularProgressIndicator
     private lateinit var showPathsButton: CardView
     private lateinit var showPathsProgress: CircularProgressIndicator
     private lateinit var showPathsDefaultImage: ImageView
+
+    private var ratingWhiteColor by Delegates.notNull<@ColorInt Int>()
+    private var ratingPerfectColor by Delegates.notNull<@ColorInt Int>()
+    private var ratingGoodColor by Delegates.notNull<@ColorInt Int>()
+    private var ratingNormalColor by Delegates.notNull<@ColorInt Int>()
+    private var ratingBadlyColor by Delegates.notNull<@ColorInt Int>()
 
     private val currentPathPolylines = ArrayList<Polyline>()
     private var currentPathPolyline: Polyline? = null
@@ -114,8 +124,20 @@ class MainMapFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         return inflater.inflate(R.layout.fragment_map, container, false).also { view ->
+            initColors()
             initViews(view)
             initViewModel()
+        }
+    }
+
+    private fun initColors() {
+        val context = context
+        if (context != null) {
+            ratingWhiteColor = ContextCompat.getColor(context, R.color.white)
+            ratingPerfectColor = ContextCompat.getColor(context, R.color.rating_perfect_color)
+            ratingGoodColor = ContextCompat.getColor(context, R.color.rating_good_color)
+            ratingNormalColor = ContextCompat.getColor(context, R.color.rating_normal_color)
+            ratingBadlyColor = ContextCompat.getColor(context, R.color.rating_badly_color)
         }
     }
 
@@ -131,30 +153,36 @@ class MainMapFragment : Fragment() {
             }
             mapViewContainer.addView(mapView)
 
+            ratingButtonsHolder = view.findViewById<CardView>(R.id.rating_buttons_holder)
+
             walkStartButton = view.findViewById<CardView>(R.id.walk_start_button)
                 .apply {
                     setOnClickListener { viewModel.onStartPathButtonClicked() }
-                }
-
-            ratingBadlyButton = view.findViewById<CardView>(R.id.rating_badly)
-                .apply {
-                    setOnClickListener { viewModel.onRatingButtonClicked(BADLY) }
-                }
-
-            ratingNormalButton = view.findViewById<CardView>(R.id.rating_normal)
-                .apply {
-                    setOnClickListener { viewModel.onRatingButtonClicked(NORMAL) }
-                }
-
-            ratingGoodButton = view.findViewById<CardView>(R.id.rating_good)
-                .apply {
-                    setOnClickListener { viewModel.onRatingButtonClicked(GOOD) }
                 }
 
             ratingPerfectButton = view.findViewById<CardView>(R.id.rating_perfect)
                 .apply {
                     setOnClickListener { viewModel.onRatingButtonClicked(PERFECT) }
                 }
+            ratingPerfectButtonStar = view.findViewById(R.id.rating_perfect_star)
+
+            ratingGoodButton = view.findViewById<CardView>(R.id.rating_good)
+                .apply {
+                    setOnClickListener { viewModel.onRatingButtonClicked(GOOD) }
+                }
+            ratingGoodButtonStar = view.findViewById(R.id.rating_good_star)
+
+            ratingNormalButton = view.findViewById<CardView>(R.id.rating_normal)
+                .apply {
+                    setOnClickListener { viewModel.onRatingButtonClicked(NORMAL) }
+                }
+            ratingNormalButtonStar = view.findViewById(R.id.rating_normal_star)
+
+            ratingBadlyButton = view.findViewById<CardView>(R.id.rating_badly)
+                .apply {
+                    setOnClickListener { viewModel.onRatingButtonClicked(BADLY) }
+                }
+            ratingBadlyButtonStar = view.findViewById(R.id.rating_badly_star)
 
             walkStopAcceptProgress = view.findViewById(R.id.walk_stop_accept_progress)
 
@@ -311,17 +339,11 @@ class MainMapFragment : Fragment() {
         if (mapUiState.isWritePath) {
             walkStartButton.visibility = GONE
             walkStopButton.visibility = VISIBLE
-            ratingBadlyButton.visibility = VISIBLE
-            ratingNormalButton.visibility = VISIBLE
-            ratingGoodButton.visibility = VISIBLE
-            ratingPerfectButton.visibility = VISIBLE
+            ratingButtonsHolder.visibility = VISIBLE
         } else {
             walkStartButton.visibility = VISIBLE
             walkStopButton.visibility = GONE
-            ratingBadlyButton.visibility = GONE
-            ratingNormalButton.visibility = GONE
-            ratingGoodButton.visibility = GONE
-            ratingPerfectButton.visibility = GONE
+            ratingButtonsHolder.visibility = GONE
         }
 
         if (mapUiState.isPathFinished) {
@@ -339,6 +361,8 @@ class MainMapFragment : Fragment() {
             }
         }
 
+        syncRatingButtons(mapUiState.newRating)
+
         if (mapUiState.mapCenter != null) {
             mapView.controller?.setCenter(
                 GeoPoint(
@@ -349,6 +373,51 @@ class MainMapFragment : Fragment() {
         } else {
             refreshMapNow()
         }
+    }
+
+    private fun syncRatingButtons(currentRating: SegmentRating) {
+        selectRatingButton(
+            ratingPerfectButton,
+            ratingPerfectButtonStar,
+            ratingPerfectColor,
+            ratingWhiteColor,
+            currentRating == PERFECT
+        )
+        selectRatingButton(
+            ratingGoodButton,
+            ratingGoodButtonStar,
+            ratingGoodColor,
+            ratingWhiteColor,
+            currentRating == GOOD
+        )
+        selectRatingButton(
+            ratingNormalButton,
+            ratingNormalButtonStar,
+            ratingNormalColor,
+            ratingWhiteColor,
+            currentRating == NORMAL
+        )
+        selectRatingButton(
+            ratingBadlyButton,
+            ratingBadlyButtonStar,
+            ratingBadlyColor,
+            ratingWhiteColor,
+            currentRating == BADLY
+        )
+    }
+
+    private fun selectRatingButton(
+        ratingButton: CardView,
+        ratingButtonStar: ImageView,
+        @ColorInt selectedColor: Int,
+        @ColorInt unselectedColor: Int,
+        selected: Boolean
+    ) {
+        ratingButton.setCardBackgroundColor(if (selected) selectedColor else unselectedColor)
+        ImageViewCompat.setImageTintList(
+            ratingButtonStar,
+            ColorStateList.valueOf(if (selected) unselectedColor else selectedColor)
+        )
     }
 
     private fun clearMap() {
@@ -439,16 +508,16 @@ class MainMapFragment : Fragment() {
     private fun getRatingColor(segmentRating: SegmentRating): Int? {
         context?.let { context ->
             when (segmentRating) {
-                BADLY -> return@getRatingColor ContextCompat.getColor(context, R.color.rating_badly)
-                NORMAL -> return@getRatingColor ContextCompat.getColor(
-                    context,
-                    R.color.rating_normal
-                )
-                GOOD -> return@getRatingColor ContextCompat.getColor(context, R.color.rating_good)
                 PERFECT -> return@getRatingColor ContextCompat.getColor(
                     context,
                     R.color.rating_perfect
                 )
+                GOOD -> return@getRatingColor ContextCompat.getColor(context, R.color.rating_good)
+                NORMAL -> return@getRatingColor ContextCompat.getColor(
+                    context,
+                    R.color.rating_normal
+                )
+                BADLY -> return@getRatingColor ContextCompat.getColor(context, R.color.rating_badly)
             }
         }
         return null

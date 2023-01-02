@@ -41,8 +41,10 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
         MutableSharedFlow<List<String>>(1, 0, BufferOverflow.DROP_OLDEST)
     private val newPathSegmentFlow =
         MutableSharedFlow<MapPathSegment>(1, 0, BufferOverflow.DROP_OLDEST)
-    private val newCommonPathFlow = MutableSharedFlow<MapCommonPath>(1, 0, BufferOverflow.DROP_OLDEST)
-    private val newRatingPathFlow = MutableSharedFlow<MapRatingPath>(1, 0, BufferOverflow.DROP_OLDEST)
+    private val newCommonPathFlow =
+        MutableSharedFlow<MapCommonPath>(1, 0, BufferOverflow.DROP_OLDEST)
+    private val newRatingPathFlow =
+        MutableSharedFlow<MapRatingPath>(1, 0, BufferOverflow.DROP_OLDEST)
 
     private val regularLocationUpdateStateFlow = MutableStateFlow(false)
 
@@ -112,7 +114,10 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
 
     fun onNewLocationReceive(location: Location) {
         if (updateCurrentSavedPath == null || !updateCurrentSavedPath!!.isActive) {
-            drawNewSegmentToPoint(MapPoint(location.latitude, location.longitude), pathRatingRepository.getCurrentRating())
+            drawNewSegmentToPoint(
+                MapPoint(location.latitude, location.longitude),
+                pathRatingRepository.getCurrentRating()
+            )
         }
     }
 
@@ -123,7 +128,8 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
                 isWritePath = true,
                 isPathFinished = false,
                 needToClearMapNow = true,
-                mapCenter = null
+                mapCenter = null,
+                newRating = pathRatingRepository.getCurrentRating()
             )
         }
     }
@@ -177,6 +183,9 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
 
     fun onRatingButtonClicked(ratingGiven: SegmentRating) {
         pathRatingRepository.setCurrentRating(ratingGiven)
+        mapUiStateFlow.update { uiState ->
+            uiState.copy(needToClearMapNow = false, newRating = ratingGiven)
+        }
     }
 
     fun updateNewPointsIfNeeded() {

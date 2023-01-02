@@ -16,4 +16,14 @@
         <item name="android:statusBarColor">@color/white</item>
         <!-- Customize your theme here. -->
     </style>
+
+    <style name="ShapeAppearanceOverlay.CardView" parent="">
+        <item name="cornerFamilyBottomLeft">rounded</item>
+        <item name="cornerFamilyBottomRight">rounded</item>
+        <item name="cornerSizeBottomLeft">0%</item>
+        <item name="cornerSizeTopLeft">20%</item>
+        <item name="cornerSizeTopRight">20%</item>
+        <item name="cornerSizeBottomRight">0%</item>
+    </style>
+
 </resources>

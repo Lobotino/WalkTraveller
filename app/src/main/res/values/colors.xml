@@ -14,12 +14,12 @@
     <color name="dark_green">#78B500</color>
     <color name="current_path">#DD0034CF</color>
     <color name="finished_path">#9C27B0</color>
-    <color name="rating_perfect">#008359</color>
-    <color name="rating_good">#00BF54</color>
+    <color name="rating_perfect">#00BF54</color>
+    <color name="rating_good">#008359</color>
     <color name="rating_normal">#FFCC22</color>
     <color name="rating_badly">#EF434D</color>
-    <color name="rating_perfect_dark">#00794F</color>
-    <color name="rating_good_dark">#00B54A</color>
+    <color name="rating_perfect_dark">#00B54A</color>
+    <color name="rating_good_dark">#00794F</color>
     <color name="rating_normal_dark">#FFC222</color>
     <color name="rating_badly_dark">#E5394D</color>
 </resources>

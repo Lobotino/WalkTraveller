@@ -26,169 +26,58 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
 
-        <androidx.constraintlayout.widget.ConstraintLayout
+        <FrameLayout
+            android:id="@+id/walk_buttons_holder"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
-            <FrameLayout
-                android:id="@+id/walk_buttons_holder"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent">
-
-
-                <androidx.cardview.widget.CardView
-                    android:id="@+id/walk_start_button"
-                    android:layout_width="60dp"
-                    android:layout_height="60dp"
-                    android:layout_gravity="center"
-                    android:layout_margin="8dp"
-                    app:cardBackgroundColor="@color/track_start_color"
-                    app:cardCornerRadius="30dp"
-                    app:cardElevation="4dp">
-
-                    <ImageView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center"
-                        android:src="@drawable/ic_launcher_foreground" />
-
-                </androidx.cardview.widget.CardView>
-
-                <androidx.cardview.widget.CardView
-                    android:id="@+id/walk_stop_button"
-                    android:layout_width="60dp"
-                    android:layout_height="60dp"
-                    android:layout_gravity="center"
-                    android:layout_margin="8dp"
-                    android:visibility="gone"
-                    app:cardBackgroundColor="@color/track_start_color"
-                    app:cardCornerRadius="30dp"
-                    app:cardElevation="4dp">
-
-                    <ImageView
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:layout_gravity="center"
-                        android:layout_margin="10dp"
-                        android:src="@drawable/ic_baseline_flag_24" />
-
-                    <com.google.android.material.progressindicator.CircularProgressIndicator
-                        android:id="@+id/walk_stop_accept_progress"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center"
-                        app:indicatorColor="@android:color/white"
-                        app:indicatorSize="60dp"
-                        app:trackThickness="5dp" />
-
-                </androidx.cardview.widget.CardView>
-            </FrameLayout>
-
             <androidx.cardview.widget.CardView
-                android:id="@+id/rating_badly"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
-                android:layout_marginStart="16dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginEnd="8dp"
-                android:layout_marginBottom="8dp"
-                android:visibility="gone"
-                app:cardBackgroundColor="@color/rating_badly_color"
+                android:id="@+id/walk_start_button"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:layout_gravity="center"
+                android:layout_margin="6dp"
+                app:cardBackgroundColor="@color/track_start_color"
                 app:cardCornerRadius="30dp"
-                app:cardElevation="4dp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@+id/rating_normal"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent">
+                app:cardElevation="4dp">
 
                 <ImageView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
-                    android:src="@drawable/ic_baseline_star_24" />
+                    android:src="@drawable/ic_launcher_foreground" />
 
             </androidx.cardview.widget.CardView>
 
             <androidx.cardview.widget.CardView
-                android:id="@+id/rating_normal"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
-                android:layout_marginStart="8dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginEnd="16dp"
-                android:layout_marginBottom="8dp"
+                android:id="@+id/walk_stop_button"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:layout_gravity="center"
+                android:layout_margin="6dp"
                 android:visibility="gone"
-                app:cardBackgroundColor="@color/rating_normal_color"
+                app:cardBackgroundColor="@color/track_start_color"
                 app:cardCornerRadius="30dp"
-                app:cardElevation="4dp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@id/walk_buttons_holder"
-                app:layout_constraintStart_toEndOf="@id/rating_badly"
-                app:layout_constraintTop_toTopOf="parent">
+                app:cardElevation="4dp">
 
                 <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="center"
+                    android:layout_margin="10dp"
+                    android:src="@drawable/ic_baseline_flag_24" />
+
+                <com.google.android.material.progressindicator.CircularProgressIndicator
+                    android:id="@+id/walk_stop_accept_progress"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
-                    android:src="@drawable/ic_baseline_star_24" />
+                    app:indicatorColor="@android:color/white"
+                    app:indicatorSize="60dp"
+                    app:trackThickness="5dp" />
 
             </androidx.cardview.widget.CardView>
-
-            <androidx.cardview.widget.CardView
-                android:id="@+id/rating_good"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
-                android:layout_marginStart="16dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginEnd="8dp"
-                android:layout_marginBottom="8dp"
-                android:visibility="gone"
-                app:cardBackgroundColor="@color/rating_good_color"
-                app:cardCornerRadius="30dp"
-                app:cardElevation="4dp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@id/rating_perfect"
-                app:layout_constraintStart_toEndOf="@id/walk_buttons_holder"
-                app:layout_constraintTop_toTopOf="parent">
-
-                <ImageView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_baseline_star_24" />
-
-            </androidx.cardview.widget.CardView>
-
-            <androidx.cardview.widget.CardView
-                android:id="@+id/rating_perfect"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
-                android:layout_marginStart="8dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginEnd="16dp"
-                android:layout_marginBottom="8dp"
-                android:visibility="gone"
-                app:cardBackgroundColor="@color/rating_perfect_color"
-                app:cardCornerRadius="30dp"
-                app:cardElevation="4dp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toEndOf="@+id/rating_good"
-                app:layout_constraintTop_toTopOf="parent">
-
-                <ImageView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_baseline_star_24" />
-
-            </androidx.cardview.widget.CardView>
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
+        </FrameLayout>
     </androidx.cardview.widget.CardView>
 
     <androidx.cardview.widget.CardView
@@ -196,7 +85,7 @@
         android:layout_width="40dp"
         android:layout_height="40dp"
         android:layout_gravity="center"
-        android:layout_margin="16dp"
+        android:layout_margin="12dp"
         app:cardBackgroundColor="@color/show_all_tracks_color"
         app:cardCornerRadius="30dp"
         app:cardElevation="4dp"
@@ -223,5 +112,15 @@
             app:trackThickness="3dp" />
 
     </androidx.cardview.widget.CardView>
+
+    <include
+        android:id="@+id/rating_buttons_holder"
+        layout="@layout/rating_buttons"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@id/buttons_holder"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
