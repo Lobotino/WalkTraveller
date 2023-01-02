@@ -536,7 +536,7 @@ class MainMapFragment : Fragment() {
     private fun walkStopAcceptProgressStart(onFinished: () -> Unit) {
         stopAcceptProgressJob = CoroutineScope(Dispatchers.Default).launch {
             while (walkStopAcceptProgress.progress != 100) {
-                delay(9)
+                delay(5)
                 withContext(Dispatchers.Main) {
                     walkStopAcceptProgress.progress += 1
                 }
