@@ -51,7 +51,8 @@ import ru.lobotino.walktraveller.services.LocationUpdatesService.Companion.EXTRA
 import ru.lobotino.walktraveller.ui.model.MapUiState
 import ru.lobotino.walktraveller.ui.model.ShowPathsButtonState
 import ru.lobotino.walktraveller.usecases.LocalMapPathsInteractor
-import ru.lobotino.walktraveller.usecases.PermissionsInteractor
+import ru.lobotino.walktraveller.usecases.GeoPermissionsInteractor
+import ru.lobotino.walktraveller.usecases.VolumeKeysListenerPermissionsInteractor
 import ru.lobotino.walktraveller.utils.ext.toGeoPoint
 import ru.lobotino.walktraveller.viewmodels.MapViewModel
 import kotlin.properties.Delegates
@@ -242,10 +243,18 @@ class MainMapFragment : Fragment() {
                             AppCompatActivity.MODE_PRIVATE
                         )
 
-                        setPermissionsInteractor(
-                            PermissionsInteractor(
+                        setGeoPermissionsInteractor(
+                            GeoPermissionsInteractor(
                                 GeoPermissionsRepository(
                                     this@MainMapFragment,
+                                    requireContext().applicationContext
+                                )
+                            )
+                        )
+
+                        setVolumeKeysListenerPermissionsInteractor(
+                            VolumeKeysListenerPermissionsInteractor(
+                                AccessibilityPermissionRepository(
                                     requireContext().applicationContext
                                 )
                             )

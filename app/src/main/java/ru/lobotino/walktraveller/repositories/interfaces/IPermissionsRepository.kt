@@ -1,12 +1,12 @@
 package ru.lobotino.walktraveller.repositories.interfaces
 
-interface IGeoPermissionsRepository {
+interface IPermissionsRepository {
 
-    fun requestGeoPermissions(
+    fun requestPermissions(
         allGranted: (() -> Unit)? = null,
         someDenied: ((List<String>) -> Unit)? = null
     )
 
-    fun geoPermissionsGranted(): Boolean
+    fun isPermissionsGranted(): Boolean
 
 }

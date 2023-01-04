@@ -7,10 +7,10 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
-import ru.lobotino.walktraveller.repositories.interfaces.IGeoPermissionsRepository
+import ru.lobotino.walktraveller.repositories.interfaces.IPermissionsRepository
 
 class GeoPermissionsRepository(fragment: Fragment, private val appContext: Context) :
-    IGeoPermissionsRepository {
+    IPermissionsRepository {
 
     private var allGrantedCallback: (() -> Unit)? = null
     private var someDeniedCallback: ((List<String>) -> Unit)? = null
@@ -39,13 +39,13 @@ class GeoPermissionsRepository(fragment: Fragment, private val appContext: Conte
             someDeniedCallback?.invoke(deniedPermissions)
         })
 
-    override fun requestGeoPermissions(allGranted: (() -> Unit)?, someDenied: ((List<String>) -> Unit)?) {
+    override fun requestPermissions(allGranted: (() -> Unit)?, someDenied: ((List<String>) -> Unit)?) {
         allGrantedCallback = allGranted
         someDeniedCallback = someDenied
         commonGeoPermissionsRepository.requestPermissions()
     }
 
-    override fun geoPermissionsGranted(): Boolean {
+    override fun isPermissionsGranted(): Boolean {
         return checkPermissions(
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) arrayListOf(
                 ACCESS_FINE_LOCATION, ACCESS_COARSE_LOCATION, ACCESS_BACKGROUND_LOCATION

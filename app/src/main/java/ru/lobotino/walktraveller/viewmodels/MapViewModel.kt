@@ -30,7 +30,8 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     private var downloadAllRatingPathsJob: Job? = null
     private var lastPaintedPoint: MapPoint? = null
 
-    private var permissionsInteractor: IPermissionsInteractor? = null
+    private var geoPermissionsInteractor: IPermissionsInteractor? = null
+    private var volumeKeysListenerPermissionsInteractor: IPermissionsInteractor? = null
     private lateinit var defaultLocationRepository: IDefaultLocationRepository
     private lateinit var locationUpdatesStatesRepository: ILocationUpdatesStatesRepository
     private lateinit var pathRatingRepository: IPathRatingRepository
@@ -66,8 +67,12 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     val observeMapUiState: Flow<MapUiState> = mapUiStateFlow
     val observeRegularLocationUpdate: Flow<Boolean> = regularLocationUpdateStateFlow
 
-    fun setPermissionsInteractor(permissionsInteractor: IPermissionsInteractor) {
-        this.permissionsInteractor = permissionsInteractor
+    fun setGeoPermissionsInteractor(geoPermissionsInteractor: IPermissionsInteractor) {
+        this.geoPermissionsInteractor = geoPermissionsInteractor
+    }
+
+    fun setVolumeKeysListenerPermissionsInteractor(volumeKeysListenerPermissionsInteractor: IPermissionsInteractor) {
+        this.volumeKeysListenerPermissionsInteractor = volumeKeysListenerPermissionsInteractor
     }
 
     fun setMapPathInteractor(mapPathsInteractor: IMapPathsInteractor) {
@@ -87,7 +92,11 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun onInitFinish() {
-        permissionsInteractor?.requestGeoPermissions(someDenied = { deniedPermissions ->
+        geoPermissionsInteractor?.requestPermissions(allGranted = {
+            volumeKeysListenerPermissionsInteractor?.requestPermissions(someDenied = { deniedPermissions ->
+                permissionsDeniedSharedFlow.tryEmit(deniedPermissions)
+            })
+        }, someDenied = { deniedPermissions ->
             permissionsDeniedSharedFlow.tryEmit(deniedPermissions)
         })
 
@@ -97,7 +106,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun onGeoLocationUpdaterConnected() {
-        permissionsInteractor?.requestGeoPermissions(someDenied = { deniedPermissions ->
+        geoPermissionsInteractor?.requestPermissions(someDenied = { deniedPermissions ->
             permissionsDeniedSharedFlow.tryEmit(deniedPermissions)
         })
     }
