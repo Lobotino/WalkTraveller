@@ -45,6 +45,7 @@ import ru.lobotino.walktraveller.model.map.MapCommonPath
 import ru.lobotino.walktraveller.model.map.MapPathSegment
 import ru.lobotino.walktraveller.model.map.MapRatingPath
 import ru.lobotino.walktraveller.repositories.*
+import ru.lobotino.walktraveller.services.VolumeKeysDetectorService
 import ru.lobotino.walktraveller.services.LocationUpdatesService
 import ru.lobotino.walktraveller.services.LocationUpdatesService.Companion.EXTRA_LOCATION
 import ru.lobotino.walktraveller.ui.model.MapUiState
@@ -115,6 +116,12 @@ class MainMapFragment : Fragment() {
             if (location != null) {
                 viewModel.onNewLocationReceive(location)
             }
+        }
+    }
+
+    private val ratingChangeReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            viewModel.onNewRatingReceive()
         }
     }
 
@@ -319,6 +326,10 @@ class MainMapFragment : Fragment() {
         LocalBroadcastManager.getInstance(requireContext()).registerReceiver(
             locationChangeReceiver,
             IntentFilter(LocationUpdatesService.ACTION_BROADCAST)
+        )
+        LocalBroadcastManager.getInstance(requireContext()).registerReceiver(
+            ratingChangeReceiver,
+            IntentFilter(VolumeKeysDetectorService.RATING_CHANGES_BROADCAST)
         )
         super.onResume()
     }

@@ -121,6 +121,16 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun onNewRatingReceive() {
+        mapUiStateFlow.update { uiState ->
+            uiState.copy(
+                mapCenter = null,
+                needToClearMapNow = false,
+                newRating = pathRatingRepository.getCurrentRating(),
+            )
+        }
+    }
+
     fun onStartPathButtonClicked() {
         regularLocationUpdateStateFlow.tryEmit(true)
         mapUiStateFlow.update { uiState ->

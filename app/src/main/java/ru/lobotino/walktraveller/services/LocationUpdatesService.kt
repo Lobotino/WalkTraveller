@@ -31,10 +31,12 @@ import ru.lobotino.walktraveller.repositories.LocationNotificationRepository.Com
 import ru.lobotino.walktraveller.repositories.interfaces.ILocationUpdatesRepository
 import ru.lobotino.walktraveller.repositories.interfaces.ILocationUpdatesStatesRepository
 import ru.lobotino.walktraveller.ui.MainActivity
-import ru.lobotino.walktraveller.usecases.*
+import ru.lobotino.walktraveller.usecases.CurrentPathInteractor
+import ru.lobotino.walktraveller.usecases.LocationMediator
+import ru.lobotino.walktraveller.usecases.LocationNotificationInteractor
+import ru.lobotino.walktraveller.usecases.interfaces.ICurrentPathInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.ILocationMediator
 import ru.lobotino.walktraveller.usecases.interfaces.ILocationNotificationInteractor
-import ru.lobotino.walktraveller.usecases.interfaces.ICurrentPathInteractor
 
 
 class LocationUpdatesService : Service() {
