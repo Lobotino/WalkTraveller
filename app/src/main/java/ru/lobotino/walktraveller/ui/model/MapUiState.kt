@@ -9,5 +9,6 @@ data class MapUiState(
     val needToClearMapNow: Boolean,
     val mapCenter: MapPoint?,
     val showPathsButtonState: ShowPathsButtonState = ShowPathsButtonState.DEFAULT,
-    val newRating: SegmentRating = SegmentRating.NORMAL
+    val newRating: SegmentRating = SegmentRating.NORMAL,
+    val bottomMenuState: BottomMenuState = BottomMenuState.DEFAULT
 )

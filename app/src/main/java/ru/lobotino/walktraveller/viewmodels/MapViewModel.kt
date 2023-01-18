@@ -19,6 +19,7 @@ import ru.lobotino.walktraveller.model.map.MapRatingPath
 import ru.lobotino.walktraveller.repositories.interfaces.IDefaultLocationRepository
 import ru.lobotino.walktraveller.repositories.interfaces.ILocationUpdatesStatesRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IPathRatingRepository
+import ru.lobotino.walktraveller.ui.model.BottomMenuState
 import ru.lobotino.walktraveller.ui.model.MapUiState
 import ru.lobotino.walktraveller.ui.model.ShowPathsButtonState
 import ru.lobotino.walktraveller.usecases.interfaces.IMapPathsInteractor
@@ -249,6 +250,24 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
                     needToDraw = true
                 }
             }
+        }
+    }
+
+    fun onShowPathsMenuClicked() {
+        mapUiStateFlow.update { uiState ->
+            uiState.copy(
+                needToClearMapNow = false,
+                bottomMenuState = BottomMenuState.PATHS_MENU
+            )
+        }
+    }
+
+    fun onHidePathsMenuClicked() {
+        mapUiStateFlow.update { uiState ->
+            uiState.copy(
+                needToClearMapNow = false,
+                bottomMenuState = BottomMenuState.DEFAULT
+            )
         }
     }
 }

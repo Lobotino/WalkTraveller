@@ -9,14 +9,14 @@
         android:id="@+id/map_view_container"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        app:layout_constraintBottom_toTopOf="@id/buttons_holder"
+        app:layout_constraintBottom_toTopOf="@id/bottom_menu"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         tools:background="@color/dark_green" />
 
     <androidx.cardview.widget.CardView
-        android:id="@+id/buttons_holder"
+        android:id="@+id/bottom_menu"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:cardBackgroundColor="@color/light_gray"
@@ -27,56 +27,105 @@
         app:layout_constraintStart_toStartOf="parent">
 
         <FrameLayout
-            android:id="@+id/walk_buttons_holder"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
-            <androidx.cardview.widget.CardView
-                android:id="@+id/walk_start_button"
-                android:layout_width="60dp"
-                android:layout_height="60dp"
-                android:layout_gravity="center"
-                android:layout_margin="6dp"
-                app:cardBackgroundColor="@color/track_start_color"
-                app:cardCornerRadius="30dp"
-                app:cardElevation="4dp">
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/walk_buttons_holder"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
 
-                <ImageView
+                <FrameLayout
+                    android:id="@+id/walk_start_buttons_holder"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_launcher_foreground" />
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent">
 
-            </androidx.cardview.widget.CardView>
+                    <androidx.cardview.widget.CardView
+                        android:id="@+id/walk_start_button"
+                        android:layout_width="60dp"
+                        android:layout_height="60dp"
+                        android:layout_gravity="center"
+                        android:layout_margin="6dp"
+                        app:cardBackgroundColor="@color/track_start_color"
+                        app:cardCornerRadius="30dp"
+                        app:cardElevation="4dp">
 
-            <androidx.cardview.widget.CardView
-                android:id="@+id/walk_stop_button"
-                android:layout_width="60dp"
-                android:layout_height="60dp"
-                android:layout_gravity="center"
-                android:layout_margin="6dp"
+                        <ImageView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_launcher_foreground"
+                            tools:ignore="ContentDescription" />
+
+                    </androidx.cardview.widget.CardView>
+
+                    <androidx.cardview.widget.CardView
+                        android:id="@+id/walk_stop_button"
+                        android:layout_width="60dp"
+                        android:layout_height="60dp"
+                        android:layout_gravity="center"
+                        android:layout_margin="6dp"
+                        android:visibility="gone"
+                        app:cardBackgroundColor="@color/track_start_color"
+                        app:cardCornerRadius="30dp"
+                        app:cardElevation="4dp">
+
+                        <ImageView
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:layout_gravity="center"
+                            android:layout_margin="10dp"
+                            android:src="@drawable/ic_baseline_flag_24"
+                            tools:ignore="ContentDescription" />
+
+                        <com.google.android.material.progressindicator.CircularProgressIndicator
+                            android:id="@+id/walk_stop_accept_progress"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            app:indicatorColor="@android:color/white"
+                            app:indicatorSize="60dp"
+                            app:trackThickness="5dp" />
+
+                    </androidx.cardview.widget.CardView>
+                </FrameLayout>
+
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/show_paths_menu_button"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:layout_marginEnd="16dp"
+                    app:cardBackgroundColor="@color/track_start_color"
+                    app:cardCornerRadius="30dp"
+                    app:cardElevation="4dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent">
+
+                    <ImageView
+                        android:id="@+id/show_paths_menu_default_image"
+                        android:layout_width="36dp"
+                        android:layout_height="33dp"
+                        android:layout_gravity="center"
+                        android:layout_margin="8dp"
+                        android:src="@drawable/ic_path"
+                        tools:ignore="ContentDescription" />
+
+                </androidx.cardview.widget.CardView>
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <include
+                android:id="@+id/paths_menu"
+                layout="@layout/paths_menu"
                 android:visibility="gone"
-                app:cardBackgroundColor="@color/track_start_color"
-                app:cardCornerRadius="30dp"
-                app:cardElevation="4dp">
-
-                <ImageView
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_gravity="center"
-                    android:layout_margin="10dp"
-                    android:src="@drawable/ic_baseline_flag_24" />
-
-                <com.google.android.material.progressindicator.CircularProgressIndicator
-                    android:id="@+id/walk_stop_accept_progress"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    app:indicatorColor="@android:color/white"
-                    app:indicatorSize="60dp"
-                    app:trackThickness="5dp" />
-
-            </androidx.cardview.widget.CardView>
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
         </FrameLayout>
     </androidx.cardview.widget.CardView>
 
@@ -98,7 +147,8 @@
             android:layout_height="match_parent"
             android:layout_gravity="center"
             android:layout_margin="6dp"
-            android:src="@drawable/ic_baseline_grid_4x4_24" />
+            android:src="@drawable/ic_paths_grid_green"
+            tools:ignore="ContentDescription" />
 
         <com.google.android.material.progressindicator.CircularProgressIndicator
             android:id="@+id/show_paths_progress"
@@ -119,7 +169,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:visibility="gone"
-        app:layout_constraintBottom_toTopOf="@id/buttons_holder"
+        app:layout_constraintBottom_toTopOf="@id/bottom_menu"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 

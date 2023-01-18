@@ -25,6 +25,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import androidx.recyclerview.widget.RecyclerView
 import androidx.room.Room
 import com.google.android.material.progressindicator.CircularProgressIndicator
 import kotlinx.coroutines.*
@@ -48,6 +49,7 @@ import ru.lobotino.walktraveller.repositories.*
 import ru.lobotino.walktraveller.services.VolumeKeysDetectorService
 import ru.lobotino.walktraveller.services.LocationUpdatesService
 import ru.lobotino.walktraveller.services.LocationUpdatesService.Companion.EXTRA_LOCATION
+import ru.lobotino.walktraveller.ui.model.BottomMenuState
 import ru.lobotino.walktraveller.ui.model.MapUiState
 import ru.lobotino.walktraveller.ui.model.ShowPathsButtonState
 import ru.lobotino.walktraveller.usecases.LocalMapPathsInteractor
@@ -76,6 +78,11 @@ class MainMapFragment : Fragment() {
     private lateinit var showPathsButton: CardView
     private lateinit var showPathsProgress: CircularProgressIndicator
     private lateinit var showPathsDefaultImage: ImageView
+    private lateinit var showPathsMenuButton: CardView
+    private lateinit var pathsMenu: ViewGroup
+    private lateinit var walkButtonsHolder: ViewGroup
+    private lateinit var hidePathsMenuButton: ImageView
+    private lateinit var allMyPathsList: RecyclerView
 
     private var ratingWhiteColor by Delegates.notNull<@ColorInt Int>()
     private var ratingPerfectColor by Delegates.notNull<@ColorInt Int>()
@@ -223,13 +230,22 @@ class MainMapFragment : Fragment() {
 
             walkStopButton.setOnClickListener { viewModel.onStopPathButtonClicked() }
 
-            showPathsButton = view.findViewById<CardView>(R.id.show_paths_button)
-                .apply {
-                    setOnClickListener { viewModel.onShowAllPathsButtonClicked() }
-                }
+            showPathsButton = view.findViewById<CardView>(R.id.show_paths_button).apply {
+                setOnClickListener { viewModel.onShowAllPathsButtonClicked() }
+            }
 
             showPathsProgress = view.findViewById(R.id.show_paths_progress)
             showPathsDefaultImage = view.findViewById(R.id.show_paths_default_image)
+
+            pathsMenu = view.findViewById(R.id.paths_menu)
+            walkButtonsHolder = view.findViewById(R.id.walk_buttons_holder)
+            allMyPathsList = view.findViewById(R.id.paths_list)
+            showPathsMenuButton = view.findViewById<CardView>(R.id.show_paths_menu_button).apply {
+                setOnClickListener { viewModel.onShowPathsMenuClicked() }
+            }
+            hidePathsMenuButton = view.findViewById<ImageView>(R.id.paths_menu_back_button).apply {
+                setOnClickListener { viewModel.onHidePathsMenuClicked() }
+            }
         }
     }
 
@@ -378,6 +394,17 @@ class MainMapFragment : Fragment() {
             ShowPathsButtonState.LOADING -> {
                 showPathsDefaultImage.visibility = GONE
                 showPathsProgress.visibility = VISIBLE
+            }
+        }
+
+        when (mapUiState.bottomMenuState) {
+            BottomMenuState.DEFAULT -> {
+                pathsMenu.visibility = GONE
+                walkButtonsHolder.visibility = VISIBLE
+            }
+            BottomMenuState.PATHS_MENU -> {
+                pathsMenu.visibility = VISIBLE
+                walkButtonsHolder.visibility = GONE
             }
         }
 
