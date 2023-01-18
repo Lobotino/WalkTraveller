@@ -4,15 +4,18 @@ import kotlinx.coroutines.*
 import ru.lobotino.walktraveller.database.model.EntityPath
 import ru.lobotino.walktraveller.model.SegmentRating
 import ru.lobotino.walktraveller.model.map.MapCommonPath
+import ru.lobotino.walktraveller.model.map.MapPathInfo
 import ru.lobotino.walktraveller.model.map.MapPathSegment
 import ru.lobotino.walktraveller.model.map.MapRatingPath
+import ru.lobotino.walktraveller.repositories.interfaces.IPathColorGenerator
 import ru.lobotino.walktraveller.repositories.interfaces.IPathRepository
 import ru.lobotino.walktraveller.usecases.interfaces.IMapPathsInteractor
 import ru.lobotino.walktraveller.utils.ext.toMapPoint
 
 class LocalMapPathsInteractor(
     private val localPathRepository: IPathRepository,
-    private val defaultDispatcher: CoroutineDispatcher = Dispatchers.IO
+    private val defaultDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val pathColorGenerator: IPathColorGenerator
 ) : IMapPathsInteractor {
 
     companion object {
@@ -67,7 +70,11 @@ class LocalMapPathsInteractor(
                 MapRatingPath(
                     pathStartPoint.toMapPoint(),
                     ArrayList<MapPathSegment>().apply {
-                        for (entityPathSegment in withContext(defaultDispatcher) { localPathRepository.getAllPathSegments(path.id) }) {
+                        for (entityPathSegment in withContext(defaultDispatcher) {
+                            localPathRepository.getAllPathSegments(
+                                path.id
+                            )
+                        }) {
                             val getStartPoint =
                                 async(defaultDispatcher) {
                                     localPathRepository.getPointInfo(
@@ -96,6 +103,27 @@ class LocalMapPathsInteractor(
                     })
             } else {
                 null
+            }
+        }
+    }
+
+    override suspend fun getAllSavedPathsInfo(): List<MapPathInfo> {
+        return coroutineScope {
+            ArrayList<MapPathInfo>().apply {
+                for (path in withContext(defaultDispatcher) { localPathRepository.getAllPaths() }) {
+                    val pathStartSegment = withContext(defaultDispatcher) {
+                        localPathRepository.getPathStartSegment(path.id)
+                    }
+                        ?: continue
+                    add(
+                        MapPathInfo(
+                            path.id,
+                            pathStartSegment.timestamp,
+                            pathColorGenerator.getColorForPath(path.id)
+                        )
+                    )
+                }
+                sortByDescending { pathInfo -> pathInfo.timestamp }
             }
         }
     }

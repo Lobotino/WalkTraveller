@@ -51,6 +51,7 @@ import ru.lobotino.walktraveller.services.LocationUpdatesService
 import ru.lobotino.walktraveller.services.LocationUpdatesService.Companion.EXTRA_LOCATION
 import ru.lobotino.walktraveller.ui.model.BottomMenuState
 import ru.lobotino.walktraveller.ui.model.MapUiState
+import ru.lobotino.walktraveller.ui.model.PathsInfoListState
 import ru.lobotino.walktraveller.ui.model.ShowPathsButtonState
 import ru.lobotino.walktraveller.usecases.LocalMapPathsInteractor
 import ru.lobotino.walktraveller.usecases.GeoPermissionsInteractor
@@ -82,7 +83,10 @@ class MainMapFragment : Fragment() {
     private lateinit var pathsMenu: ViewGroup
     private lateinit var walkButtonsHolder: ViewGroup
     private lateinit var hidePathsMenuButton: ImageView
-    private lateinit var allMyPathsList: RecyclerView
+    private lateinit var pathsInfoList: RecyclerView
+    private lateinit var pathsInfoProgress: CircularProgressIndicator
+
+    private lateinit var pathsInfoListAdapter: PathsInfoAdapter
 
     private var ratingWhiteColor by Delegates.notNull<@ColorInt Int>()
     private var ratingPerfectColor by Delegates.notNull<@ColorInt Int>()
@@ -239,7 +243,11 @@ class MainMapFragment : Fragment() {
 
             pathsMenu = view.findViewById(R.id.paths_menu)
             walkButtonsHolder = view.findViewById(R.id.walk_buttons_holder)
-            allMyPathsList = view.findViewById(R.id.paths_list)
+            pathsInfoList = view.findViewById<RecyclerView>(R.id.paths_list).apply {
+                pathsInfoListAdapter = PathsInfoAdapter()
+                adapter = pathsInfoListAdapter
+            }
+            pathsInfoProgress = view.findViewById(R.id.paths_list_progress)
             showPathsMenuButton = view.findViewById<CardView>(R.id.show_paths_menu_button).apply {
                 setOnClickListener { viewModel.onShowPathsMenuClicked() }
             }
@@ -278,13 +286,14 @@ class MainMapFragment : Fragment() {
 
                         setMapPathInteractor(
                             LocalMapPathsInteractor(
-                                LocalPathRepository(
+                                localPathRepository = LocalPathRepository(
                                     Room.databaseBuilder(
                                         requireContext().applicationContext,
                                         AppDatabase::class.java, PATH_DATABASE_NAME
                                     ).build(),
                                     sharedPreferences
-                                )
+                                ),
+                                pathColorGenerator = PathColorGenerator(requireContext())
                             )
                         )
 
@@ -324,6 +333,10 @@ class MainMapFragment : Fragment() {
                             } else {
                                 locationUpdatesService?.stopLocationUpdates()
                             }
+                        }.launchIn(lifecycleScope)
+
+                        observeNewPathsInfoList.onEach { newPathsInfoList ->
+                            pathsInfoListAdapter.setPathsInfoItems(newPathsInfoList)
                         }.launchIn(lifecycleScope)
 
                         onInitFinish()
@@ -394,6 +407,17 @@ class MainMapFragment : Fragment() {
             ShowPathsButtonState.LOADING -> {
                 showPathsDefaultImage.visibility = GONE
                 showPathsProgress.visibility = VISIBLE
+            }
+        }
+
+        when (mapUiState.pathsInfoListState) {
+            PathsInfoListState.DEFAULT -> {
+                pathsInfoList.visibility = VISIBLE
+                pathsInfoProgress.visibility = GONE
+            }
+            PathsInfoListState.LOADING -> {
+                pathsInfoList.visibility = GONE
+                pathsInfoProgress.visibility = VISIBLE
             }
         }
 

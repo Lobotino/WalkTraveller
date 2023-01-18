@@ -172,6 +172,20 @@ class LocalPathRepository(
         }
     }
 
+    override suspend fun getPathStartSegment(pathId: Long): EntityPathSegment? {
+        val path = pathsDao.getPathById(pathId)
+        return if (path == null) {
+            null
+        } else {
+            val secondPathPoint = pathSegmentsDao.getNextPathPoint(path.startPointId)
+            if (secondPathPoint == null) {
+                null
+            } else {
+                pathSegmentsDao.getPathSegmentByPoints(path.startPointId, secondPathPoint.id)
+            }
+        }
+    }
+
     override suspend fun deletePath(pathId: Long) {
         pathsPointsRelationsDao.getAllPathPointsIds(pathId).forEach { pointId ->
             pointsDao.deletePointById(pointId)

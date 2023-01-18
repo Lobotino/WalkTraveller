@@ -11,16 +11,14 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import ru.lobotino.walktraveller.model.map.MapPoint
 import ru.lobotino.walktraveller.model.SegmentRating
-import ru.lobotino.walktraveller.model.map.MapCommonPath
-import ru.lobotino.walktraveller.model.map.MapPathSegment
-import ru.lobotino.walktraveller.model.map.MapRatingPath
+import ru.lobotino.walktraveller.model.map.*
 import ru.lobotino.walktraveller.repositories.interfaces.IDefaultLocationRepository
 import ru.lobotino.walktraveller.repositories.interfaces.ILocationUpdatesStatesRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IPathRatingRepository
 import ru.lobotino.walktraveller.ui.model.BottomMenuState
 import ru.lobotino.walktraveller.ui.model.MapUiState
+import ru.lobotino.walktraveller.ui.model.PathsInfoListState
 import ru.lobotino.walktraveller.ui.model.ShowPathsButtonState
 import ru.lobotino.walktraveller.usecases.interfaces.IMapPathsInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IPermissionsInteractor
@@ -29,6 +27,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
 
     private var updateCurrentSavedPath: Job? = null
     private var downloadAllRatingPathsJob: Job? = null
+    private var downloadAllPathsInfoJob: Job? = null
     private var lastPaintedPoint: MapPoint? = null
 
     private var geoPermissionsInteractor: IPermissionsInteractor? = null
@@ -47,6 +46,8 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
         MutableSharedFlow<MapCommonPath>(1, 0, BufferOverflow.DROP_OLDEST)
     private val newRatingPathFlow =
         MutableSharedFlow<MapRatingPath>(1, 0, BufferOverflow.DROP_OLDEST)
+    private val newPathsInfoListFlow =
+        MutableSharedFlow<List<MapPathInfo>>(1, 0, BufferOverflow.DROP_OLDEST)
 
     private val regularLocationUpdateStateFlow = MutableStateFlow(false)
 
@@ -67,6 +68,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     val observeNewRatingPath: Flow<MapRatingPath> = newRatingPathFlow
     val observeMapUiState: Flow<MapUiState> = mapUiStateFlow
     val observeRegularLocationUpdate: Flow<Boolean> = regularLocationUpdateStateFlow
+    val observeNewPathsInfoList: Flow<List<MapPathInfo>> = newPathsInfoListFlow
 
     fun setGeoPermissionsInteractor(geoPermissionsInteractor: IPermissionsInteractor) {
         this.geoPermissionsInteractor = geoPermissionsInteractor
@@ -260,9 +262,21 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
                 bottomMenuState = BottomMenuState.PATHS_MENU
             )
         }
+
+        downloadAllRatingPathsJob?.cancel()
+        downloadAllPathsInfoJob = viewModelScope.launch {
+            mapUiStateFlow.update { uiState ->
+                uiState.copy(pathsInfoListState = PathsInfoListState.LOADING)
+            }
+            newPathsInfoListFlow.tryEmit(mapPathsInteractor.getAllSavedPathsInfo())
+            mapUiStateFlow.update { uiState ->
+                uiState.copy(pathsInfoListState = PathsInfoListState.DEFAULT)
+            }
+        }
     }
 
     fun onHidePathsMenuClicked() {
+        downloadAllRatingPathsJob?.cancel()
         mapUiStateFlow.update { uiState ->
             uiState.copy(
                 needToClearMapNow = false,

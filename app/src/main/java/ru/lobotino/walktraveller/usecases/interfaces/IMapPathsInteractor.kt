@@ -1,6 +1,7 @@
 package ru.lobotino.walktraveller.usecases.interfaces
 
 import ru.lobotino.walktraveller.model.map.MapCommonPath
+import ru.lobotino.walktraveller.model.map.MapPathInfo
 import ru.lobotino.walktraveller.model.map.MapRatingPath
 
 interface IMapPathsInteractor {
@@ -10,5 +11,7 @@ interface IMapPathsInteractor {
     suspend fun getLastSavedRatingPath(): MapRatingPath?
 
     suspend fun getAllSavedRatingPaths(): List<MapRatingPath>
+
+    suspend fun getAllSavedPathsInfo(): List<MapPathInfo>
 
 }

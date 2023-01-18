@@ -22,6 +22,8 @@ interface IPathRepository {
 
     suspend fun getAllPathSegments(pathId: Long): List<EntityPathSegment>
 
+    suspend fun getPathStartSegment(pathId: Long): EntityPathSegment?
+
     suspend fun getLastPathInfo(): EntityPath?
 
     suspend fun getLastPathSegments(): List<EntityPathSegment>

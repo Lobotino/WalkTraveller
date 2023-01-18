@@ -10,5 +10,6 @@ data class MapUiState(
     val mapCenter: MapPoint?,
     val showPathsButtonState: ShowPathsButtonState = ShowPathsButtonState.DEFAULT,
     val newRating: SegmentRating = SegmentRating.NORMAL,
-    val bottomMenuState: BottomMenuState = BottomMenuState.DEFAULT
+    val bottomMenuState: BottomMenuState = BottomMenuState.DEFAULT,
+    val pathsInfoListState: PathsInfoListState = PathsInfoListState.DEFAULT
 )
