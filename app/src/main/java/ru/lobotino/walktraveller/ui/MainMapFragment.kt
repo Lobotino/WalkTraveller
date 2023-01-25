@@ -339,6 +339,14 @@ class MainMapFragment : Fragment() {
                             pathsInfoListAdapter.setPathsInfoItems(newPathsInfoList)
                         }.launchIn(lifecycleScope)
 
+                        observeNewMapCenter.onEach { newMapCenter ->
+                            mapView.controller?.setCenter(newMapCenter.toGeoPoint())
+                        }.launchIn(lifecycleScope)
+
+                        observeNeedToClearMapNow {
+                            clearMap()
+                        }
+
                         onInitFinish()
                     }
         }
@@ -381,10 +389,6 @@ class MainMapFragment : Fragment() {
     }
 
     private fun updateMapUiState(mapUiState: MapUiState) {
-        if (mapUiState.needToClearMapNow) {
-            clearMap()
-        }
-
         if (mapUiState.isWritePath) {
             walkStartButton.visibility = GONE
             walkStopButton.visibility = VISIBLE
@@ -434,16 +438,7 @@ class MainMapFragment : Fragment() {
 
         syncRatingButtons(mapUiState.newRating)
 
-        if (mapUiState.mapCenter != null) {
-            mapView.controller?.setCenter(
-                GeoPoint(
-                    mapUiState.mapCenter.latitude,
-                    mapUiState.mapCenter.longitude
-                )
-            )
-        } else {
-            refreshMapNow()
-        }
+        refreshMapNow()
     }
 
     private fun syncRatingButtons(currentRating: SegmentRating) {

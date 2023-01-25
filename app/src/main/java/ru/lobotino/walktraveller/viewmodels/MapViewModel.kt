@@ -48,16 +48,18 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
         MutableSharedFlow<MapRatingPath>(1, 0, BufferOverflow.DROP_OLDEST)
     private val newPathsInfoListFlow =
         MutableSharedFlow<List<MapPathInfo>>(1, 0, BufferOverflow.DROP_OLDEST)
+    private val newMapCenterFlow =
+        MutableSharedFlow<MapPoint>(1, 0, BufferOverflow.DROP_OLDEST)
 
     private val regularLocationUpdateStateFlow = MutableStateFlow(false)
+
+    private var clearMapNowListener: (() -> Unit)? = null
 
     private val mapUiStateFlow =
         MutableStateFlow(
             MapUiState(
                 isWritePath = false,
                 isPathFinished = false,
-                needToClearMapNow = false,
-                mapCenter = null,
                 showPathsButtonState = ShowPathsButtonState.DEFAULT
             )
         )
@@ -69,6 +71,11 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     val observeMapUiState: Flow<MapUiState> = mapUiStateFlow
     val observeRegularLocationUpdate: Flow<Boolean> = regularLocationUpdateStateFlow
     val observeNewPathsInfoList: Flow<List<MapPathInfo>> = newPathsInfoListFlow
+    val observeNewMapCenter: Flow<MapPoint> = newMapCenterFlow
+
+    fun observeNeedToClearMapNow(listener: (() -> Unit)?) {
+        clearMapNowListener = listener
+    }
 
     fun setGeoPermissionsInteractor(geoPermissionsInteractor: IPermissionsInteractor) {
         this.geoPermissionsInteractor = geoPermissionsInteractor
@@ -103,9 +110,8 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
             permissionsDeniedSharedFlow.tryEmit(deniedPermissions)
         })
 
-        mapUiStateFlow.update { uiState ->
-            uiState.copy(mapCenter = defaultLocationRepository.getDefaultUserLocation())
-        }
+        newMapCenterFlow.tryEmit(defaultLocationRepository.getDefaultUserLocation())
+        clearMapNowListener?.invoke()
     }
 
     fun onGeoLocationUpdaterConnected() {
@@ -118,8 +124,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
         mapUiStateFlow.update { uiState ->
             uiState.copy(
                 isWritePath = false,
-                isPathFinished = false,
-                mapCenter = null
+                isPathFinished = false
             )
         }
     }
@@ -135,22 +140,17 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
 
     fun onNewRatingReceive() {
         mapUiStateFlow.update { uiState ->
-            uiState.copy(
-                mapCenter = null,
-                needToClearMapNow = false,
-                newRating = pathRatingRepository.getCurrentRating(),
-            )
+            uiState.copy(newRating = pathRatingRepository.getCurrentRating())
         }
     }
 
     fun onStartPathButtonClicked() {
         regularLocationUpdateStateFlow.tryEmit(true)
+        clearMapNowListener?.invoke()
         mapUiStateFlow.update { uiState ->
             uiState.copy(
                 isWritePath = true,
                 isPathFinished = false,
-                needToClearMapNow = true,
-                mapCenter = null,
                 newRating = pathRatingRepository.getCurrentRating()
             )
         }
@@ -161,9 +161,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
         mapUiStateFlow.update { uiState ->
             uiState.copy(
                 isWritePath = false,
-                isPathFinished = true,
-                needToClearMapNow = false,
-                mapCenter = null
+                isPathFinished = true
             )
         }
         lastPaintedPoint = null
@@ -174,30 +172,19 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
             downloadAllRatingPathsJob?.cancel()
             downloadAllRatingPathsJob = null
             mapUiStateFlow.update { uiState ->
-                uiState.copy(
-                    needToClearMapNow = false,
-                    mapCenter = null,
-                    showPathsButtonState = ShowPathsButtonState.DEFAULT
-                )
+                uiState.copy(showPathsButtonState = ShowPathsButtonState.DEFAULT)
             }
         } else {
+            clearMapNowListener?.invoke()
             mapUiStateFlow.update { uiState ->
-                uiState.copy(
-                    needToClearMapNow = true,
-                    mapCenter = null,
-                    showPathsButtonState = ShowPathsButtonState.LOADING
-                )
+                uiState.copy(showPathsButtonState = ShowPathsButtonState.LOADING)
             }
             downloadAllRatingPathsJob = viewModelScope.launch {
                 for (path in mapPathsInteractor.getAllSavedRatingPaths()) {
                     newRatingPathFlow.tryEmit(path)
                 }
                 mapUiStateFlow.update { uiState ->
-                    uiState.copy(
-                        needToClearMapNow = false,
-                        mapCenter = null,
-                        showPathsButtonState = ShowPathsButtonState.DEFAULT
-                    )
+                    uiState.copy(showPathsButtonState = ShowPathsButtonState.DEFAULT)
                 }
             }
         }
@@ -206,7 +193,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     fun onRatingButtonClicked(ratingGiven: SegmentRating) {
         pathRatingRepository.setCurrentRating(ratingGiven)
         mapUiStateFlow.update { uiState ->
-            uiState.copy(needToClearMapNow = false, newRating = ratingGiven)
+            uiState.copy(newRating = ratingGiven)
         }
     }
 
@@ -222,10 +209,9 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
             updateCurrentSavedPath?.cancel()
             updateCurrentSavedPath = viewModelScope.launch {
                 mapPathsInteractor.getLastSavedRatingPath()?.let { lastSavedPath ->
-                    mapUiStateFlow.update { uiState -> uiState.copy(needToClearMapNow = true) }
                     if (needToUpdateAllPath) {
-                        lastPaintedPoint =
-                            lastSavedPath.pathSegments.first().startPoint
+                        clearMapNowListener?.invoke()
+                        lastPaintedPoint = lastSavedPath.pathSegments.first().startPoint
                     }
                     drawUnpaintedYetPathSegments(lastSavedPath.pathSegments)
                 }
@@ -257,10 +243,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
 
     fun onShowPathsMenuClicked() {
         mapUiStateFlow.update { uiState ->
-            uiState.copy(
-                needToClearMapNow = false,
-                bottomMenuState = BottomMenuState.PATHS_MENU
-            )
+            uiState.copy(bottomMenuState = BottomMenuState.PATHS_MENU)
         }
 
         downloadAllRatingPathsJob?.cancel()
@@ -278,10 +261,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     fun onHidePathsMenuClicked() {
         downloadAllRatingPathsJob?.cancel()
         mapUiStateFlow.update { uiState ->
-            uiState.copy(
-                needToClearMapNow = false,
-                bottomMenuState = BottomMenuState.DEFAULT
-            )
+            uiState.copy(bottomMenuState = BottomMenuState.DEFAULT)
         }
     }
 }
