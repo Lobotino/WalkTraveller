@@ -18,8 +18,8 @@
             android:layout_height="20dp"
             android:layout_gravity="center_vertical"
             android:layout_marginStart="6dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="8dp"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="12dp"
             app:cardBackgroundColor="@color/rating_good"
             app:cardCornerRadius="6dp" />
 
@@ -50,8 +50,8 @@
 
         <androidx.cardview.widget.CardView
             android:id="@+id/path_button_show"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
             android:layout_gravity="center_vertical|end"
             android:layout_marginStart="4dp"
             android:layout_marginEnd="4dp"
@@ -70,8 +70,8 @@
 
         <androidx.cardview.widget.CardView
             android:id="@+id/path_button_share"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
             android:layout_gravity="center_vertical|end"
             android:layout_marginStart="4dp"
             android:layout_marginEnd="4dp"
@@ -90,8 +90,8 @@
 
         <androidx.cardview.widget.CardView
             android:id="@+id/path_button_delete"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
             android:layout_gravity="center_vertical|end"
             android:layout_marginStart="4dp"
             android:layout_marginEnd="4dp"

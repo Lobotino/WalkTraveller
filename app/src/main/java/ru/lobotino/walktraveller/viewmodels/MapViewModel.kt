@@ -16,6 +16,8 @@ import ru.lobotino.walktraveller.model.map.*
 import ru.lobotino.walktraveller.repositories.interfaces.IDefaultLocationRepository
 import ru.lobotino.walktraveller.repositories.interfaces.ILocationUpdatesStatesRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IPathRatingRepository
+import ru.lobotino.walktraveller.ui.PathsInfoAdapter
+import ru.lobotino.walktraveller.ui.PathsInfoAdapter.PathItemButtonType.*
 import ru.lobotino.walktraveller.ui.model.BottomMenuState
 import ru.lobotino.walktraveller.ui.model.MapUiState
 import ru.lobotino.walktraveller.ui.model.PathsInfoListState
@@ -26,7 +28,7 @@ import ru.lobotino.walktraveller.usecases.interfaces.IPermissionsInteractor
 class MapViewModel(application: Application) : AndroidViewModel(application) {
 
     private var updateCurrentSavedPath: Job? = null
-    private var downloadAllRatingPathsJob: Job? = null
+    private var downloadRatingPathsJob: Job? = null
     private var downloadAllPathsInfoJob: Job? = null
     private var lastPaintedPoint: MapPoint? = null
 
@@ -168,9 +170,9 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun onShowAllPathsButtonClicked() {
-        if (downloadAllRatingPathsJob?.isActive == true || mapUiStateFlow.value.showPathsButtonState == ShowPathsButtonState.LOADING) {
-            downloadAllRatingPathsJob?.cancel()
-            downloadAllRatingPathsJob = null
+        if (downloadRatingPathsJob?.isActive == true || mapUiStateFlow.value.showPathsButtonState == ShowPathsButtonState.LOADING) {
+            downloadRatingPathsJob?.cancel()
+            downloadRatingPathsJob = null
             mapUiStateFlow.update { uiState ->
                 uiState.copy(showPathsButtonState = ShowPathsButtonState.DEFAULT)
             }
@@ -179,7 +181,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
             mapUiStateFlow.update { uiState ->
                 uiState.copy(showPathsButtonState = ShowPathsButtonState.LOADING)
             }
-            downloadAllRatingPathsJob = viewModelScope.launch {
+            downloadRatingPathsJob = viewModelScope.launch {
                 for (path in mapPathsInteractor.getAllSavedRatingPaths()) {
                     newRatingPathFlow.tryEmit(path)
                 }
@@ -246,7 +248,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
             uiState.copy(bottomMenuState = BottomMenuState.PATHS_MENU)
         }
 
-        downloadAllRatingPathsJob?.cancel()
+        downloadRatingPathsJob?.cancel()
         downloadAllPathsInfoJob = viewModelScope.launch {
             mapUiStateFlow.update { uiState ->
                 uiState.copy(pathsInfoListState = PathsInfoListState.LOADING)
@@ -259,9 +261,31 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun onHidePathsMenuClicked() {
-        downloadAllRatingPathsJob?.cancel()
+        downloadRatingPathsJob?.cancel()
         mapUiStateFlow.update { uiState ->
             uiState.copy(bottomMenuState = BottomMenuState.DEFAULT)
+        }
+    }
+
+    fun onPathInListButtonClicked(
+        pathId: Long,
+        clickedButtonType: PathsInfoAdapter.PathItemButtonType
+    ) {
+        when (clickedButtonType) {
+            SHOW -> {
+                clearMapNowListener?.invoke()
+                viewModelScope.launch {
+                    val savedRatingPath = mapPathsInteractor.getSavedRatingPath(pathId)
+                    if (savedRatingPath != null) {
+                        newRatingPathFlow.tryEmit(savedRatingPath)
+                    } else {
+                        //TODO handle bd error
+                    }
+                }
+            }
+            else -> {
+                //TODO
+            }
         }
     }
 }

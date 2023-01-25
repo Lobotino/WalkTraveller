@@ -2,11 +2,9 @@ package ru.lobotino.walktraveller.usecases
 
 import kotlinx.coroutines.*
 import ru.lobotino.walktraveller.database.model.EntityPath
+import ru.lobotino.walktraveller.database.model.EntityPathSegment
 import ru.lobotino.walktraveller.model.SegmentRating
-import ru.lobotino.walktraveller.model.map.MapCommonPath
-import ru.lobotino.walktraveller.model.map.MapPathInfo
-import ru.lobotino.walktraveller.model.map.MapPathSegment
-import ru.lobotino.walktraveller.model.map.MapRatingPath
+import ru.lobotino.walktraveller.model.map.*
 import ru.lobotino.walktraveller.repositories.interfaces.IPathColorGenerator
 import ru.lobotino.walktraveller.repositories.interfaces.IPathRepository
 import ru.lobotino.walktraveller.usecases.interfaces.IMapPathsInteractor
@@ -75,30 +73,7 @@ class LocalMapPathsInteractor(
                                 path.id
                             )
                         }) {
-                            val getStartPoint =
-                                async(defaultDispatcher) {
-                                    localPathRepository.getPointInfo(
-                                        entityPathSegment.startPointId
-                                    )
-                                }
-                            val getFinishPoint =
-                                async(defaultDispatcher) {
-                                    localPathRepository.getPointInfo(
-                                        entityPathSegment.finishPointId
-                                    )
-                                }
-
-                            val startPoint = getStartPoint.await()
-                            val finishPoint = getFinishPoint.await()
-                            if (startPoint == null || finishPoint == null) continue
-
-                            add(
-                                MapPathSegment(
-                                    startPoint.toMapPoint(),
-                                    finishPoint.toMapPoint(),
-                                    ratingList[entityPathSegment.rating]
-                                )
-                            )
+                            add(entityPathSegment.toMapPathSegment() ?: continue)
                         }
                     })
             } else {
@@ -113,8 +88,8 @@ class LocalMapPathsInteractor(
                 for (path in withContext(defaultDispatcher) { localPathRepository.getAllPaths() }) {
                     val pathStartSegment = withContext(defaultDispatcher) {
                         localPathRepository.getPathStartSegment(path.id)
-                    }
-                        ?: continue
+                    } ?: continue
+
                     add(
                         MapPathInfo(
                             path.id,
@@ -125,6 +100,50 @@ class LocalMapPathsInteractor(
                 }
                 sortByDescending { pathInfo -> pathInfo.timestamp }
             }
+        }
+    }
+
+    override suspend fun getSavedRatingPath(pathId: Long): MapRatingPath? {
+        return coroutineScope {
+            val pathSegments = withContext(defaultDispatcher) {
+                localPathRepository.getAllPathSegments(pathId)
+            }
+
+            if (pathSegments.isEmpty()) return@coroutineScope null
+
+            val resultPathSegments = ArrayList<MapPathSegment>()
+            for (path in pathSegments) {
+                resultPathSegments.add(path.toMapPathSegment() ?: continue)
+            }
+
+            if (resultPathSegments.isNotEmpty()) {
+                MapRatingPath(resultPathSegments[0].startPoint, resultPathSegments)
+            } else {
+                null
+            }
+        }
+    }
+
+    private suspend fun EntityPathSegment.toMapPathSegment(): MapPathSegment? {
+        return coroutineScope {
+            val getStartPoint =
+                async(defaultDispatcher) {
+                    localPathRepository.getPointInfo(startPointId)
+                }
+            val getFinishPoint =
+                async(defaultDispatcher) {
+                    localPathRepository.getPointInfo(finishPointId)
+                }
+
+            val startPoint = getStartPoint.await()
+            val finishPoint = getFinishPoint.await()
+            if (startPoint == null || finishPoint == null) return@coroutineScope null
+
+            MapPathSegment(
+                startPoint.toMapPoint(),
+                finishPoint.toMapPoint(),
+                ratingList[rating]
+            )
         }
     }
 }

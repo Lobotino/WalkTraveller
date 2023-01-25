@@ -244,7 +244,9 @@ class MainMapFragment : Fragment() {
             pathsMenu = view.findViewById(R.id.paths_menu)
             walkButtonsHolder = view.findViewById(R.id.walk_buttons_holder)
             pathsInfoList = view.findViewById<RecyclerView>(R.id.paths_list).apply {
-                pathsInfoListAdapter = PathsInfoAdapter()
+                pathsInfoListAdapter = PathsInfoAdapter { pathId, itemButtonClickedType ->
+                    viewModel.onPathInListButtonClicked(pathId, itemButtonClickedType)
+                }
                 adapter = pathsInfoListAdapter
             }
             pathsInfoProgress = view.findViewById(R.id.paths_list_progress)
