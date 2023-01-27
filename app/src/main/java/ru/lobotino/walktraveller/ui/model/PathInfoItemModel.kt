@@ -4,6 +4,6 @@ import ru.lobotino.walktraveller.model.map.MapPathInfo
 
 data class PathInfoItemModel(
     val pathInfo: MapPathInfo,
-    var pathInfoItemState: PathInfoItemState = PathInfoItemState.DEFAULT,
+    var pathInfoItemShowButtonState: PathInfoItemShowButtonState = PathInfoItemShowButtonState.DEFAULT,
     var isSelected: Boolean = false
 )

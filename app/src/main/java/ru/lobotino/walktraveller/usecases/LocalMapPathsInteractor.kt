@@ -66,6 +66,7 @@ class LocalMapPathsInteractor(
                         ?: return@coroutineScope null
 
                 MapRatingPath(
+                    path.id,
                     pathStartPoint.toMapPoint(),
                     ArrayList<MapPathSegment>().apply {
                         for (entityPathSegment in withContext(defaultDispatcher) {
@@ -117,7 +118,7 @@ class LocalMapPathsInteractor(
             }
 
             if (resultPathSegments.isNotEmpty()) {
-                MapRatingPath(resultPathSegments[0].startPoint, resultPathSegments)
+                MapRatingPath(pathId, resultPathSegments[0].startPoint, resultPathSegments)
             } else {
                 null
             }

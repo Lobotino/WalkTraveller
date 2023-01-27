@@ -37,6 +37,8 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
 
     private lateinit var mapPathsInteractor: IMapPathsInteractor
 
+    private var showedPathIdsList: MutableList<Long> = ArrayList()
+
     private val permissionsDeniedSharedFlow =
         MutableSharedFlow<List<String>>(1, 0, BufferOverflow.DROP_OLDEST)
     private val newPathSegmentFlow =
@@ -50,7 +52,9 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     private val newMapCenterFlow =
         MutableSharedFlow<MapPoint>(1, 0, BufferOverflow.DROP_OLDEST)
     private val newPathInfoListItemStateFlow =
-        MutableSharedFlow<Pair<Long, PathInfoItemState>>(1, 0, BufferOverflow.DROP_OLDEST)
+        MutableSharedFlow<Pair<Long, PathInfoItemShowButtonState>>(1, 0, BufferOverflow.DROP_OLDEST)
+    private val hidePathFlow =
+        MutableSharedFlow<Long>(1, 0, BufferOverflow.DROP_OLDEST)
 
     private val regularLocationUpdateStateFlow = MutableStateFlow(false)
 
@@ -73,8 +77,9 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     val observeRegularLocationUpdate: Flow<Boolean> = regularLocationUpdateStateFlow
     val observeNewPathsInfoList: Flow<List<MapPathInfo>> = newPathsInfoListFlow
     val observeNewMapCenter: Flow<MapPoint> = newMapCenterFlow
-    val observeNewPathInfoListItemState: Flow<Pair<Long, PathInfoItemState>> =
+    val observeNewPathInfoListItemState: Flow<Pair<Long, PathInfoItemShowButtonState>> =
         newPathInfoListItemStateFlow
+    val observeHidePath: Flow<Long> = hidePathFlow
 
     fun observeNeedToClearMapNow(listener: (() -> Unit)?) {
         clearMapNowListener = listener
@@ -114,7 +119,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
         })
 
         newMapCenterFlow.tryEmit(defaultLocationRepository.getDefaultUserLocation())
-        clearMapNowListener?.invoke()
+        clearMap()
     }
 
     fun onGeoLocationUpdaterConnected() {
@@ -149,7 +154,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
 
     fun onStartPathButtonClicked() {
         regularLocationUpdateStateFlow.tryEmit(true)
-        clearMapNowListener?.invoke()
+        clearMap()
         mapUiStateFlow.update { uiState ->
             uiState.copy(
                 isWritePath = true,
@@ -178,13 +183,22 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
                 uiState.copy(showPathsButtonState = ShowPathsButtonState.DEFAULT)
             }
         } else {
-            clearMapNowListener?.invoke()
+            clearMap()
             mapUiStateFlow.update { uiState ->
                 uiState.copy(showPathsButtonState = ShowPathsButtonState.LOADING)
             }
+            if (mapUiStateFlow.value.bottomMenuState == BottomMenuState.PATHS_MENU) {
+                newPathInfoListItemStateFlow.tryEmit(Pair(-1, PathInfoItemShowButtonState.LOADING))
+            }
             downloadRatingPathsJob = viewModelScope.launch {
                 for (path in mapPathsInteractor.getAllSavedRatingPaths()) {
-                    newRatingPathFlow.tryEmit(path)
+                    showRatingPathOnMap(path)
+                    newPathInfoListItemStateFlow.tryEmit(
+                        Pair(
+                            path.pathId,
+                            PathInfoItemShowButtonState.HIDE
+                        )
+                    )
                 }
                 mapUiStateFlow.update { uiState ->
                     uiState.copy(showPathsButtonState = ShowPathsButtonState.DEFAULT)
@@ -213,7 +227,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
             updateCurrentSavedPath = viewModelScope.launch {
                 mapPathsInteractor.getLastSavedRatingPath()?.let { lastSavedPath ->
                     if (needToUpdateAllPath) {
-                        clearMapNowListener?.invoke()
+                        clearMap()
                         lastPaintedPoint = lastSavedPath.pathSegments.first().startPoint
                     }
                     drawUnpaintedYetPathSegments(lastSavedPath.pathSegments)
@@ -274,19 +288,34 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     ) {
         when (clickedButtonType) {
             SHOW -> {
-                newPathInfoListItemStateFlow.tryEmit(Pair(pathId, PathInfoItemState.LOADING))
-                viewModelScope.launch {
-                    val savedRatingPath = mapPathsInteractor.getSavedRatingPath(pathId)
-                    if (savedRatingPath != null) {
-                        newRatingPathFlow.tryEmit(savedRatingPath)
-                        newPathInfoListItemStateFlow.tryEmit(
-                            Pair(
-                                pathId,
-                                PathInfoItemState.DEFAULT
-                            )
+                if (showedPathIdsList.contains(pathId)) {
+                    hidePathFromMap(pathId)
+                    newPathInfoListItemStateFlow.tryEmit(
+                        Pair(
+                            pathId,
+                            PathInfoItemShowButtonState.DEFAULT
                         )
-                    } else {
-                        //TODO handle bd error
+                    )
+                } else {
+                    newPathInfoListItemStateFlow.tryEmit(
+                        Pair(
+                            pathId,
+                            PathInfoItemShowButtonState.LOADING
+                        )
+                    )
+                    viewModelScope.launch {
+                        val savedRatingPath = mapPathsInteractor.getSavedRatingPath(pathId)
+                        if (savedRatingPath != null) {
+                            showRatingPathOnMap(savedRatingPath)
+                            newPathInfoListItemStateFlow.tryEmit(
+                                Pair(
+                                    pathId,
+                                    PathInfoItemShowButtonState.HIDE
+                                )
+                            )
+                        } else {
+                            //TODO handle bd error
+                        }
                     }
                 }
             }
@@ -294,5 +323,24 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
                 //TODO
             }
         }
+    }
+
+    private fun showRatingPathOnMap(ratingPath: MapRatingPath) {
+        if (!showedPathIdsList.contains(ratingPath.pathId)) {
+            newRatingPathFlow.tryEmit(ratingPath)
+            showedPathIdsList.add(ratingPath.pathId)
+        }
+    }
+
+    private fun hidePathFromMap(pathId: Long) {
+        if (showedPathIdsList.contains(pathId)) {
+            showedPathIdsList.remove(pathId)
+            hidePathFlow.tryEmit(pathId)
+        }
+    }
+
+    private fun clearMap() {
+        showedPathIdsList.clear()
+        clearMapNowListener?.invoke()
     }
 }

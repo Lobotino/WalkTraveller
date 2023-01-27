@@ -67,6 +67,16 @@
                 android:src="@drawable/ic_baseline_eye_24"
                 tools:ignore="ContentDescription" />
 
+            <ImageView
+                android:id="@+id/path_button_hide_image"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_gravity="center"
+                android:layout_margin="5dp"
+                android:src="@drawable/baseline_visibility_off_24"
+                android:visibility="gone"
+                tools:ignore="ContentDescription" />
+
             <com.google.android.material.progressindicator.CircularProgressIndicator
                 android:id="@+id/path_button_show_progress"
                 android:layout_width="wrap_content"

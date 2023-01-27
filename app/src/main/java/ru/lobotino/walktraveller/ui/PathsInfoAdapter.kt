@@ -13,7 +13,7 @@ import com.google.android.material.progressindicator.CircularProgressIndicator
 import ru.lobotino.walktraveller.R
 import ru.lobotino.walktraveller.model.map.MapPathInfo
 import ru.lobotino.walktraveller.ui.model.PathInfoItemModel
-import ru.lobotino.walktraveller.ui.model.PathInfoItemState
+import ru.lobotino.walktraveller.ui.model.PathInfoItemShowButtonState
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -29,14 +29,21 @@ class PathsInfoAdapter(private val itemButtonClickedListener: (Long, PathItemBut
         notifyDataSetChanged()
     }
 
-    fun setPathShowState(pathId: Long, pathInfoItemState: PathInfoItemState) {
+    fun setPathShowState(pathId: Long, pathInfoItemShowButtonState: PathInfoItemShowButtonState) {
         for (index in pathsItems.indices) {
             if (pathsItems[index].pathInfo.pathId == pathId) {
-                pathsItems[index].pathInfoItemState = pathInfoItemState
+                pathsItems[index].pathInfoItemShowButtonState = pathInfoItemShowButtonState
                 notifyItemChanged(index)
                 break
             }
         }
+    }
+
+    fun setAllPathsShowState(pathInfoItemShowButtonState: PathInfoItemShowButtonState) {
+        for (path in pathsItems) {
+            path.pathInfoItemShowButtonState = pathInfoItemShowButtonState
+        }
+        notifyItemRangeChanged(0, pathsItems.size)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PathInfoItem {
@@ -70,6 +77,7 @@ class PathsInfoAdapter(private val itemButtonClickedListener: (Long, PathItemBut
         private val pathColor: CardView
         private val pathButtonShow: CardView
         private val pathButtonShowImage: ImageView
+        private val pathButtonHideImage: ImageView
         private val pathButtonShowProgress: CircularProgressIndicator
 
         init {
@@ -78,6 +86,7 @@ class PathsInfoAdapter(private val itemButtonClickedListener: (Long, PathItemBut
             pathColor = view.findViewById(R.id.path_color)
             pathButtonShow = view.findViewById(R.id.path_button_show)
             pathButtonShowImage = view.findViewById(R.id.path_button_show_image)
+            pathButtonHideImage = view.findViewById(R.id.path_button_hide_image)
             pathButtonShowProgress = view.findViewById(R.id.path_button_show_progress)
         }
 
@@ -91,13 +100,17 @@ class PathsInfoAdapter(private val itemButtonClickedListener: (Long, PathItemBut
             pathButtonShow.setOnClickListener {
                 itemButtonClickedListener.invoke(path.pathInfo.pathId, PathItemButtonType.SHOW)
             }
-            pathButtonShowImage.visibility = when (path.pathInfoItemState) {
-                PathInfoItemState.DEFAULT -> View.VISIBLE
-                PathInfoItemState.LOADING -> View.GONE
+            pathButtonShowImage.visibility = when (path.pathInfoItemShowButtonState) {
+                PathInfoItemShowButtonState.DEFAULT -> View.VISIBLE
+                else -> View.GONE
             }
-            pathButtonShowProgress.visibility = when (path.pathInfoItemState) {
-                PathInfoItemState.DEFAULT -> View.GONE
-                PathInfoItemState.LOADING -> View.VISIBLE
+            pathButtonHideImage.visibility = when (path.pathInfoItemShowButtonState) {
+                PathInfoItemShowButtonState.HIDE -> View.VISIBLE
+                else -> View.GONE
+            }
+            pathButtonShowProgress.visibility = when (path.pathInfoItemShowButtonState) {
+                PathInfoItemShowButtonState.LOADING -> View.VISIBLE
+                else -> View.GONE
             }
         }
 

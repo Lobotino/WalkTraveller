@@ -6,6 +6,7 @@ import android.location.Location
 import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
+import android.util.ArrayMap
 import android.view.LayoutInflater
 import android.view.MotionEvent.ACTION_DOWN
 import android.view.MotionEvent.ACTION_UP
@@ -92,6 +93,7 @@ class MainMapFragment : Fragment() {
     private var ratingNormalColor by Delegates.notNull<@ColorInt Int>()
     private var ratingBadlyColor by Delegates.notNull<@ColorInt Int>()
 
+    private val showingPathsPolylines = ArrayMap<Long, List<Polyline>>()
     private val currentPathPolylines = ArrayList<Polyline>()
     private var currentPathPolyline: Polyline? = null
     private var lastCurrentPathRating: SegmentRating? = null
@@ -347,10 +349,18 @@ class MainMapFragment : Fragment() {
                         }.launchIn(lifecycleScope)
 
                         observeNewPathInfoListItemState.onEach { pathInfoItemState ->
-                            pathsInfoListAdapter.setPathShowState(
-                                pathInfoItemState.first,
-                                pathInfoItemState.second
-                            )
+                            if (pathInfoItemState.first == -1L) {
+                                pathsInfoListAdapter.setAllPathsShowState(pathInfoItemState.second)
+                            } else {
+                                pathsInfoListAdapter.setPathShowState(
+                                    pathInfoItemState.first,
+                                    pathInfoItemState.second
+                                )
+                            }
+                        }.launchIn(lifecycleScope)
+
+                        observeHidePath.onEach { pathId ->
+                            hidePathById(pathId)
                         }.launchIn(lifecycleScope)
 
                         observeNeedToClearMapNow {
@@ -498,6 +508,7 @@ class MainMapFragment : Fragment() {
 
     private fun clearMap() {
         mapView.overlays.clear()
+        showingPathsPolylines.clear()
     }
 
     private fun showPermissionsDeniedError() {
@@ -546,6 +557,7 @@ class MainMapFragment : Fragment() {
             }
         }
         mapView.overlays.addAll(resultPolylineList)
+        showingPathsPolylines[path.pathId] = resultPolylineList
         refreshMapNow()
     }
 
@@ -578,6 +590,14 @@ class MainMapFragment : Fragment() {
             }
         }
 
+        refreshMapNow()
+    }
+
+    private fun hidePathById(pathId: Long) {
+        val hidingPath = showingPathsPolylines[pathId] ?: return
+
+        showingPathsPolylines.remove(pathId)
+        mapView.overlays.removeAll(hidingPath)
         refreshMapNow()
     }
 
