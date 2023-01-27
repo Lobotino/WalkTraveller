@@ -129,40 +129,6 @@
         </FrameLayout>
     </androidx.cardview.widget.CardView>
 
-    <androidx.cardview.widget.CardView
-        android:id="@+id/show_paths_button"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:layout_gravity="center"
-        android:layout_margin="12dp"
-        app:cardBackgroundColor="@color/white_button_color"
-        app:cardCornerRadius="30dp"
-        app:cardElevation="4dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <ImageView
-            android:id="@+id/show_paths_default_image"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_gravity="center"
-            android:layout_margin="6dp"
-            android:src="@drawable/ic_paths_grid_green"
-            tools:ignore="ContentDescription" />
-
-        <com.google.android.material.progressindicator.CircularProgressIndicator
-            android:id="@+id/show_paths_progress"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:indeterminate="true"
-            android:visibility="gone"
-            app:indicatorColor="@color/light_green"
-            app:indicatorSize="26dp"
-            app:trackThickness="3dp" />
-
-    </androidx.cardview.widget.CardView>
-
     <include
         android:id="@+id/rating_buttons_holder"
         layout="@layout/rating_buttons"

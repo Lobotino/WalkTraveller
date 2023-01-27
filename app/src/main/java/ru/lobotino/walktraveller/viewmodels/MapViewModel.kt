@@ -64,8 +64,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
         MutableStateFlow(
             MapUiState(
                 isWritePath = false,
-                isPathFinished = false,
-                showPathsButtonState = ShowPathsButtonState.DEFAULT
+                isPathFinished = false
             )
         )
 
@@ -182,26 +181,49 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
             mapUiStateFlow.update { uiState ->
                 uiState.copy(showPathsButtonState = ShowPathsButtonState.DEFAULT)
             }
+            newPathInfoListItemStateFlow.tryEmit(
+                Pair(
+                    -1,
+                    PathInfoItemShowButtonState.DEFAULT
+                )
+            )
         } else {
-            clearMap()
-            mapUiStateFlow.update { uiState ->
-                uiState.copy(showPathsButtonState = ShowPathsButtonState.LOADING)
-            }
-            if (mapUiStateFlow.value.bottomMenuState == BottomMenuState.PATHS_MENU) {
-                newPathInfoListItemStateFlow.tryEmit(Pair(-1, PathInfoItemShowButtonState.LOADING))
-            }
-            downloadRatingPathsJob = viewModelScope.launch {
-                for (path in mapPathsInteractor.getAllSavedRatingPaths()) {
-                    showRatingPathOnMap(path)
-                    newPathInfoListItemStateFlow.tryEmit(
-                        Pair(
-                            path.pathId,
-                            PathInfoItemShowButtonState.HIDE
-                        )
-                    )
-                }
+            if (mapUiStateFlow.value.showPathsButtonState == ShowPathsButtonState.HIDE) {
+                clearMap()
                 mapUiStateFlow.update { uiState ->
                     uiState.copy(showPathsButtonState = ShowPathsButtonState.DEFAULT)
+                }
+                newPathInfoListItemStateFlow.tryEmit(
+                    Pair(
+                        -1,
+                        PathInfoItemShowButtonState.DEFAULT
+                    )
+                )
+            } else {
+                clearMap()
+                mapUiStateFlow.update { uiState ->
+                    uiState.copy(showPathsButtonState = ShowPathsButtonState.LOADING)
+                }
+                newPathInfoListItemStateFlow.tryEmit(
+                    Pair(
+                        -1,
+                        PathInfoItemShowButtonState.LOADING
+                    )
+                )
+
+                downloadRatingPathsJob = viewModelScope.launch {
+                    for (path in mapPathsInteractor.getAllSavedRatingPaths()) {
+                        showRatingPathOnMap(path)
+                        newPathInfoListItemStateFlow.tryEmit(
+                            Pair(
+                                path.pathId,
+                                PathInfoItemShowButtonState.HIDE
+                            )
+                        )
+                    }
+                    mapUiStateFlow.update { uiState ->
+                        uiState.copy(showPathsButtonState = ShowPathsButtonState.HIDE)
+                    }
                 }
             }
         }
@@ -270,7 +292,10 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
             }
             newPathsInfoListFlow.tryEmit(mapPathsInteractor.getAllSavedPathsInfo())
             mapUiStateFlow.update { uiState ->
-                uiState.copy(pathsInfoListState = PathsInfoListState.DEFAULT)
+                uiState.copy(
+                    pathsInfoListState = PathsInfoListState.DEFAULT,
+                    showPathsButtonState = ShowPathsButtonState.DEFAULT
+                )
             }
         }
     }
@@ -278,7 +303,10 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     fun onHidePathsMenuClicked() {
         downloadRatingPathsJob?.cancel()
         mapUiStateFlow.update { uiState ->
-            uiState.copy(bottomMenuState = BottomMenuState.DEFAULT)
+            uiState.copy(
+                bottomMenuState = BottomMenuState.DEFAULT,
+                showPathsButtonState = ShowPathsButtonState.GONE
+            )
         }
     }
 

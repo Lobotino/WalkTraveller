@@ -86,7 +86,7 @@ class PathsInfoAdapter(private val itemButtonClickedListener: (Long, PathItemBut
             pathColor = view.findViewById(R.id.path_color)
             pathButtonShow = view.findViewById(R.id.path_button_show)
             pathButtonShowImage = view.findViewById(R.id.path_button_show_image)
-            pathButtonHideImage = view.findViewById(R.id.path_button_hide_image)
+            pathButtonHideImage = view.findViewById(R.id.show_all_paths_hide_image)
             pathButtonShowProgress = view.findViewById(R.id.path_button_show_progress)
         }
 

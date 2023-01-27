@@ -75,9 +75,10 @@ class MainMapFragment : Fragment() {
     private lateinit var ratingGoodButtonStar: ImageView
     private lateinit var ratingPerfectButtonStar: ImageView
     private lateinit var walkStopAcceptProgress: CircularProgressIndicator
-    private lateinit var showPathsButton: CardView
-    private lateinit var showPathsProgress: CircularProgressIndicator
-    private lateinit var showPathsDefaultImage: ImageView
+    private lateinit var showAllPathsButton: CardView
+    private lateinit var showAllPathsProgress: CircularProgressIndicator
+    private lateinit var showAllPathsDefaultImage: ImageView
+    private lateinit var showAllPathsHideImage: ImageView
     private lateinit var showPathsMenuButton: CardView
     private lateinit var pathsMenu: ViewGroup
     private lateinit var walkButtonsHolder: ViewGroup
@@ -234,12 +235,13 @@ class MainMapFragment : Fragment() {
 
             walkStopButton.setOnClickListener { viewModel.onStopPathButtonClicked() }
 
-            showPathsButton = view.findViewById<CardView>(R.id.show_paths_button).apply {
+            showAllPathsButton = view.findViewById<CardView>(R.id.show_all_paths_button).apply {
                 setOnClickListener { viewModel.onShowAllPathsButtonClicked() }
             }
 
-            showPathsProgress = view.findViewById(R.id.show_paths_progress)
-            showPathsDefaultImage = view.findViewById(R.id.show_paths_default_image)
+            showAllPathsProgress = view.findViewById(R.id.show_all_paths_progress)
+            showAllPathsDefaultImage = view.findViewById(R.id.show_all_paths_default_image)
+            showAllPathsHideImage = view.findViewById(R.id.show_all_paths_hide_image)
 
             pathsMenu = view.findViewById(R.id.paths_menu)
             walkButtonsHolder = view.findViewById(R.id.walk_buttons_holder)
@@ -423,15 +425,21 @@ class MainMapFragment : Fragment() {
             setLastPathFinished()
         }
 
-        when (mapUiState.showPathsButtonState) {
-            ShowPathsButtonState.DEFAULT -> {
-                showPathsDefaultImage.visibility = VISIBLE
-                showPathsProgress.visibility = GONE
-            }
-            ShowPathsButtonState.LOADING -> {
-                showPathsDefaultImage.visibility = GONE
-                showPathsProgress.visibility = VISIBLE
-            }
+        showAllPathsButton.visibility = when (mapUiState.showPathsButtonState) {
+            ShowPathsButtonState.GONE -> GONE
+            else -> VISIBLE
+        }
+        showAllPathsDefaultImage.visibility = when (mapUiState.showPathsButtonState) {
+            ShowPathsButtonState.DEFAULT -> VISIBLE
+            else -> GONE
+        }
+        showAllPathsHideImage.visibility = when (mapUiState.showPathsButtonState) {
+            ShowPathsButtonState.HIDE -> VISIBLE
+            else -> GONE
+        }
+        showAllPathsProgress.visibility = when (mapUiState.showPathsButtonState) {
+            ShowPathsButtonState.LOADING -> VISIBLE
+            else -> GONE
         }
 
         when (mapUiState.pathsInfoListState) {

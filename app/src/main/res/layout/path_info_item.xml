@@ -68,7 +68,7 @@
                 tools:ignore="ContentDescription" />
 
             <ImageView
-                android:id="@+id/path_button_hide_image"
+                android:id="@+id/show_all_paths_hide_image"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_gravity="center"
