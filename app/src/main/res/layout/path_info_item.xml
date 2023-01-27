@@ -50,33 +50,46 @@
 
         <androidx.cardview.widget.CardView
             android:id="@+id/path_button_show"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
+            android:layout_width="34dp"
+            android:layout_height="34dp"
             android:layout_gravity="center_vertical|end"
             android:layout_marginStart="4dp"
-            android:layout_marginEnd="4dp"
-            app:cardBackgroundColor="@color/white"
-            app:cardCornerRadius="10dp">
+            android:layout_marginEnd="10dp"
+            app:cardBackgroundColor="@color/white_button_color"
+            app:cardCornerRadius="15dp">
 
             <ImageView
+                android:id="@+id/path_button_show_image"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_gravity="center"
-                android:layout_margin="2dp"
+                android:layout_margin="5dp"
                 android:src="@drawable/ic_baseline_eye_24"
                 tools:ignore="ContentDescription" />
+
+            <com.google.android.material.progressindicator.CircularProgressIndicator
+                android:id="@+id/path_button_show_progress"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:indeterminate="true"
+                android:visibility="gone"
+                app:indicatorColor="@color/black"
+                app:indicatorSize="22dp"
+                app:trackThickness="3dp" />
 
         </androidx.cardview.widget.CardView>
 
         <androidx.cardview.widget.CardView
             android:id="@+id/path_button_share"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
+            android:layout_width="34dp"
+            android:layout_height="34dp"
             android:layout_gravity="center_vertical|end"
             android:layout_marginStart="4dp"
-            android:layout_marginEnd="4dp"
+            android:layout_marginEnd="10dp"
+            android:visibility="gone"
             app:cardBackgroundColor="@color/white"
-            app:cardCornerRadius="10dp">
+            app:cardCornerRadius="15dp">
 
             <ImageView
                 android:layout_width="match_parent"
@@ -90,19 +103,18 @@
 
         <androidx.cardview.widget.CardView
             android:id="@+id/path_button_delete"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
+            android:layout_width="34dp"
+            android:layout_height="34dp"
             android:layout_gravity="center_vertical|end"
-            android:layout_marginStart="4dp"
             android:layout_marginEnd="4dp"
-            app:cardBackgroundColor="@color/white"
-            app:cardCornerRadius="10dp">
+            app:cardBackgroundColor="@color/white_button_color"
+            app:cardCornerRadius="15dp">
 
             <ImageView
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_gravity="center"
-                android:layout_margin="2dp"
+                android:layout_margin="4dp"
                 android:src="@drawable/ic_baseline_delete_24"
                 tools:ignore="ContentDescription" />
 

@@ -26,6 +26,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.SimpleItemAnimator
 import androidx.room.Room
 import com.google.android.material.progressindicator.CircularProgressIndicator
 import kotlinx.coroutines.*
@@ -49,10 +50,7 @@ import ru.lobotino.walktraveller.repositories.*
 import ru.lobotino.walktraveller.services.VolumeKeysDetectorService
 import ru.lobotino.walktraveller.services.LocationUpdatesService
 import ru.lobotino.walktraveller.services.LocationUpdatesService.Companion.EXTRA_LOCATION
-import ru.lobotino.walktraveller.ui.model.BottomMenuState
-import ru.lobotino.walktraveller.ui.model.MapUiState
-import ru.lobotino.walktraveller.ui.model.PathsInfoListState
-import ru.lobotino.walktraveller.ui.model.ShowPathsButtonState
+import ru.lobotino.walktraveller.ui.model.*
 import ru.lobotino.walktraveller.usecases.LocalMapPathsInteractor
 import ru.lobotino.walktraveller.usecases.GeoPermissionsInteractor
 import ru.lobotino.walktraveller.usecases.VolumeKeysListenerPermissionsInteractor
@@ -247,6 +245,9 @@ class MainMapFragment : Fragment() {
                 pathsInfoListAdapter = PathsInfoAdapter { pathId, itemButtonClickedType ->
                     viewModel.onPathInListButtonClicked(pathId, itemButtonClickedType)
                 }
+                if (itemAnimator is SimpleItemAnimator) {
+                    (itemAnimator as SimpleItemAnimator).supportsChangeAnimations = false
+                }
                 adapter = pathsInfoListAdapter
             }
             pathsInfoProgress = view.findViewById(R.id.paths_list_progress)
@@ -343,6 +344,13 @@ class MainMapFragment : Fragment() {
 
                         observeNewMapCenter.onEach { newMapCenter ->
                             mapView.controller?.setCenter(newMapCenter.toGeoPoint())
+                        }.launchIn(lifecycleScope)
+
+                        observeNewPathInfoListItemState.onEach { pathInfoItemState ->
+                            pathsInfoListAdapter.setPathShowState(
+                                pathInfoItemState.first,
+                                pathInfoItemState.second
+                            )
                         }.launchIn(lifecycleScope)
 
                         observeNeedToClearMapNow {
@@ -538,6 +546,7 @@ class MainMapFragment : Fragment() {
             }
         }
         mapView.overlays.addAll(resultPolylineList)
+        refreshMapNow()
     }
 
     private fun createRatingSegmentPolyline(pathSegment: MapPathSegment): Polyline {

@@ -18,10 +18,7 @@ import ru.lobotino.walktraveller.repositories.interfaces.ILocationUpdatesStatesR
 import ru.lobotino.walktraveller.repositories.interfaces.IPathRatingRepository
 import ru.lobotino.walktraveller.ui.PathsInfoAdapter
 import ru.lobotino.walktraveller.ui.PathsInfoAdapter.PathItemButtonType.*
-import ru.lobotino.walktraveller.ui.model.BottomMenuState
-import ru.lobotino.walktraveller.ui.model.MapUiState
-import ru.lobotino.walktraveller.ui.model.PathsInfoListState
-import ru.lobotino.walktraveller.ui.model.ShowPathsButtonState
+import ru.lobotino.walktraveller.ui.model.*
 import ru.lobotino.walktraveller.usecases.interfaces.IMapPathsInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IPermissionsInteractor
 
@@ -52,6 +49,8 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
         MutableSharedFlow<List<MapPathInfo>>(1, 0, BufferOverflow.DROP_OLDEST)
     private val newMapCenterFlow =
         MutableSharedFlow<MapPoint>(1, 0, BufferOverflow.DROP_OLDEST)
+    private val newPathInfoListItemStateFlow =
+        MutableSharedFlow<Pair<Long, PathInfoItemState>>(1, 0, BufferOverflow.DROP_OLDEST)
 
     private val regularLocationUpdateStateFlow = MutableStateFlow(false)
 
@@ -74,6 +73,8 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     val observeRegularLocationUpdate: Flow<Boolean> = regularLocationUpdateStateFlow
     val observeNewPathsInfoList: Flow<List<MapPathInfo>> = newPathsInfoListFlow
     val observeNewMapCenter: Flow<MapPoint> = newMapCenterFlow
+    val observeNewPathInfoListItemState: Flow<Pair<Long, PathInfoItemState>> =
+        newPathInfoListItemStateFlow
 
     fun observeNeedToClearMapNow(listener: (() -> Unit)?) {
         clearMapNowListener = listener
@@ -273,11 +274,17 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     ) {
         when (clickedButtonType) {
             SHOW -> {
-                clearMapNowListener?.invoke()
+                newPathInfoListItemStateFlow.tryEmit(Pair(pathId, PathInfoItemState.LOADING))
                 viewModelScope.launch {
                     val savedRatingPath = mapPathsInteractor.getSavedRatingPath(pathId)
                     if (savedRatingPath != null) {
                         newRatingPathFlow.tryEmit(savedRatingPath)
+                        newPathInfoListItemStateFlow.tryEmit(
+                            Pair(
+                                pathId,
+                                PathInfoItemState.DEFAULT
+                            )
+                        )
                     } else {
                         //TODO handle bd error
                     }
