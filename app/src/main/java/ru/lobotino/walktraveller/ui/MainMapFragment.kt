@@ -48,12 +48,12 @@ import ru.lobotino.walktraveller.model.map.MapCommonPath
 import ru.lobotino.walktraveller.model.map.MapPathSegment
 import ru.lobotino.walktraveller.model.map.MapRatingPath
 import ru.lobotino.walktraveller.repositories.*
-import ru.lobotino.walktraveller.services.VolumeKeysDetectorService
 import ru.lobotino.walktraveller.services.LocationUpdatesService
 import ru.lobotino.walktraveller.services.LocationUpdatesService.Companion.EXTRA_LOCATION
+import ru.lobotino.walktraveller.services.VolumeKeysDetectorService
 import ru.lobotino.walktraveller.ui.model.*
-import ru.lobotino.walktraveller.usecases.LocalMapPathsInteractor
 import ru.lobotino.walktraveller.usecases.GeoPermissionsInteractor
+import ru.lobotino.walktraveller.usecases.LocalMapPathsInteractor
 import ru.lobotino.walktraveller.usecases.VolumeKeysListenerPermissionsInteractor
 import ru.lobotino.walktraveller.utils.ext.toGeoPoint
 import ru.lobotino.walktraveller.viewmodels.MapViewModel
@@ -93,6 +93,7 @@ class MainMapFragment : Fragment() {
     private var ratingGoodColor by Delegates.notNull<@ColorInt Int>()
     private var ratingNormalColor by Delegates.notNull<@ColorInt Int>()
     private var ratingBadlyColor by Delegates.notNull<@ColorInt Int>()
+    private var commonPathColor by Delegates.notNull<@ColorInt Int>()
 
     private val showingPathsPolylines = ArrayMap<Long, List<Polyline>>()
     private val currentPathPolylines = ArrayList<Polyline>()
@@ -158,6 +159,7 @@ class MainMapFragment : Fragment() {
             ratingGoodColor = ContextCompat.getColor(context, R.color.rating_good_color)
             ratingNormalColor = ContextCompat.getColor(context, R.color.rating_normal_color)
             ratingBadlyColor = ContextCompat.getColor(context, R.color.rating_badly_color)
+            commonPathColor = ContextCompat.getColor(context, R.color.common_path_color)
         }
     }
 
@@ -323,7 +325,7 @@ class MainMapFragment : Fragment() {
                         }.launchIn(lifecycleScope)
 
                         observeNewCommonPath.onEach { path ->
-                            paintNewCommonPath(path)
+                            paintNewCommonPath(path, commonPathColor)
                         }.launchIn(lifecycleScope)
 
                         observeNewRatingPath.onEach { path ->
@@ -529,11 +531,10 @@ class MainMapFragment : Fragment() {
         }
     }
 
-    private fun paintNewCommonPath(path: MapCommonPath) {
+    private fun paintNewCommonPath(path: MapCommonPath, color: Int) {
         if (context != null) {
             mapView.overlays.add(Polyline(mapView).apply {
-                outlinePaint.color =
-                    ContextCompat.getColor(requireContext(), R.color.common_path)
+                outlinePaint.color = color
 
                 setPoints(path.pathPoints.map { point ->
                     GeoPoint(
@@ -541,6 +542,8 @@ class MainMapFragment : Fragment() {
                         point.longitude
                     )
                 })
+
+                showingPathsPolylines[path.pathId] = listOf(this)
             })
             refreshMapNow()
         }

@@ -10,7 +10,7 @@
     <color name="light_gray">#F8F8F8</color>
     <color name="gray">#2C3039</color>
     <color name="white_button_pressed_state">#E3E3E3</color>
-    <color name="common_path">#1EF6E1</color>
+    <color name="common_path_color">#1EF6E1</color>
     <color name="light_green">@android:color/holo_green_light</color>
     <color name="dark_green">#78B500</color>
     <color name="current_path">#DD0034CF</color>
