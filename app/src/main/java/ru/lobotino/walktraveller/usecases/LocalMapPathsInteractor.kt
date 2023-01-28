@@ -4,7 +4,10 @@ import kotlinx.coroutines.*
 import ru.lobotino.walktraveller.database.model.EntityPath
 import ru.lobotino.walktraveller.database.model.EntityPathSegment
 import ru.lobotino.walktraveller.model.SegmentRating
-import ru.lobotino.walktraveller.model.map.*
+import ru.lobotino.walktraveller.model.map.MapCommonPath
+import ru.lobotino.walktraveller.model.map.MapPathInfo
+import ru.lobotino.walktraveller.model.map.MapPathSegment
+import ru.lobotino.walktraveller.model.map.MapRatingPath
 import ru.lobotino.walktraveller.repositories.interfaces.IPathColorGenerator
 import ru.lobotino.walktraveller.repositories.interfaces.IPathRepository
 import ru.lobotino.walktraveller.usecases.interfaces.IMapPathsInteractor
