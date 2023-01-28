@@ -8,13 +8,15 @@ import ru.lobotino.walktraveller.model.map.MapCommonPath
 import ru.lobotino.walktraveller.model.map.MapPathInfo
 import ru.lobotino.walktraveller.model.map.MapPathSegment
 import ru.lobotino.walktraveller.model.map.MapRatingPath
+import ru.lobotino.walktraveller.repositories.interfaces.ICachePathsRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IPathColorGenerator
 import ru.lobotino.walktraveller.repositories.interfaces.IPathRepository
 import ru.lobotino.walktraveller.usecases.interfaces.IMapPathsInteractor
 import ru.lobotino.walktraveller.utils.ext.toMapPoint
 
 class LocalMapPathsInteractor(
-    private val localPathRepository: IPathRepository,
+    private val databasePathRepository: IPathRepository,
+    private val cachePathRepository: ICachePathsRepository,
     private val defaultDispatcher: CoroutineDispatcher = Dispatchers.IO,
     private val pathColorGenerator: IPathColorGenerator
 ) : IMapPathsInteractor {
@@ -26,23 +28,31 @@ class LocalMapPathsInteractor(
     override suspend fun getAllSavedCommonPaths(): List<MapCommonPath> {
         return coroutineScope {
             ArrayList<MapCommonPath>().apply {
-                for (path in withContext(defaultDispatcher) { localPathRepository.getAllPaths() }) {
+                for (path in withContext(defaultDispatcher) { databasePathRepository.getAllPaths() }) {
+                    val cachedPath = cachePathRepository.getCommonPath(path.id)
+                    if (cachedPath != null) {
+                        add(cachedPath)
+                        continue
+                    }
+
                     val getStartPoint =
-                        async(defaultDispatcher) { localPathRepository.getPointInfo(path.startPointId) }
+                        async(defaultDispatcher) { databasePathRepository.getPointInfo(path.startPointId) }
 
                     val getAllPoints =
-                        async(defaultDispatcher) { localPathRepository.getAllPathPoints(path.id) }
+                        async(defaultDispatcher) { databasePathRepository.getAllPathPoints(path.id) }
 
                     val startPoint = getStartPoint.await() ?: continue
 
                     val pathPoints = getAllPoints.await()
                     if (pathPoints.isEmpty()) continue
 
-                    add(
-                        MapCommonPath(
-                            path.id,
-                            startPoint.toMapPoint(),
-                            pathPoints.map { it.toMapPoint() })
+                    add(MapCommonPath(
+                        path.id,
+                        startPoint.toMapPoint(),
+                        pathPoints.map { it.toMapPoint() })
+                        .also { ratingPath ->
+                            cachePathRepository.saveCommonPath(ratingPath)
+                        }
                     )
                 }
             }
@@ -51,15 +61,28 @@ class LocalMapPathsInteractor(
 
     override suspend fun getLastSavedRatingPath(): MapRatingPath? {
         return coroutineScope {
-            mapRatingPath(withContext(defaultDispatcher) { localPathRepository.getLastPathInfo() })
+            mapRatingPath(withContext(defaultDispatcher) { databasePathRepository.getLastPathInfo() })?.also { ratingPath ->
+                cachePathRepository.saveRatingPath(
+                    ratingPath
+                )
+            }
         }
     }
 
     override suspend fun getAllSavedRatingPaths(): List<MapRatingPath> {
         return coroutineScope {
             ArrayList<MapRatingPath>().apply {
-                for (path in withContext(defaultDispatcher) { localPathRepository.getAllPaths() }) {
-                    mapRatingPath(path)?.let { ratingPath -> add(ratingPath) }
+                for (path in withContext(defaultDispatcher) { databasePathRepository.getAllPaths() }) {
+                    val cachedPath = cachePathRepository.getRatingPath(path.id)
+                    if (cachedPath != null) {
+                        add(cachedPath)
+                        continue
+                    }
+
+                    mapRatingPath(path)?.let { ratingPath ->
+                        add(ratingPath)
+                        cachePathRepository.saveRatingPath(ratingPath)
+                    }
                 }
             }
         }
@@ -70,7 +93,7 @@ class LocalMapPathsInteractor(
             if (path != null) {
 
                 val pathStartPoint =
-                    withContext(defaultDispatcher) { localPathRepository.getPointInfo(path.startPointId) }
+                    withContext(defaultDispatcher) { databasePathRepository.getPointInfo(path.startPointId) }
                         ?: return@coroutineScope null
 
                 MapRatingPath(
@@ -78,7 +101,7 @@ class LocalMapPathsInteractor(
                     pathStartPoint.toMapPoint(),
                     ArrayList<MapPathSegment>().apply {
                         for (entityPathSegment in withContext(defaultDispatcher) {
-                            localPathRepository.getAllPathSegments(
+                            databasePathRepository.getAllPathSegments(
                                 path.id
                             )
                         }) {
@@ -94,9 +117,9 @@ class LocalMapPathsInteractor(
     override suspend fun getAllSavedPathsInfo(): List<MapPathInfo> {
         return coroutineScope {
             ArrayList<MapPathInfo>().apply {
-                for (path in withContext(defaultDispatcher) { localPathRepository.getAllPaths() }) {
+                for (path in withContext(defaultDispatcher) { databasePathRepository.getAllPaths() }) {
                     val pathStartSegment = withContext(defaultDispatcher) {
-                        localPathRepository.getPathStartSegment(path.id)
+                        databasePathRepository.getPathStartSegment(path.id)
                     } ?: continue
 
                     add(
@@ -114,8 +137,10 @@ class LocalMapPathsInteractor(
 
     override suspend fun getSavedRatingPath(pathId: Long): MapRatingPath? {
         return coroutineScope {
+            cachePathRepository.getRatingPath(pathId)?.let { return@coroutineScope it }
+
             val pathSegments = withContext(defaultDispatcher) {
-                localPathRepository.getAllPathSegments(pathId)
+                databasePathRepository.getAllPathSegments(pathId)
             }
 
             if (pathSegments.isEmpty()) return@coroutineScope null
@@ -126,7 +151,15 @@ class LocalMapPathsInteractor(
             }
 
             if (resultPathSegments.isNotEmpty()) {
-                MapRatingPath(pathId, resultPathSegments[0].startPoint, resultPathSegments)
+                MapRatingPath(
+                    pathId,
+                    resultPathSegments[0].startPoint,
+                    resultPathSegments
+                ).also { ratingPath ->
+                    cachePathRepository.saveRatingPath(
+                        ratingPath
+                    )
+                }
             } else {
                 null
             }
@@ -135,14 +168,20 @@ class LocalMapPathsInteractor(
 
     override suspend fun getSavedCommonPath(pathId: Long): MapCommonPath? {
         return coroutineScope {
+            cachePathRepository.getCommonPath(pathId)?.let { return@coroutineScope it }
+
             val pathPoints = withContext(defaultDispatcher) {
-                localPathRepository.getAllPathPoints(pathId)
+                databasePathRepository.getAllPathPoints(pathId)
                     .map { entityPoint -> entityPoint.toMapPoint() }
             }
 
             if (pathPoints.isEmpty()) return@coroutineScope null
 
-            MapCommonPath(pathId, pathPoints[0], pathPoints)
+            MapCommonPath(
+                pathId,
+                pathPoints[0],
+                pathPoints
+            ).also { commonPath -> cachePathRepository.saveCommonPath(commonPath) }
         }
     }
 
@@ -150,11 +189,11 @@ class LocalMapPathsInteractor(
         return coroutineScope {
             val getStartPoint =
                 async(defaultDispatcher) {
-                    localPathRepository.getPointInfo(startPointId)
+                    databasePathRepository.getPointInfo(startPointId)
                 }
             val getFinishPoint =
                 async(defaultDispatcher) {
-                    localPathRepository.getPointInfo(finishPointId)
+                    databasePathRepository.getPointInfo(finishPointId)
                 }
 
             val startPoint = getStartPoint.await()

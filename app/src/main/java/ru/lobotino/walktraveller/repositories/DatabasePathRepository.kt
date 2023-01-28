@@ -13,13 +13,13 @@ import ru.lobotino.walktraveller.repositories.interfaces.IPathRepository
 import java.sql.Timestamp
 import java.util.*
 
-class LocalPathRepository(
+class DatabasePathRepository(
     database: AppDatabase,
     private val sharedPreferences: SharedPreferences
 ) : IPathRepository {
 
     companion object {
-        private val TAG = LocalPathRepository::class.java.canonicalName
+        private val TAG = DatabasePathRepository::class.java.canonicalName
         private const val KEY_LAST_PATH_ID = "last_path_id"
     }
 

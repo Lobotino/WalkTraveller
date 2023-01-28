@@ -80,7 +80,7 @@ class LocationUpdatesService : Service() {
 
     private fun initLocalPathRepository() {
         pathInteractor = CurrentPathInteractor(
-            LocalPathRepository(
+            DatabasePathRepository(
                 Room.databaseBuilder(
                     applicationContext,
                     AppDatabase::class.java, PATH_DATABASE_NAME

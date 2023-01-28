@@ -295,14 +295,15 @@ class MainMapFragment : Fragment() {
 
                         setMapPathInteractor(
                             LocalMapPathsInteractor(
-                                localPathRepository = LocalPathRepository(
+                                databasePathRepository = DatabasePathRepository(
                                     Room.databaseBuilder(
                                         requireContext().applicationContext,
                                         AppDatabase::class.java, PATH_DATABASE_NAME
                                     ).build(),
                                     sharedPreferences
                                 ),
-                                pathColorGenerator = PathColorGenerator(requireContext())
+                                pathColorGenerator = PathColorGenerator(requireContext()),
+                                cachePathRepository = CachePathsRepository()
                             )
                         )
 
