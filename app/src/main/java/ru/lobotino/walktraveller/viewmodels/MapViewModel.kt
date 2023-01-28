@@ -29,6 +29,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     private var downloadAllPathsInfoJob: Job? = null
     private var backgroundCachingRatingPathsJob: Job? = null
     private var backgroundCachingCommonPathsJob: Job? = null
+    private var backgroundCachingPathsInfoJob: Job? = null
     private var lastPaintedPoint: MapPoint? = null
 
     private var geoPermissionsInteractor: IPermissionsInteractor? = null
@@ -290,10 +291,12 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
         }
 
         downloadRatingPathsJob?.cancel()
+        backgroundCachingPathsInfoJob?.cancel()
+
+        mapUiStateFlow.update { uiState ->
+            uiState.copy(pathsInfoListState = PathsInfoListState.LOADING)
+        }
         downloadAllPathsInfoJob = viewModelScope.launch {
-            mapUiStateFlow.update { uiState ->
-                uiState.copy(pathsInfoListState = PathsInfoListState.LOADING)
-            }
             newPathsInfoListFlow.tryEmit(mapPathsInteractor.getAllSavedPathsInfo())
             mapUiStateFlow.update { uiState ->
                 uiState.copy(
@@ -387,9 +390,11 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
         backgroundCachingRatingPathsJob = viewModelScope.launch {
             mapPathsInteractor.getAllSavedRatingPaths()
         }
-
         backgroundCachingCommonPathsJob = viewModelScope.launch {
             mapPathsInteractor.getAllSavedCommonPaths()
+        }
+        backgroundCachingPathsInfoJob = viewModelScope.launch {
+            mapPathsInteractor.getAllSavedPathsInfo()
         }
     }
 }

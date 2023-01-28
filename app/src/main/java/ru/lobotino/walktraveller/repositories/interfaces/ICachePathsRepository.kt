@@ -1,6 +1,7 @@
 package ru.lobotino.walktraveller.repositories.interfaces
 
 import ru.lobotino.walktraveller.model.map.MapCommonPath
+import ru.lobotino.walktraveller.model.map.MapPathInfo
 import ru.lobotino.walktraveller.model.map.MapRatingPath
 
 interface ICachePathsRepository {
@@ -9,8 +10,12 @@ interface ICachePathsRepository {
 
     fun saveCommonPath(commonPath: MapCommonPath)
 
+    fun savePathInfo(pathInfo: MapPathInfo)
+
     fun getRatingPath(pathId: Long): MapRatingPath?
 
     fun getCommonPath(pathId: Long): MapCommonPath?
+
+    fun getPathInfo(pathId: Long): MapPathInfo?
 
 }

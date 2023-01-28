@@ -118,6 +118,12 @@ class LocalMapPathsInteractor(
         return coroutineScope {
             ArrayList<MapPathInfo>().apply {
                 for (path in withContext(defaultDispatcher) { databasePathRepository.getAllPaths() }) {
+                    val cachedPathInfo = cachePathRepository.getPathInfo(path.id)
+                    if (cachedPathInfo != null) {
+                        add(cachedPathInfo)
+                        continue
+                    }
+
                     val pathStartSegment = withContext(defaultDispatcher) {
                         databasePathRepository.getPathStartSegment(path.id)
                     } ?: continue
@@ -127,7 +133,7 @@ class LocalMapPathsInteractor(
                             path.id,
                             pathStartSegment.timestamp,
                             pathColorGenerator.getColorForPath(path.id)
-                        )
+                        ).also { pathInfo -> cachePathRepository.savePathInfo(pathInfo) }
                     )
                 }
                 sortByDescending { pathInfo -> pathInfo.timestamp }
