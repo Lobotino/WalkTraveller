@@ -27,6 +27,8 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     private var updateCurrentSavedPath: Job? = null
     private var downloadRatingPathsJob: Job? = null
     private var downloadAllPathsInfoJob: Job? = null
+    private var backgroundCachingRatingPathsJob: Job? = null
+    private var backgroundCachingCommonPathsJob: Job? = null
     private var lastPaintedPoint: MapPoint? = null
 
     private var geoPermissionsInteractor: IPermissionsInteractor? = null
@@ -109,6 +111,8 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun onInitFinish() {
+        startBackgroundCachingPaths()
+
         geoPermissionsInteractor?.requestPermissions(allGranted = {
             volumeKeysListenerPermissionsInteractor?.requestPermissions(someDenied = { deniedPermissions ->
                 permissionsDeniedSharedFlow.tryEmit(deniedPermissions)
@@ -210,7 +214,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
                         PathInfoItemShowButtonState.LOADING
                     )
                 )
-
+                backgroundCachingRatingPathsJob?.cancel()
                 downloadRatingPathsJob = viewModelScope.launch {
                     for (path in mapPathsInteractor.getAllSavedRatingPaths()) {
                         showRatingPathOnMap(path)
@@ -377,5 +381,15 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     private fun clearMap() {
         showedPathIdsList.clear()
         clearMapNowListener?.invoke()
+    }
+
+    private fun startBackgroundCachingPaths() {
+        backgroundCachingRatingPathsJob = viewModelScope.launch {
+            mapPathsInteractor.getAllSavedRatingPaths()
+        }
+
+        backgroundCachingCommonPathsJob = viewModelScope.launch {
+            mapPathsInteractor.getAllSavedCommonPaths()
+        }
     }
 }
