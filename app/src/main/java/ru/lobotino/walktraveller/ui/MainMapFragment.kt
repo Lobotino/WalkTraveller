@@ -542,6 +542,7 @@ class MainMapFragment : Fragment() {
                     )
                 })
             })
+            refreshMapNow()
         }
     }
 

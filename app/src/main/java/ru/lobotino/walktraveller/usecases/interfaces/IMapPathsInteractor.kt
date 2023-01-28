@@ -8,6 +8,8 @@ interface IMapPathsInteractor {
 
     suspend fun getAllSavedCommonPaths(): List<MapCommonPath>
 
+    suspend fun getSavedCommonPath(pathId: Long): MapCommonPath?
+
     suspend fun getLastSavedRatingPath(): MapRatingPath?
 
     suspend fun getAllSavedRatingPaths(): List<MapRatingPath>

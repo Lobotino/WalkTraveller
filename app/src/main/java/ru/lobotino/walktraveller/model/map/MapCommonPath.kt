@@ -1,3 +1,3 @@
 package ru.lobotino.walktraveller.model.map
 
-data class MapCommonPath(val startPoint: MapPoint, val pathPoints: List<MapPoint>)
+data class MapCommonPath(val pathId: Long, val startPoint: MapPoint, val pathPoints: List<MapPoint>)

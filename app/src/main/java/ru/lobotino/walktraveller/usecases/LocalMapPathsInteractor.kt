@@ -35,7 +35,12 @@ class LocalMapPathsInteractor(
                     val pathPoints = getAllPoints.await()
                     if (pathPoints.isEmpty()) continue
 
-                    add(MapCommonPath(startPoint.toMapPoint(), pathPoints.map { it.toMapPoint() }))
+                    add(
+                        MapCommonPath(
+                            path.id,
+                            startPoint.toMapPoint(),
+                            pathPoints.map { it.toMapPoint() })
+                    )
                 }
             }
         }
@@ -122,6 +127,19 @@ class LocalMapPathsInteractor(
             } else {
                 null
             }
+        }
+    }
+
+    override suspend fun getSavedCommonPath(pathId: Long): MapCommonPath? {
+        return coroutineScope {
+            val pathPoints = withContext(defaultDispatcher) {
+                localPathRepository.getAllPathPoints(pathId)
+                    .map { entityPoint -> entityPoint.toMapPoint() }
+            }
+
+            if (pathPoints.isEmpty()) return@coroutineScope null
+
+            MapCommonPath(pathId, pathPoints[0], pathPoints)
         }
     }
 

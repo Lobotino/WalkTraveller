@@ -360,6 +360,13 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    private fun showCommonPathOnMap(commonPath: MapCommonPath) {
+        if (!showedPathIdsList.contains(commonPath.pathId)) {
+            newCommonPathFlow.tryEmit(commonPath)
+            showedPathIdsList.add(commonPath.pathId)
+        }
+    }
+
     private fun hidePathFromMap(pathId: Long) {
         if (showedPathIdsList.contains(pathId)) {
             showedPathIdsList.remove(pathId)
