@@ -88,6 +88,8 @@ class MainMapFragment : Fragment() {
     private lateinit var pathsInfoList: RecyclerView
     private lateinit var pathsInfoProgress: CircularProgressIndicator
 
+    private lateinit var userLocationOverlay: UserLocationOverlay
+
     private lateinit var pathsInfoListAdapter: PathsInfoAdapter
 
     private var ratingWhiteColor by Delegates.notNull<@ColorInt Int>()
@@ -176,6 +178,8 @@ class MainMapFragment : Fragment() {
                 setMultiTouchControls(true)
             }
             mapViewContainer.addView(mapView)
+
+            userLocationOverlay = UserLocationOverlay(requireContext())
 
             ratingButtonsHolder = view.findViewById<CardView>(R.id.rating_buttons_holder)
 
@@ -380,6 +384,11 @@ class MainMapFragment : Fragment() {
                             hidePathById(pathId)
                         }.launchIn(lifecycleScope)
 
+                        observeNewUserLocation().onEach { newUserLocation ->
+                            userLocationOverlay.setPosition(newUserLocation.toGeoPoint())
+                            refreshMapNow()
+                        }.launchIn(lifecycleScope)
+
                         observeNeedToClearMapNow {
                             clearMap()
                         }
@@ -532,6 +541,7 @@ class MainMapFragment : Fragment() {
     private fun clearMap() {
         mapView.overlays.clear()
         showingPathsPolylines.clear()
+        addUserLocationTracker()
     }
 
     private fun showPermissionsDeniedError() {
@@ -652,7 +662,7 @@ class MainMapFragment : Fragment() {
     }
 
     private fun refreshMapNow() {
-        mapView.controller.setCenter(mapView.mapCenter)
+        mapView.postInvalidate()
     }
 
     private fun walkStopAcceptProgressStart(onFinished: () -> Unit) {
@@ -680,5 +690,9 @@ class MainMapFragment : Fragment() {
         } else {
             false
         }
+    }
+
+    private fun addUserLocationTracker() {
+        mapView.overlays.add(userLocationOverlay)
     }
 }

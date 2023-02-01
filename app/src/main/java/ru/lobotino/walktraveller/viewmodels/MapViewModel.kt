@@ -87,6 +87,8 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
         newPathInfoListItemStateFlow
     val observeHidePath: Flow<Long> = hidePathFlow
 
+    fun observeNewUserLocation() : Flow<MapPoint> = userLocationInteractor.observeCurrentUserLocation()
+
     fun observeNeedToClearMapNow(listener: (() -> Unit)?) {
         clearMapNowListener = listener
     }

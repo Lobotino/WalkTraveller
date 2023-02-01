@@ -23,4 +23,5 @@
     <color name="rating_good_dark">#00794F</color>
     <color name="rating_normal_dark">#FFC222</color>
     <color name="rating_badly_dark">#E5394D</color>
+    <color name="user_marker_color">#187AA7</color>
 </resources>
