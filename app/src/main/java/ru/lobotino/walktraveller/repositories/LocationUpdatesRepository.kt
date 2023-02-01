@@ -12,12 +12,12 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import ru.lobotino.walktraveller.repositories.interfaces.ILocationUpdatesRepository
 
 class LocationUpdatesRepository(
-    private val fusedLocationClient: FusedLocationProviderClient
+    private val fusedLocationClient: FusedLocationProviderClient,
+    updateLocationInterval: Long
 ) : ILocationUpdatesRepository {
 
     companion object {
         private val TAG = LocationUpdatesRepository::class.java.canonicalName
-        private const val UPDATE_INTERVAL_IN_MILLISECONDS: Long = 5000
     }
 
     private val locationUpdatesFlow = MutableSharedFlow<Location>(1, 0, BufferOverflow.DROP_OLDEST)
@@ -34,7 +34,7 @@ class LocationUpdatesRepository(
     }
 
     private val regularLocationRequest =
-        LocationRequest.Builder(UPDATE_INTERVAL_IN_MILLISECONDS).apply {
+        LocationRequest.Builder(updateLocationInterval).apply {
             setPriority(Priority.PRIORITY_HIGH_ACCURACY)
         }.build()
 
@@ -83,7 +83,7 @@ class LocationUpdatesRepository(
         fusedLocationClient.removeLocationUpdates(onNewLocation)
     }
 
-    override fun updateLocationNow() {
+    override fun updateLocationNow(resultLocation: (Location) -> Unit) {
         try {
             fusedLocationClient.getCurrentLocation(
                 currentLocationRequest,
@@ -94,10 +94,10 @@ class LocationUpdatesRepository(
                     override fun isCancellationRequested() = false
                 })
                 .addOnSuccessListener { location: Location? ->
-                    if (location == null)
+                    if (location == null) {
                         Log.e(TAG, "Cannot update location now.")
-                    else {
-                        locationUpdatesFlow.tryEmit(location)
+                    } else {
+                        resultLocation(location)
                     }
                 }
         } catch (unlikely: SecurityException) {

@@ -29,6 +29,7 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.SimpleItemAnimator
 import androidx.room.Room
+import com.google.android.gms.location.LocationServices
 import com.google.android.material.progressindicator.CircularProgressIndicator
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.launchIn
@@ -54,6 +55,7 @@ import ru.lobotino.walktraveller.services.VolumeKeysDetectorService
 import ru.lobotino.walktraveller.ui.model.*
 import ru.lobotino.walktraveller.usecases.GeoPermissionsInteractor
 import ru.lobotino.walktraveller.usecases.LocalMapPathsInteractor
+import ru.lobotino.walktraveller.usecases.UserLocationInteractor
 import ru.lobotino.walktraveller.usecases.VolumeKeysListenerPermissionsInteractor
 import ru.lobotino.walktraveller.utils.ext.toGeoPoint
 import ru.lobotino.walktraveller.viewmodels.MapViewModel
@@ -316,6 +318,16 @@ class MainMapFragment : Fragment() {
                         )
 
                         setPathRatingRepository(PathRatingRepository(sharedPreferences))
+
+                        setUserLocationInteractor(
+                            UserLocationInteractor(
+                                LocationUpdatesRepository(
+                                    LocationServices.getFusedLocationProviderClient(requireActivity()),
+                                    5000
+                                ),
+                                DefaultLocationRepository(sharedPreferences)
+                            )
+                        )
 
                         observePermissionsDeniedResult.onEach {
                             showPermissionsDeniedError()

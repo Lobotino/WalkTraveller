@@ -93,10 +93,11 @@ class LocationUpdatesService : Service() {
 
     private fun initLocationUpdatesRepository() {
         locationUpdatesRepository = LocationUpdatesRepository(
-            LocationServices.getFusedLocationProviderClient(this)
+            LocationServices.getFusedLocationProviderClient(this),
+            5000
         ).apply {
             observeLocationUpdates().onEach { location ->
-                onNewLocation(location)
+                onNewPathLocation(location)
             }.launchIn(CoroutineScope(Dispatchers.Default))
 
             observeLocationUpdatesErrors().onEach {
@@ -138,7 +139,7 @@ class LocationUpdatesService : Service() {
         locationMediator = LocationMediator(lastLocation)
     }
 
-    private fun onNewLocation(newLocation: Location) {
+    private fun onNewPathLocation(newLocation: Location) {
         Log.d(TAG, "New location: ${newLocation.latitude}, ${newLocation.longitude}")
         locationMediator.onNewLocation(newLocation) { location ->
             lastLocation = location
@@ -210,10 +211,6 @@ class LocationUpdatesService : Service() {
     override fun onDestroy() {
         locationUpdatesStatesRepository.setRequestingLocationUpdates(false)
         super.onDestroy()
-    }
-
-    fun updateLocationNow() {
-        locationUpdatesRepository.updateLocationNow()
     }
 
     fun startLocationUpdates() {

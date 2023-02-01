@@ -2,14 +2,12 @@ package ru.lobotino.walktraveller.viewmodels
 
 import android.app.Application
 import android.location.Location
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import ru.lobotino.walktraveller.model.SegmentRating
 import ru.lobotino.walktraveller.model.map.*
@@ -17,12 +15,17 @@ import ru.lobotino.walktraveller.repositories.interfaces.IDefaultLocationReposit
 import ru.lobotino.walktraveller.repositories.interfaces.ILocationUpdatesStatesRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IPathRatingRepository
 import ru.lobotino.walktraveller.ui.PathsInfoAdapter
-import ru.lobotino.walktraveller.ui.PathsInfoAdapter.PathItemButtonType.*
+import ru.lobotino.walktraveller.ui.PathsInfoAdapter.PathItemButtonType.SHOW
 import ru.lobotino.walktraveller.ui.model.*
+import ru.lobotino.walktraveller.usecases.IUserLocationInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IMapPathsInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IPermissionsInteractor
 
 class MapViewModel(application: Application) : AndroidViewModel(application) {
+
+    companion object {
+        private val TAG = MapViewModel::class.java.canonicalName
+    }
 
     private var updateCurrentSavedPath: Job? = null
     private var downloadRatingPathsJob: Job? = null
@@ -37,6 +40,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     private lateinit var defaultLocationRepository: IDefaultLocationRepository
     private lateinit var locationUpdatesStatesRepository: ILocationUpdatesStatesRepository
     private lateinit var pathRatingRepository: IPathRatingRepository
+    private lateinit var userLocationInteractor: IUserLocationInteractor
 
     private lateinit var mapPathsInteractor: IMapPathsInteractor
 
@@ -111,6 +115,10 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
         this.pathRatingRepository = pathRatingRepository
     }
 
+    fun setUserLocationInteractor(userLocationInteractor: IUserLocationInteractor) {
+        this.userLocationInteractor = userLocationInteractor
+    }
+
     fun onInitFinish() {
         startBackgroundCachingPaths()
 
@@ -122,7 +130,20 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
             permissionsDeniedSharedFlow.tryEmit(deniedPermissions)
         })
 
-        newMapCenterFlow.tryEmit(defaultLocationRepository.getDefaultUserLocation())
+        userLocationInteractor.apply {
+            observeCurrentUserLocation().onEach { newUserLocation ->
+                //TODO
+            }.launchIn(viewModelScope)
+
+            observeUserLocationErrors().onEach { newUserLocationError ->
+                Log.w(TAG, newUserLocationError)
+            }.launchIn(viewModelScope)
+
+            getCurrentUserLocation { location ->
+                newMapCenterFlow.tryEmit(location)
+            }
+        }
+
         clearMap()
     }
 

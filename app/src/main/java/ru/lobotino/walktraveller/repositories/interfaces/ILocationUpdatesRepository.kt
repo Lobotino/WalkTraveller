@@ -9,7 +9,7 @@ interface ILocationUpdatesRepository {
 
     fun stopLocationUpdates()
 
-    fun updateLocationNow()
+    fun updateLocationNow(resultLocation: (Location) -> Unit)
 
     fun observeLocationUpdates(): Flow<Location>
 
