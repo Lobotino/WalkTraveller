@@ -1,12 +1,15 @@
 package ru.lobotino.walktraveller.ui
 
 import android.content.*
+import android.content.Context.SENSOR_SERVICE
 import android.content.res.ColorStateList
+import android.hardware.SensorManager
 import android.location.Location
 import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
 import android.util.ArrayMap
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.MotionEvent.ACTION_DOWN
 import android.view.MotionEvent.ACTION_UP
@@ -333,6 +336,15 @@ class MainMapFragment : Fragment() {
                             )
                         )
 
+                        setUserRotationRepository(
+                            UserRotationRepository(
+                                requireActivity().getSystemService(
+                                    SENSOR_SERVICE
+                                ) as SensorManager,
+                                lifecycleScope
+                            )
+                        )
+
                         observePermissionsDeniedResult.onEach {
                             showPermissionsDeniedError()
                         }.launchIn(lifecycleScope)
@@ -389,6 +401,11 @@ class MainMapFragment : Fragment() {
                             refreshMapNow()
                         }.launchIn(lifecycleScope)
 
+                        observeNewUserRotation().onEach { newUserRotation ->
+                            userLocationOverlay.setRotation(newUserRotation)
+                            refreshMapNow()
+                        }.launchIn(lifecycleScope)
+
                         observeNeedToClearMapNow {
                             clearMap()
                         }
@@ -414,7 +431,7 @@ class MainMapFragment : Fragment() {
 
     override fun onResume() {
         mapView.onResume()
-        viewModel.updateNewPointsIfNeeded()
+        viewModel.onResume()
         LocalBroadcastManager.getInstance(requireContext()).registerReceiver(
             locationChangeReceiver,
             IntentFilter(LocationUpdatesService.ACTION_BROADCAST)
@@ -428,6 +445,7 @@ class MainMapFragment : Fragment() {
 
     override fun onPause() {
         mapView.onPause()
+        viewModel.onPause()
         LocalBroadcastManager
             .getInstance(requireContext())
             .unregisterReceiver(locationChangeReceiver)

@@ -12,11 +12,11 @@ class UserLocationInteractor(
     private val defaultUserLocationRepository: IDefaultLocationRepository
 ) : IUserLocationInteractor {
 
-    override fun startTrackCurrentUserLocation() {
+    override fun startTrackUserLocation() {
         locationUpdatesRepository.startLocationUpdates()
     }
 
-    override fun stopTrackCurrentUserLocation() {
+    override fun stopTrackUserLocation() {
         locationUpdatesRepository.stopLocationUpdates()
     }
 

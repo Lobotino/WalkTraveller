@@ -5,9 +5,9 @@ import ru.lobotino.walktraveller.model.map.MapPoint
 
 interface IUserLocationInteractor {
 
-    fun startTrackCurrentUserLocation()
+    fun startTrackUserLocation()
 
-    fun stopTrackCurrentUserLocation()
+    fun stopTrackUserLocation()
 
     fun getCurrentUserLocation(resultLocation: (MapPoint) -> Unit)
 

@@ -14,6 +14,7 @@ import ru.lobotino.walktraveller.model.map.*
 import ru.lobotino.walktraveller.repositories.interfaces.IDefaultLocationRepository
 import ru.lobotino.walktraveller.repositories.interfaces.ILocationUpdatesStatesRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IPathRatingRepository
+import ru.lobotino.walktraveller.repositories.interfaces.IUserRotationRepository
 import ru.lobotino.walktraveller.ui.PathsInfoAdapter
 import ru.lobotino.walktraveller.ui.PathsInfoAdapter.PathItemButtonType.SHOW
 import ru.lobotino.walktraveller.ui.model.*
@@ -26,6 +27,8 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     companion object {
         private val TAG = MapViewModel::class.java.canonicalName
     }
+
+    private var isInitialized = false
 
     private var updateCurrentSavedPath: Job? = null
     private var downloadRatingPathsJob: Job? = null
@@ -41,6 +44,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     private lateinit var locationUpdatesStatesRepository: ILocationUpdatesStatesRepository
     private lateinit var pathRatingRepository: IPathRatingRepository
     private lateinit var userLocationInteractor: IUserLocationInteractor
+    private lateinit var userRotationRepository: IUserRotationRepository
 
     private lateinit var mapPathsInteractor: IMapPathsInteractor
 
@@ -87,7 +91,10 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
         newPathInfoListItemStateFlow
     val observeHidePath: Flow<Long> = hidePathFlow
 
-    fun observeNewUserLocation() : Flow<MapPoint> = userLocationInteractor.observeCurrentUserLocation()
+    fun observeNewUserLocation(): Flow<MapPoint> =
+        userLocationInteractor.observeCurrentUserLocation()
+
+    fun observeNewUserRotation(): Flow<Float> = userRotationRepository.observeUserRotation()
 
     fun observeNeedToClearMapNow(listener: (() -> Unit)?) {
         clearMapNowListener = listener
@@ -121,6 +128,10 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
         this.userLocationInteractor = userLocationInteractor
     }
 
+    fun setUserRotationRepository(userRotationRepository: IUserRotationRepository) {
+        this.userRotationRepository = userRotationRepository
+    }
+
     fun onInitFinish() {
         startBackgroundCachingPaths()
 
@@ -146,7 +157,25 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
 
+        userLocationInteractor.startTrackUserLocation()
+        userRotationRepository.startTrackUserRotation()
+
         clearMap()
+
+        isInitialized = true
+    }
+
+    fun onResume() {
+        if (isInitialized) {
+            userLocationInteractor.startTrackUserLocation()
+            userRotationRepository.startTrackUserRotation()
+            updateNewPointsIfNeeded()
+        }
+    }
+
+    fun onPause() {
+        userLocationInteractor.stopTrackUserLocation()
+        userRotationRepository.stopTrackUserRotation()
     }
 
     fun onGeoLocationUpdaterConnected() {
@@ -264,7 +293,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun updateNewPointsIfNeeded() {
+    private fun updateNewPointsIfNeeded() {
         var needToUpdateAllPath = false
         if (locationUpdatesStatesRepository.isRequestingLocationUpdates() && !mapUiStateFlow.value.isWritePath) {
             mapUiStateFlow.update { uiState -> uiState.copy(isWritePath = true) }
