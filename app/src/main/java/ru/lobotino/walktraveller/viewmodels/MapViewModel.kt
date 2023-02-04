@@ -29,6 +29,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private var isInitialized = false
+    private var updatingYetUnpaintedPaths = false
 
     private var updateCurrentSavedPath: Job? = null
     private var downloadRatingPathsJob: Job? = null
@@ -176,6 +177,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     fun onPause() {
         userLocationInteractor.stopTrackUserLocation()
         userRotationRepository.stopTrackUserRotation()
+        updatingYetUnpaintedPaths = false
     }
 
     fun onGeoLocationUpdaterConnected() {
@@ -194,7 +196,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun onNewLocationReceive(location: Location) {
-        if (updateCurrentSavedPath == null || !updateCurrentSavedPath!!.isActive) {
+        if (!updatingYetUnpaintedPaths) {
             drawNewSegmentToPoint(
                 MapPoint(location.latitude, location.longitude),
                 pathRatingRepository.getCurrentRating()
@@ -294,6 +296,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun updateNewPointsIfNeeded() {
+        updatingYetUnpaintedPaths = true
         var needToUpdateAllPath = false
         if (locationUpdatesStatesRepository.isRequestingLocationUpdates() && !mapUiStateFlow.value.isWritePath) {
             mapUiStateFlow.update { uiState -> uiState.copy(isWritePath = true) }
@@ -310,8 +313,11 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
                         lastPaintedPoint = lastSavedPath.pathSegments.first().startPoint
                     }
                     drawUnpaintedYetPathSegments(lastSavedPath.pathSegments)
+                    updatingYetUnpaintedPaths = false
                 }
             }
+        } else {
+            updatingYetUnpaintedPaths = false
         }
     }
 
