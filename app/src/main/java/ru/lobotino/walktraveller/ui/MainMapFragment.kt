@@ -9,7 +9,6 @@ import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
 import android.util.ArrayMap
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.MotionEvent.ACTION_DOWN
 import android.view.MotionEvent.ACTION_UP
@@ -229,6 +228,7 @@ class MainMapFragment : Fragment() {
                                 }
                                 true
                             }
+
                             ACTION_UP -> {
                                 tryCancelWalkStopAcceptProgress().also { canceled ->
                                     if (canceled) {
@@ -237,6 +237,7 @@ class MainMapFragment : Fragment() {
                                 }
                                 true
                             }
+
                             else -> {
                                 true
                             }
@@ -319,7 +320,7 @@ class MainMapFragment : Fragment() {
                         setDefaultLocationRepository(DefaultLocationRepository(sharedPreferences))
 
                         setLocationUpdatesStatesRepository(
-                            LocationUpdatesStatesRepository(
+                            WritingPathStatesRepository(
                                 sharedPreferences
                             )
                         )
@@ -396,9 +397,22 @@ class MainMapFragment : Fragment() {
                             hidePathById(pathId)
                         }.launchIn(lifecycleScope)
 
-                        observeNewUserLocation().onEach { newUserLocation ->
+                        observeNewCurrentUserLocation.onEach { newUserLocation ->
                             userLocationOverlay.setPosition(newUserLocation.toGeoPoint())
                             refreshMapNow()
+                        }.launchIn(lifecycleScope)
+
+                        observeWritingPathNow.onEach { isWritingPathNow ->
+                            if (isWritingPathNow) {
+                                walkStartButton.visibility = GONE
+                                walkStopButton.visibility = VISIBLE
+                                ratingButtonsHolder.visibility = VISIBLE
+                            } else {
+                                locationUpdatesService?.finishCurrentPath()
+                                walkStartButton.visibility = VISIBLE
+                                walkStopButton.visibility = GONE
+                                ratingButtonsHolder.visibility = GONE
+                            }
                         }.launchIn(lifecycleScope)
 
                         observeNewUserRotation().onEach { newUserRotation ->
@@ -453,16 +467,6 @@ class MainMapFragment : Fragment() {
     }
 
     private fun updateMapUiState(mapUiState: MapUiState) {
-        if (mapUiState.isWritePath) {
-            walkStartButton.visibility = GONE
-            walkStopButton.visibility = VISIBLE
-            ratingButtonsHolder.visibility = VISIBLE
-        } else {
-            walkStartButton.visibility = VISIBLE
-            walkStopButton.visibility = GONE
-            ratingButtonsHolder.visibility = GONE
-        }
-
         if (mapUiState.isPathFinished) {
             setLastPathFinished()
         }
@@ -489,6 +493,7 @@ class MainMapFragment : Fragment() {
                 pathsInfoList.visibility = VISIBLE
                 pathsInfoProgress.visibility = GONE
             }
+
             PathsInfoListState.LOADING -> {
                 pathsInfoList.visibility = GONE
                 pathsInfoProgress.visibility = VISIBLE
@@ -500,6 +505,7 @@ class MainMapFragment : Fragment() {
                 pathsMenu.visibility = GONE
                 walkButtonsHolder.visibility = VISIBLE
             }
+
             BottomMenuState.PATHS_MENU -> {
                 pathsMenu.visibility = VISIBLE
                 walkButtonsHolder.visibility = GONE
@@ -662,11 +668,13 @@ class MainMapFragment : Fragment() {
                     context,
                     R.color.rating_perfect
                 )
+
                 GOOD -> return@getRatingColor ContextCompat.getColor(context, R.color.rating_good)
                 NORMAL -> return@getRatingColor ContextCompat.getColor(
                     context,
                     R.color.rating_normal
                 )
+
                 BADLY -> return@getRatingColor ContextCompat.getColor(context, R.color.rating_badly)
             }
         }

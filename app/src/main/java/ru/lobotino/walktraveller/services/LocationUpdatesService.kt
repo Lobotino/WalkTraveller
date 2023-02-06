@@ -29,7 +29,7 @@ import ru.lobotino.walktraveller.model.map.MapPoint
 import ru.lobotino.walktraveller.repositories.*
 import ru.lobotino.walktraveller.repositories.LocationNotificationRepository.Companion.EXTRA_STARTED_FROM_NOTIFICATION
 import ru.lobotino.walktraveller.repositories.interfaces.ILocationUpdatesRepository
-import ru.lobotino.walktraveller.repositories.interfaces.ILocationUpdatesStatesRepository
+import ru.lobotino.walktraveller.repositories.interfaces.IWritingPathStatesRepository
 import ru.lobotino.walktraveller.ui.MainActivity
 import ru.lobotino.walktraveller.usecases.CurrentPathInteractor
 import ru.lobotino.walktraveller.usecases.LocationMediator
@@ -37,6 +37,7 @@ import ru.lobotino.walktraveller.usecases.LocationNotificationInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.ICurrentPathInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.ILocationMediator
 import ru.lobotino.walktraveller.usecases.interfaces.ILocationNotificationInteractor
+import ru.lobotino.walktraveller.utils.ext.toMapPoint
 
 
 class LocationUpdatesService : Service() {
@@ -55,7 +56,7 @@ class LocationUpdatesService : Service() {
     private var changingConfiguration = false
     private var lastLocation: Location? = null
 
-    private lateinit var locationUpdatesStatesRepository: ILocationUpdatesStatesRepository
+    private lateinit var writingPathStatesRepository: IWritingPathStatesRepository
     private lateinit var locationUpdatesRepository: ILocationUpdatesRepository
     private lateinit var locationNotificationInteractor: ILocationNotificationInteractor
     private lateinit var locationMediator: ILocationMediator
@@ -66,7 +67,7 @@ class LocationUpdatesService : Service() {
         initSharedPreferences()
         initLocationMediator()
         initLocationNotificationInteractor()
-        initLocationUpdatesStatesRepository()
+        initWritingPathStatesRepository()
         initLocationUpdatesRepository()
         initLocalPathRepository()
     }
@@ -101,7 +102,7 @@ class LocationUpdatesService : Service() {
             }.launchIn(CoroutineScope(Dispatchers.Default))
 
             observeLocationUpdatesErrors().onEach {
-                locationUpdatesStatesRepository.setRequestingLocationUpdates(false)
+                writingPathStatesRepository.setWritingPathNow(false)
             }.launchIn(CoroutineScope(Dispatchers.Default))
         }
     }
@@ -131,8 +132,8 @@ class LocationUpdatesService : Service() {
             )
     }
 
-    private fun initLocationUpdatesStatesRepository() {
-        this.locationUpdatesStatesRepository = LocationUpdatesStatesRepository(sharedPreferences)
+    private fun initWritingPathStatesRepository() {
+        this.writingPathStatesRepository = WritingPathStatesRepository(sharedPreferences)
     }
 
     private fun initLocationMediator() {
@@ -145,7 +146,7 @@ class LocationUpdatesService : Service() {
             lastLocation = location
 
             CoroutineScope(Dispatchers.Default).launch {
-                pathInteractor.addNewPathPoint(MapPoint(location.latitude, location.longitude))
+                pathInteractor.addNewPathPoint(location.toMapPoint())
             }
 
             LocalBroadcastManager.getInstance(applicationContext)
@@ -198,7 +199,7 @@ class LocationUpdatesService : Service() {
     override fun onUnbind(intent: Intent): Boolean {
         Log.i(TAG, "Last client unbound from service")
 
-        if (!changingConfiguration && locationUpdatesStatesRepository.isRequestingLocationUpdates()) {
+        if (!changingConfiguration && writingPathStatesRepository.isWritingPathNow()) {
             Log.i(TAG, "Starting foreground service")
             startForeground(
                 locationNotificationInteractor.getNotificationId(),
@@ -209,7 +210,7 @@ class LocationUpdatesService : Service() {
     }
 
     override fun onDestroy() {
-        locationUpdatesStatesRepository.setRequestingLocationUpdates(false)
+        writingPathStatesRepository.setWritingPathNow(false)
         super.onDestroy()
     }
 
@@ -217,23 +218,23 @@ class LocationUpdatesService : Service() {
         Log.i(TAG, "Requesting location updates")
         startService(Intent(applicationContext, LocationUpdatesService::class.java))
         locationUpdatesRepository.startLocationUpdates()
-        locationUpdatesStatesRepository.setRequestingLocationUpdates(true)
     }
 
     fun stopLocationUpdates() {
         Log.i(TAG, "Removing location updates")
         try {
-            pathInteractor.finishCurrentPath()
             locationUpdatesRepository.stopLocationUpdates()
-            locationUpdatesStatesRepository.setRequestingLocationUpdates(false)
             stopSelf()
         } catch (unlikely: SecurityException) {
-            locationUpdatesStatesRepository.setRequestingLocationUpdates(true)
             Log.e(
                 TAG,
                 "Lost location permission. Could not remove updates. $unlikely"
             )
         }
+    }
+
+    fun finishCurrentPath() {
+        pathInteractor.finishCurrentPath()
     }
 
     inner class LocalBinder : Binder() {

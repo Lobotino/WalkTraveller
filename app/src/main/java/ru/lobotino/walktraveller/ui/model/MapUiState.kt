@@ -3,7 +3,6 @@ package ru.lobotino.walktraveller.ui.model
 import ru.lobotino.walktraveller.model.SegmentRating
 
 data class MapUiState(
-    val isWritePath: Boolean,
     val isPathFinished: Boolean,
     val showPathsButtonState: ShowPathsButtonState = ShowPathsButtonState.GONE,
     val newRating: SegmentRating = SegmentRating.NORMAL,

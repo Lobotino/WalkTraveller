@@ -12,7 +12,7 @@ import kotlinx.coroutines.launch
 import ru.lobotino.walktraveller.model.SegmentRating
 import ru.lobotino.walktraveller.model.map.*
 import ru.lobotino.walktraveller.repositories.interfaces.IDefaultLocationRepository
-import ru.lobotino.walktraveller.repositories.interfaces.ILocationUpdatesStatesRepository
+import ru.lobotino.walktraveller.repositories.interfaces.IWritingPathStatesRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IPathRatingRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IUserRotationRepository
 import ru.lobotino.walktraveller.ui.PathsInfoAdapter
@@ -21,6 +21,7 @@ import ru.lobotino.walktraveller.ui.model.*
 import ru.lobotino.walktraveller.usecases.IUserLocationInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IMapPathsInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IPermissionsInteractor
+import ru.lobotino.walktraveller.utils.ext.toMapPoint
 
 class MapViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -42,7 +43,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     private var geoPermissionsInteractor: IPermissionsInteractor? = null
     private var volumeKeysListenerPermissionsInteractor: IPermissionsInteractor? = null
     private lateinit var defaultLocationRepository: IDefaultLocationRepository
-    private lateinit var locationUpdatesStatesRepository: ILocationUpdatesStatesRepository
+    private lateinit var writingPathStatesRepository: IWritingPathStatesRepository
     private lateinit var pathRatingRepository: IPathRatingRepository
     private lateinit var userLocationInteractor: IUserLocationInteractor
     private lateinit var userRotationRepository: IUserRotationRepository
@@ -53,6 +54,8 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
 
     private val permissionsDeniedSharedFlow =
         MutableSharedFlow<List<String>>(1, 0, BufferOverflow.DROP_OLDEST)
+    private val hidePathFlow =
+        MutableSharedFlow<Long>(1, 0, BufferOverflow.DROP_OLDEST)
     private val newPathSegmentFlow =
         MutableSharedFlow<MapPathSegment>(1, 0, BufferOverflow.DROP_OLDEST)
     private val newCommonPathFlow =
@@ -65,8 +68,9 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
         MutableSharedFlow<MapPoint>(1, 0, BufferOverflow.DROP_OLDEST)
     private val newPathInfoListItemStateFlow =
         MutableSharedFlow<Pair<Long, PathInfoItemShowButtonState>>(1, 0, BufferOverflow.DROP_OLDEST)
-    private val hidePathFlow =
-        MutableSharedFlow<Long>(1, 0, BufferOverflow.DROP_OLDEST)
+    private val newCurrentUserLocationFlow =
+        MutableSharedFlow<MapPoint>(1, 0, BufferOverflow.DROP_OLDEST)
+    private val writingPathNowState = MutableStateFlow(false)
 
     private val regularLocationUpdateStateFlow = MutableStateFlow(false)
 
@@ -75,7 +79,6 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     private val mapUiStateFlow =
         MutableStateFlow(
             MapUiState(
-                isWritePath = false,
                 isPathFinished = false
             )
         )
@@ -91,9 +94,8 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     val observeNewPathInfoListItemState: Flow<Pair<Long, PathInfoItemShowButtonState>> =
         newPathInfoListItemStateFlow
     val observeHidePath: Flow<Long> = hidePathFlow
-
-    fun observeNewUserLocation(): Flow<MapPoint> =
-        userLocationInteractor.observeCurrentUserLocation()
+    val observeNewCurrentUserLocation: Flow<MapPoint> = newCurrentUserLocationFlow
+    val observeWritingPathNow: Flow<Boolean> = writingPathNowState
 
     fun observeNewUserRotation(): Flow<Float> = userRotationRepository.observeUserRotation()
 
@@ -117,8 +119,8 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
         this.defaultLocationRepository = defaultLocationRepository
     }
 
-    fun setLocationUpdatesStatesRepository(locationUpdatesStatesRepository: ILocationUpdatesStatesRepository) {
-        this.locationUpdatesStatesRepository = locationUpdatesStatesRepository
+    fun setLocationUpdatesStatesRepository(locationUpdatesStatesRepository: IWritingPathStatesRepository) {
+        this.writingPathStatesRepository = locationUpdatesStatesRepository
     }
 
     fun setPathRatingRepository(pathRatingRepository: IPathRatingRepository) {
@@ -145,20 +147,11 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
         })
 
         userLocationInteractor.apply {
-            observeCurrentUserLocation().onEach { newUserLocation ->
-                //TODO
-            }.launchIn(viewModelScope)
-
-            observeUserLocationErrors().onEach { newUserLocationError ->
-                Log.w(TAG, newUserLocationError)
-            }.launchIn(viewModelScope)
-
             getCurrentUserLocation { location ->
                 newMapCenterFlow.tryEmit(location)
             }
         }
 
-        userLocationInteractor.startTrackUserLocation()
         userRotationRepository.startTrackUserRotation()
 
         clearMap()
@@ -167,17 +160,19 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun onResume() {
+        regularLocationUpdateStateFlow.tryEmit(true)
         if (isInitialized) {
-            userLocationInteractor.startTrackUserLocation()
             userRotationRepository.startTrackUserRotation()
             updateNewPointsIfNeeded()
         }
     }
 
     fun onPause() {
-        userLocationInteractor.stopTrackUserLocation()
         userRotationRepository.stopTrackUserRotation()
         updatingYetUnpaintedPaths = false
+        if (!writingPathStatesRepository.isWritingPathNow()) {
+            regularLocationUpdateStateFlow.tryEmit(false)
+        }
     }
 
     fun onGeoLocationUpdaterConnected() {
@@ -187,16 +182,18 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun onGeoLocationUpdaterDisconnected() {
+        writingPathNowState.tryEmit(false)
         mapUiStateFlow.update { uiState ->
             uiState.copy(
-                isWritePath = false,
                 isPathFinished = false
             )
         }
     }
 
     fun onNewLocationReceive(location: Location) {
-        if (!updatingYetUnpaintedPaths) {
+        newCurrentUserLocationFlow.tryEmit(location.toMapPoint())
+
+        if (writingPathStatesRepository.isWritingPathNow() && !updatingYetUnpaintedPaths) {
             drawNewSegmentToPoint(
                 MapPoint(location.latitude, location.longitude),
                 pathRatingRepository.getCurrentRating()
@@ -211,11 +208,11 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun onStartPathButtonClicked() {
-        regularLocationUpdateStateFlow.tryEmit(true)
         clearMap()
+        writingPathStatesRepository.setWritingPathNow(true)
+        writingPathNowState.tryEmit(true)
         mapUiStateFlow.update { uiState ->
             uiState.copy(
-                isWritePath = true,
                 isPathFinished = false,
                 newRating = pathRatingRepository.getCurrentRating()
             )
@@ -223,10 +220,10 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun onStopPathButtonClicked() {
-        regularLocationUpdateStateFlow.tryEmit(false)
+        writingPathStatesRepository.setWritingPathNow(false)
+        writingPathNowState.tryEmit(false)
         mapUiStateFlow.update { uiState ->
             uiState.copy(
-                isWritePath = false,
                 isPathFinished = true
             )
         }
@@ -297,22 +294,25 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun updateNewPointsIfNeeded() {
         updatingYetUnpaintedPaths = true
-        var needToUpdateAllPath = false
-        if (locationUpdatesStatesRepository.isRequestingLocationUpdates() && !mapUiStateFlow.value.isWritePath) {
-            mapUiStateFlow.update { uiState -> uiState.copy(isWritePath = true) }
-            regularLocationUpdateStateFlow.tryEmit(true)
-            needToUpdateAllPath = true
-        }
+        if (writingPathStatesRepository.isWritingPathNow()) {
+            var needToUpdateAllPath = false
 
-        if (mapUiStateFlow.value.isWritePath) {
+            if (!writingPathNowState.value) {
+                writingPathNowState.tryEmit(true)
+                needToUpdateAllPath = true
+            }
+
             updateCurrentSavedPath?.cancel()
             updateCurrentSavedPath = viewModelScope.launch {
                 mapPathsInteractor.getLastSavedRatingPath()?.let { lastSavedPath ->
-                    if (needToUpdateAllPath) {
-                        clearMap()
-                        lastPaintedPoint = lastSavedPath.pathSegments.first().startPoint
+
+                    if (lastSavedPath.pathSegments.isNotEmpty()) {
+                        if (needToUpdateAllPath) {
+                            clearMap()
+                            lastPaintedPoint = lastSavedPath.pathSegments.first().startPoint
+                        }
+                        drawUnpaintedYetPathSegments(lastSavedPath.pathSegments)
                     }
-                    drawUnpaintedYetPathSegments(lastSavedPath.pathSegments)
                     updatingYetUnpaintedPaths = false
                 }
             }
