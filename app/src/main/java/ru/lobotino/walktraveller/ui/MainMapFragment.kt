@@ -3,6 +3,7 @@ package ru.lobotino.walktraveller.ui
 import android.content.*
 import android.content.Context.SENSOR_SERVICE
 import android.content.res.ColorStateList
+import android.graphics.drawable.Drawable
 import android.hardware.SensorManager
 import android.location.Location
 import android.os.Build
@@ -36,6 +37,9 @@ import com.google.android.material.progressindicator.CircularProgressIndicator
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import org.osmdroid.events.MapListener
+import org.osmdroid.events.ScrollEvent
+import org.osmdroid.events.ZoomEvent
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.CustomZoomButtonsController
@@ -65,6 +69,10 @@ import kotlin.properties.Delegates
 
 class MainMapFragment : Fragment() {
 
+    companion object {
+        private const val DEFAULT_COMFORT_ZOOM = 12.5
+    }
+
     private lateinit var mapView: MapView
     private lateinit var viewModel: MapViewModel
     private lateinit var walkStartButton: CardView
@@ -89,6 +97,8 @@ class MainMapFragment : Fragment() {
     private lateinit var hidePathsMenuButton: ImageView
     private lateinit var pathsInfoList: RecyclerView
     private lateinit var pathsInfoProgress: CircularProgressIndicator
+    private lateinit var findMyLocationButton: CardView
+    private lateinit var findMyLocationButtonImage: ImageView
 
     private lateinit var userLocationOverlay: UserLocationOverlay
 
@@ -100,6 +110,12 @@ class MainMapFragment : Fragment() {
     private var ratingNormalColor by Delegates.notNull<@ColorInt Int>()
     private var ratingBadlyColor by Delegates.notNull<@ColorInt Int>()
     private var commonPathColor by Delegates.notNull<@ColorInt Int>()
+    private var findMyLocationDefaultColor by Delegates.notNull<@ColorInt Int>()
+    private var findMyLocationLoadingColor by Delegates.notNull<@ColorInt Int>()
+    private var findMyLocationErrorColor by Delegates.notNull<@ColorInt Int>()
+
+    private lateinit var findMyLocationDefaultImage: Drawable
+    private lateinit var findMyLocationCenterOnLocationImage: Drawable
 
     private val showingPathsPolylines = ArrayMap<Long, List<Polyline>>()
     private val currentPathPolylines = ArrayList<Polyline>()
@@ -152,20 +168,34 @@ class MainMapFragment : Fragment() {
     ): View? {
         return inflater.inflate(R.layout.fragment_map, container, false).also { view ->
             initColors()
+            initDrawables()
             initViews(view)
             initViewModel()
         }
     }
 
     private fun initColors() {
-        val context = context
-        if (context != null) {
+        context?.let { context ->
             ratingWhiteColor = ContextCompat.getColor(context, R.color.white)
             ratingPerfectColor = ContextCompat.getColor(context, R.color.rating_perfect_color)
             ratingGoodColor = ContextCompat.getColor(context, R.color.rating_good_color)
             ratingNormalColor = ContextCompat.getColor(context, R.color.rating_normal_color)
             ratingBadlyColor = ContextCompat.getColor(context, R.color.rating_badly_color)
             commonPathColor = ContextCompat.getColor(context, R.color.common_path_color)
+            findMyLocationDefaultColor = ContextCompat.getColor(context, R.color.black)
+            findMyLocationLoadingColor = ContextCompat.getColor(context, R.color.user_marker_color)
+            findMyLocationErrorColor = ContextCompat.getColor(context, R.color.rating_badly_color)
+        }
+    }
+
+    private fun initDrawables() {
+        context?.let { context ->
+            findMyLocationDefaultImage =
+                ContextCompat.getDrawable(context, R.drawable.ic_find_my_location_default)!!
+            findMyLocationCenterOnLocationImage = ContextCompat.getDrawable(
+                context,
+                R.drawable.ic_find_my_location_center_on_current
+            )!!
         }
     }
 
@@ -175,9 +205,20 @@ class MainMapFragment : Fragment() {
 
             mapView = MapView(context).apply {
                 setTileSource(TileSourceFactory.MAPNIK)
-                controller.setZoom(12.5)
+                controller.setZoom(DEFAULT_COMFORT_ZOOM)
                 zoomController.setVisibility(CustomZoomButtonsController.Visibility.NEVER)
                 setMultiTouchControls(true)
+                addMapListener(object : MapListener {
+                    override fun onScroll(event: ScrollEvent?): Boolean {
+                        viewModel.onMapScrolled()
+                        return true
+                    }
+
+                    override fun onZoom(event: ZoomEvent?): Boolean {
+                        viewModel.onMapZoomed()
+                        return true
+                    }
+                })
             }
             mapViewContainer.addView(mapView)
 
@@ -273,6 +314,10 @@ class MainMapFragment : Fragment() {
             hidePathsMenuButton = view.findViewById<ImageView>(R.id.paths_menu_back_button).apply {
                 setOnClickListener { viewModel.onHidePathsMenuClicked() }
             }
+            findMyLocationButton = view.findViewById<CardView>(R.id.my_location_button).apply {
+                setOnClickListener { viewModel.onFindMyLocationButtonClicked() }
+            }
+            findMyLocationButtonImage = view.findViewById(R.id.my_location_button_image)
         }
     }
 
@@ -379,7 +424,10 @@ class MainMapFragment : Fragment() {
                         }.launchIn(lifecycleScope)
 
                         observeNewMapCenter.onEach { newMapCenter ->
-                            mapView.controller?.setCenter(newMapCenter.toGeoPoint())
+                            mapView.controller?.let { mapViewController ->
+                                mapViewController.setCenter(newMapCenter.toGeoPoint())
+                                mapViewController.setZoom(DEFAULT_COMFORT_ZOOM)
+                            }
                         }.launchIn(lifecycleScope)
 
                         observeNewPathInfoListItemState.onEach { pathInfoItemState ->
@@ -509,6 +557,28 @@ class MainMapFragment : Fragment() {
             BottomMenuState.PATHS_MENU -> {
                 pathsMenu.visibility = VISIBLE
                 walkButtonsHolder.visibility = GONE
+            }
+        }
+
+        when (mapUiState.findMyLocationButtonState) {
+            FindMyLocationButtonState.DEFAULT -> {
+                findMyLocationButtonImage.setImageDrawable(findMyLocationDefaultImage)
+                findMyLocationButtonImage.setColorFilter(findMyLocationDefaultColor)
+            }
+
+            FindMyLocationButtonState.LOADING -> {
+                findMyLocationButtonImage.setImageDrawable(findMyLocationDefaultImage)
+                findMyLocationButtonImage.setColorFilter(findMyLocationLoadingColor)
+            }
+
+            FindMyLocationButtonState.CENTER_ON_CURRENT_LOCATION -> {
+                findMyLocationButtonImage.setImageDrawable(findMyLocationCenterOnLocationImage)
+                findMyLocationButtonImage.setColorFilter(findMyLocationDefaultColor)
+            }
+
+            FindMyLocationButtonState.ERROR -> {
+                findMyLocationButtonImage.setImageDrawable(findMyLocationDefaultImage)
+                findMyLocationButtonImage.setColorFilter(findMyLocationErrorColor)
             }
         }
 

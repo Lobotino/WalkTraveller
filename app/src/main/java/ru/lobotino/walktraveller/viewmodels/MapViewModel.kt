@@ -24,6 +24,7 @@ import ru.lobotino.walktraveller.repositories.interfaces.IWritingPathStatesRepos
 import ru.lobotino.walktraveller.ui.PathsInfoAdapter
 import ru.lobotino.walktraveller.ui.PathsInfoAdapter.PathItemButtonType.SHOW
 import ru.lobotino.walktraveller.ui.model.BottomMenuState
+import ru.lobotino.walktraveller.ui.model.FindMyLocationButtonState
 import ru.lobotino.walktraveller.ui.model.MapUiState
 import ru.lobotino.walktraveller.ui.model.PathInfoItemShowButtonState
 import ru.lobotino.walktraveller.ui.model.PathsInfoListState
@@ -156,11 +157,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
             permissionsDeniedSharedFlow.tryEmit(deniedPermissions)
         })
 
-        userLocationInteractor.apply {
-            getCurrentUserLocation { location ->
-                newMapCenterFlow.tryEmit(location)
-            }
-        }
+        updateCurrentMapCenterToUserLocation()
 
         userRotationRepository.startTrackUserRotation()
 
@@ -423,6 +420,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
                     }
                 }
             }
+
             else -> {
                 //TODO
             }
@@ -464,6 +462,28 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
         }
         backgroundCachingPathsInfoJob = viewModelScope.launch {
             mapPathsInteractor.getAllSavedPathsInfo()
+        }
+    }
+
+    fun onFindMyLocationButtonClicked() {
+        updateCurrentMapCenterToUserLocation()
+    }
+
+    fun onMapScrolled() {
+        if (mapUiStateFlow.value.findMyLocationButtonState == FindMyLocationButtonState.CENTER_ON_CURRENT_LOCATION) {
+            mapUiStateFlow.update { mapUiState -> mapUiState.copy(findMyLocationButtonState = FindMyLocationButtonState.DEFAULT) }
+        }
+    }
+
+    fun onMapZoomed() {
+        //TODO
+    }
+
+    private fun updateCurrentMapCenterToUserLocation() {
+        mapUiStateFlow.update { mapUiState -> mapUiState.copy(findMyLocationButtonState = FindMyLocationButtonState.LOADING) }
+        userLocationInteractor.getCurrentUserLocation { location ->
+            newMapCenterFlow.tryEmit(location)
+            mapUiStateFlow.update { mapUiState -> mapUiState.copy(findMyLocationButtonState = FindMyLocationButtonState.CENTER_ON_CURRENT_LOCATION) }
         }
     }
 }
