@@ -145,8 +145,10 @@ class LocationUpdatesService : Service() {
         locationMediator.onNewLocation(newLocation) { location ->
             lastLocation = location
 
-            CoroutineScope(Dispatchers.Default).launch {
-                pathInteractor.addNewPathPoint(location.toMapPoint())
+            if (writingPathStatesRepository.isWritingPathNow()) {
+                CoroutineScope(Dispatchers.Default).launch {
+                    pathInteractor.addNewPathPoint(location.toMapPoint())
+                }
             }
 
             LocalBroadcastManager.getInstance(applicationContext)
