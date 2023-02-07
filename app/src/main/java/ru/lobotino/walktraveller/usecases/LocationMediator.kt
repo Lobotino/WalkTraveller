@@ -8,7 +8,7 @@ class LocationMediator(private var lastLocation: Location? = null) : ILocationMe
 
     companion object {
         private val TAG = LocationMediator::class.java.canonicalName
-        private const val MAX_REAL_DISTANCE_BETWEEN_LOCATIONS_IN_METERS = 200 * 1000
+        private const val MAX_REAL_DISTANCE_BETWEEN_LOCATIONS_IN_METERS = 10000 * 1000
     }
 
     override fun onNewLocation(
