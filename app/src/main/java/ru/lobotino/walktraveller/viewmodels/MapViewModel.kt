@@ -2,22 +2,32 @@ package ru.lobotino.walktraveller.viewmodels
 
 import android.app.Application
 import android.location.Location
-import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import ru.lobotino.walktraveller.model.SegmentRating
-import ru.lobotino.walktraveller.model.map.*
+import ru.lobotino.walktraveller.model.map.MapCommonPath
+import ru.lobotino.walktraveller.model.map.MapPathInfo
+import ru.lobotino.walktraveller.model.map.MapPathSegment
+import ru.lobotino.walktraveller.model.map.MapPoint
+import ru.lobotino.walktraveller.model.map.MapRatingPath
 import ru.lobotino.walktraveller.repositories.interfaces.IDefaultLocationRepository
-import ru.lobotino.walktraveller.repositories.interfaces.IWritingPathStatesRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IPathRatingRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IUserRotationRepository
+import ru.lobotino.walktraveller.repositories.interfaces.IWritingPathStatesRepository
 import ru.lobotino.walktraveller.ui.PathsInfoAdapter
 import ru.lobotino.walktraveller.ui.PathsInfoAdapter.PathItemButtonType.SHOW
-import ru.lobotino.walktraveller.ui.model.*
+import ru.lobotino.walktraveller.ui.model.BottomMenuState
+import ru.lobotino.walktraveller.ui.model.MapUiState
+import ru.lobotino.walktraveller.ui.model.PathInfoItemShowButtonState
+import ru.lobotino.walktraveller.ui.model.PathsInfoListState
+import ru.lobotino.walktraveller.ui.model.ShowPathsButtonState
 import ru.lobotino.walktraveller.usecases.IUserLocationInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IMapPathsInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IPermissionsInteractor
@@ -312,6 +322,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
                             lastPaintedPoint = lastSavedPath.pathSegments.first().startPoint
                         }
                         drawUnpaintedYetPathSegments(lastSavedPath.pathSegments)
+                        newCurrentUserLocationFlow.tryEmit(lastSavedPath.pathSegments.last().finishPoint)
                     }
                     updatingYetUnpaintedPaths = false
                 }
