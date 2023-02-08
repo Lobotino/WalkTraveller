@@ -15,7 +15,7 @@
         app:layout_constraintTop_toTopOf="parent"
         tools:background="@color/dark_green" />
 
-    <androidx.cardview.widget.CardView
+    <ru.lobotino.walktraveller.ui.FindMyLocationButton
         android:id="@+id/my_location_button"
         android:layout_width="46dp"
         android:layout_height="46dp"
@@ -25,18 +25,7 @@
         app:cardCornerRadius="30dp"
         app:cardElevation="4dp"
         app:layout_constraintBottom_toTopOf="@id/bottom_menu"
-        app:layout_constraintEnd_toEndOf="parent">
-
-        <ImageView
-            android:id="@+id/my_location_button_image"
-            android:layout_width="26dp"
-            android:layout_height="26dp"
-            android:layout_gravity="center"
-            android:layout_margin="8dp"
-            android:src="@drawable/ic_find_my_location_default"
-            tools:ignore="ContentDescription" />
-
-    </androidx.cardview.widget.CardView>
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <androidx.cardview.widget.CardView
         android:id="@+id/bottom_menu"
