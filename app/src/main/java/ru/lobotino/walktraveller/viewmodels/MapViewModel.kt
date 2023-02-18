@@ -6,6 +6,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -480,7 +481,10 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun updateCurrentMapCenterToUserLocation() {
-        mapUiStateFlow.update { mapUiState -> mapUiState.copy(findMyLocationButtonState = FindMyLocationButtonState.LOADING) }
+        val setLoadingStateWithDelayJob = viewModelScope.launch {
+            delay(50L)
+            mapUiStateFlow.update { mapUiState -> mapUiState.copy(findMyLocationButtonState = FindMyLocationButtonState.LOADING) }
+        }
 
         val setLocationButtonStateToError = {
             mapUiStateFlow.update { mapUiState -> mapUiState.copy(findMyLocationButtonState = FindMyLocationButtonState.ERROR) }
@@ -488,11 +492,14 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
 
         userLocationInteractor.getCurrentUserLocation(
             { location ->
+                setLoadingStateWithDelayJob.cancel()
                 newMapCenterFlow.tryEmit(location)
                 mapUiStateFlow.update { mapUiState -> mapUiState.copy(findMyLocationButtonState = FindMyLocationButtonState.CENTER_ON_CURRENT_LOCATION) }
             }, {
+                setLoadingStateWithDelayJob.cancel()
                 setLocationButtonStateToError()
             }, {
+                setLoadingStateWithDelayJob.cancel()
                 setLocationButtonStateToError()
             }
         )
