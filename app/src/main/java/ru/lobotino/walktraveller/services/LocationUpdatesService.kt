@@ -25,9 +25,12 @@ import ru.lobotino.walktraveller.App
 import ru.lobotino.walktraveller.App.Companion.PATH_DATABASE_NAME
 import ru.lobotino.walktraveller.R
 import ru.lobotino.walktraveller.database.AppDatabase
-import ru.lobotino.walktraveller.model.map.MapPoint
-import ru.lobotino.walktraveller.repositories.*
+import ru.lobotino.walktraveller.repositories.DatabasePathRepository
+import ru.lobotino.walktraveller.repositories.LocationNotificationRepository
 import ru.lobotino.walktraveller.repositories.LocationNotificationRepository.Companion.EXTRA_STARTED_FROM_NOTIFICATION
+import ru.lobotino.walktraveller.repositories.LocationUpdatesRepository
+import ru.lobotino.walktraveller.repositories.PathRatingRepository
+import ru.lobotino.walktraveller.repositories.WritingPathStatesRepository
 import ru.lobotino.walktraveller.repositories.interfaces.ILocationUpdatesRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IWritingPathStatesRepository
 import ru.lobotino.walktraveller.ui.MainActivity
@@ -99,10 +102,6 @@ class LocationUpdatesService : Service() {
         ).apply {
             observeLocationUpdates().onEach { location ->
                 onNewPathLocation(location)
-            }.launchIn(CoroutineScope(Dispatchers.Default))
-
-            observeLocationUpdatesErrors().onEach {
-                writingPathStatesRepository.setWritingPathNow(false)
             }.launchIn(CoroutineScope(Dispatchers.Default))
         }
     }
@@ -209,11 +208,6 @@ class LocationUpdatesService : Service() {
             )
         }
         return true
-    }
-
-    override fun onDestroy() {
-        writingPathStatesRepository.setWritingPathNow(false)
-        super.onDestroy()
     }
 
     fun startLocationUpdates() {
