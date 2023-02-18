@@ -481,9 +481,20 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun updateCurrentMapCenterToUserLocation() {
         mapUiStateFlow.update { mapUiState -> mapUiState.copy(findMyLocationButtonState = FindMyLocationButtonState.LOADING) }
-        userLocationInteractor.getCurrentUserLocation { location ->
-            newMapCenterFlow.tryEmit(location)
-            mapUiStateFlow.update { mapUiState -> mapUiState.copy(findMyLocationButtonState = FindMyLocationButtonState.CENTER_ON_CURRENT_LOCATION) }
+
+        val setLocationButtonStateToError = {
+            mapUiStateFlow.update { mapUiState -> mapUiState.copy(findMyLocationButtonState = FindMyLocationButtonState.ERROR) }
         }
+
+        userLocationInteractor.getCurrentUserLocation(
+            { location ->
+                newMapCenterFlow.tryEmit(location)
+                mapUiStateFlow.update { mapUiState -> mapUiState.copy(findMyLocationButtonState = FindMyLocationButtonState.CENTER_ON_CURRENT_LOCATION) }
+            }, {
+                setLocationButtonStateToError()
+            }, {
+                setLocationButtonStateToError()
+            }
+        )
     }
 }

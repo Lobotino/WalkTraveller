@@ -33,6 +33,8 @@ class FindMyLocationButton : CardView {
         ContextCompat.getDrawable(context, R.drawable.ic_find_my_location_default)!!
     private val findMyLocationCenterOnCurrentDrawable =
         ContextCompat.getDrawable(context, R.drawable.ic_find_my_location_center_on_current)!!
+    private val findMyLocationErrorDrawable =
+        ContextCompat.getDrawable(context, R.drawable.ic_find_my_location_error)!!
 
     private lateinit var findMyLocationAnimator: ObjectAnimator
 
@@ -92,7 +94,7 @@ class FindMyLocationButton : CardView {
 
             ERROR -> {
                 stopAnimateLoadingState()
-                findLocationImage.setImageDrawable(findMyLocationDefaultDrawable)
+                findLocationImage.setImageDrawable(findMyLocationErrorDrawable)
                 findLocationImage.setColorFilter(findMyLocationErrorColor)
             }
         }

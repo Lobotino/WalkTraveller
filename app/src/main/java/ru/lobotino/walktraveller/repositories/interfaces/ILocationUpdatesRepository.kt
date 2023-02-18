@@ -9,7 +9,11 @@ interface ILocationUpdatesRepository {
 
     fun stopLocationUpdates()
 
-    fun updateLocationNow(resultLocation: (Location) -> Unit)
+    fun updateLocationNow(
+        onSuccess: (Location) -> Unit,
+        onEmpty: () -> Unit,
+        onError: (Exception) -> Unit
+    )
 
     fun observeLocationUpdates(): Flow<Location>
 

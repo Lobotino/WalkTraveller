@@ -2,7 +2,12 @@ package ru.lobotino.walktraveller.repositories
 
 import android.location.Location
 import android.util.Log
-import com.google.android.gms.location.*
+import com.google.android.gms.location.CurrentLocationRequest
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationResult
+import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationToken
 import com.google.android.gms.tasks.CancellationTokenSource
 import com.google.android.gms.tasks.OnTokenCanceledListener
@@ -83,7 +88,11 @@ class LocationUpdatesRepository(
         fusedLocationClient.removeLocationUpdates(onNewLocation)
     }
 
-    override fun updateLocationNow(resultLocation: (Location) -> Unit) {
+    override fun updateLocationNow(
+        onSuccess: (Location) -> Unit,
+        onEmpty: () -> Unit,
+        onError: (Exception) -> Unit
+    ) {
         try {
             fusedLocationClient.getCurrentLocation(
                 currentLocationRequest,
@@ -95,15 +104,17 @@ class LocationUpdatesRepository(
                 })
                 .addOnSuccessListener { location: Location? ->
                     if (location == null) {
-                        Log.e(TAG, "Cannot update location now.")
+                        onEmpty()
                     } else {
-                        resultLocation(location)
+                        onSuccess(location)
                     }
                 }
-        } catch (unlikely: SecurityException) {
-            val errorMessage = "Lost location permission.$unlikely"
-            Log.e(TAG, errorMessage)
-            locationUpdatesErrorsFlow.tryEmit(errorMessage)
+        } catch (exception: SecurityException) {
+            "Lost location permission.$exception".let { errorMessage ->
+                Log.e(TAG, errorMessage)
+                locationUpdatesErrorsFlow.tryEmit(errorMessage)
+            }
+            onError(exception)
         }
     }
 

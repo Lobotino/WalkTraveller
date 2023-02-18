@@ -1,5 +1,6 @@
 package ru.lobotino.walktraveller.usecases
 
+import android.location.Location
 import ru.lobotino.walktraveller.model.map.MapPoint
 import ru.lobotino.walktraveller.repositories.interfaces.IDefaultLocationRepository
 import ru.lobotino.walktraveller.repositories.interfaces.ILocationUpdatesRepository
@@ -11,8 +12,16 @@ class UserLocationInteractor(
 ) : IUserLocationInteractor {
 
 
-    override fun getCurrentUserLocation(resultLocation: (MapPoint) -> Unit) {
-        locationUpdatesRepository.updateLocationNow { location -> resultLocation(location.toMapPoint()) }
+    override fun getCurrentUserLocation(
+        onSuccess: (MapPoint) -> Unit,
+        onEmpty: () -> Unit,
+        onError: (Exception) -> Unit
+    ) {
+        locationUpdatesRepository.updateLocationNow(
+            { location: Location -> onSuccess(location.toMapPoint()) },
+            onEmpty,
+            onError
+        )
     }
 
     override fun getLastUserLocation(): MapPoint {
