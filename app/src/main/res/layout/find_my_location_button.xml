@@ -6,7 +6,7 @@
     android:layout_gravity="center">
 
     <ImageView
-        android:id="@+id/my_location_button_image"
+        android:id="@+id/find_my_location_button_image"
         android:layout_width="26dp"
         android:layout_height="26dp"
         android:layout_gravity="center"

@@ -1,7 +1,8 @@
 package ru.lobotino.walktraveller.ui
 
+import android.animation.ObjectAnimator
+import android.animation.PropertyValuesHolder
 import android.content.Context
-import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.widget.ImageView
@@ -14,33 +15,35 @@ import ru.lobotino.walktraveller.ui.model.FindMyLocationButtonState.DEFAULT
 import ru.lobotino.walktraveller.ui.model.FindMyLocationButtonState.ERROR
 import ru.lobotino.walktraveller.ui.model.FindMyLocationButtonState.LOADING
 
+
 class FindMyLocationButton : CardView {
+
+    companion object {
+        private const val LOADING_SCALE_ANIMATION_DURATION = 1000L
+        private const val LOADING_SCALE_MODIFIER = 1.15f
+    }
 
     private val findMyLocationDefaultColor: Int = ContextCompat.getColor(context, R.color.black)
     private val findMyLocationLoadingColor: Int =
-        ContextCompat.getColor(context, R.color.user_marker_color)
+        ContextCompat.getColor(context, R.color.find_my_location_loading_color)
     private val findMyLocationErrorColor: Int =
-        ContextCompat.getColor(context, R.color.rating_badly_color)
+        ContextCompat.getColor(context, R.color.find_my_location_error_color)
 
-    private val defaultStateImage: Drawable =
+    private val findMyLocationDefaultDrawable =
         ContextCompat.getDrawable(context, R.drawable.ic_find_my_location_default)!!
-    private val centerStateImage: Drawable = ContextCompat.getDrawable(
-        context,
-        R.drawable.ic_find_my_location_center_on_current
-    )!!
+    private val findMyLocationCenterOnCurrentDrawable =
+        ContextCompat.getDrawable(context, R.drawable.ic_find_my_location_center_on_current)!!
 
-    private var findMyLocationImage: ImageView
+    private lateinit var findMyLocationAnimator: ObjectAnimator
 
-    private var buttonState = DEFAULT
+    private lateinit var findLocationImage: ImageView
 
     constructor(context: Context) : super(context) {
-        LayoutInflater.from(context).inflate(R.layout.find_my_location_button, this)
-        findMyLocationImage = findViewById(R.id.my_location_button_image)
+        initView(context)
     }
 
     constructor(context: Context, attributeSet: AttributeSet) : super(context, attributeSet) {
-        LayoutInflater.from(context).inflate(R.layout.find_my_location_button, this)
-        findMyLocationImage = findViewById(R.id.my_location_button_image)
+        initView(context)
     }
 
     constructor(context: Context, attributeSet: AttributeSet, defStyleAttr: Int) : super(
@@ -48,33 +51,60 @@ class FindMyLocationButton : CardView {
         attributeSet,
         defStyleAttr
     ) {
+        initView(context)
+    }
+
+    private fun initView(context: Context) {
         LayoutInflater.from(context).inflate(R.layout.find_my_location_button, this)
-        findMyLocationImage = findViewById(R.id.my_location_button_image)
+        findLocationImage = findViewById(R.id.find_my_location_button_image)
+
+        findMyLocationAnimator = ObjectAnimator.ofPropertyValuesHolder(
+            findLocationImage,
+            PropertyValuesHolder.ofFloat("scaleX", LOADING_SCALE_MODIFIER),
+            PropertyValuesHolder.ofFloat("scaleY", LOADING_SCALE_MODIFIER)
+        ).apply {
+            duration = LOADING_SCALE_ANIMATION_DURATION
+            repeatCount = ObjectAnimator.INFINITE
+            repeatMode = ObjectAnimator.REVERSE
+        }
     }
 
     fun updateState(newState: FindMyLocationButtonState) {
-        buttonState = newState
-
         when (newState) {
             DEFAULT -> {
-                findMyLocationImage.setImageDrawable(defaultStateImage)
-                findMyLocationImage.setColorFilter(findMyLocationDefaultColor)
+                stopAnimateLoadingState()
+                findLocationImage.setImageDrawable(findMyLocationDefaultDrawable)
+                findLocationImage.setColorFilter(findMyLocationDefaultColor)
             }
 
             LOADING -> {
-                findMyLocationImage.setImageDrawable(defaultStateImage)
-                findMyLocationImage.setColorFilter(findMyLocationLoadingColor)
+                stopAnimateLoadingState()
+                findLocationImage.setImageDrawable(findMyLocationDefaultDrawable)
+                findLocationImage.setColorFilter(findMyLocationLoadingColor)
+                startAnimateLoadingState()
             }
 
             CENTER_ON_CURRENT_LOCATION -> {
-                findMyLocationImage.setImageDrawable(centerStateImage)
-                findMyLocationImage.setColorFilter(findMyLocationDefaultColor)
+                stopAnimateLoadingState()
+                findLocationImage.setImageDrawable(findMyLocationCenterOnCurrentDrawable)
+                findLocationImage.setColorFilter(findMyLocationDefaultColor)
             }
 
             ERROR -> {
-                findMyLocationImage.setImageDrawable(defaultStateImage)
-                findMyLocationImage.setColorFilter(findMyLocationErrorColor)
+                stopAnimateLoadingState()
+                findLocationImage.setImageDrawable(findMyLocationDefaultDrawable)
+                findLocationImage.setColorFilter(findMyLocationErrorColor)
             }
         }
+    }
+
+    private fun startAnimateLoadingState() {
+        findMyLocationAnimator.start()
+    }
+
+    private fun stopAnimateLoadingState() {
+        findMyLocationAnimator.cancel()
+        findLocationImage.scaleX = 1.0f
+        findLocationImage.scaleY = 1.0f
     }
 }
