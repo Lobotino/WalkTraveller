@@ -5,9 +5,8 @@ import android.app.NotificationManager
 import android.app.Service
 import android.content.Intent
 import android.content.SharedPreferences
-import android.content.res.Configuration
+import android.graphics.Color
 import android.location.Location
-import android.os.Binder
 import android.os.Build
 import android.os.IBinder
 import android.provider.ContactsContract
@@ -27,7 +26,6 @@ import ru.lobotino.walktraveller.R
 import ru.lobotino.walktraveller.database.AppDatabase
 import ru.lobotino.walktraveller.repositories.DatabasePathRepository
 import ru.lobotino.walktraveller.repositories.LocationNotificationRepository
-import ru.lobotino.walktraveller.repositories.LocationNotificationRepository.Companion.EXTRA_STARTED_FROM_NOTIFICATION
 import ru.lobotino.walktraveller.repositories.LocationUpdatesRepository
 import ru.lobotino.walktraveller.repositories.PathRatingRepository
 import ru.lobotino.walktraveller.repositories.WritingPathStatesRepository
@@ -51,12 +49,13 @@ class LocationUpdatesService : Service() {
         private const val CHANNEL_ID = "walk_traveller_notifications_channel"
         const val EXTRA_LOCATION = "$PACKAGE_NAME.location"
         const val ACTION_BROADCAST = "$PACKAGE_NAME.broadcast"
+        const val ACTION_START_LOCATION_UPDATES = "$PACKAGE_NAME.start_location_updates"
+        const val ACTION_STOP_LOCATION_UPDATES = "$PACKAGE_NAME.stop_location_updates"
+        const val ACTION_FINISH_CURRENT_PATH = "$PACKAGE_NAME.finish_current_path"
     }
 
-    private val binder: IBinder = LocalBinder()
     private lateinit var sharedPreferences: SharedPreferences
 
-    private var changingConfiguration = false
     private var lastLocation: Location? = null
 
     private lateinit var writingPathStatesRepository: IWritingPathStatesRepository
@@ -117,7 +116,11 @@ class LocationUpdatesService : Service() {
                                 CHANNEL_ID,
                                 getString(R.string.app_name),
                                 NotificationManager.IMPORTANCE_DEFAULT
-                            )
+                            ).apply {
+                                description = "Location updates for saving current user path"
+                                enableLights(true)
+                                lightColor = Color.BLUE;
+                            }
                         )
                     }
                 },
@@ -160,67 +163,59 @@ class LocationUpdatesService : Service() {
     }
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
-        val startedFromNotification = intent.getBooleanExtra(
-            EXTRA_STARTED_FROM_NOTIFICATION,
-            false
+        intent.action?.let { action ->
+            when (action) {
+                ACTION_START_LOCATION_UPDATES -> {
+                    startLocationUpdates()
+                    return START_STICKY
+                }
+
+                ACTION_STOP_LOCATION_UPDATES -> {
+                    stopLocationUpdates()
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                        stopForeground(STOP_FOREGROUND_REMOVE)
+                    } else {
+                        stopForeground(true)
+                    }
+                    stopSelf()
+                    return START_STICKY
+                }
+
+                ACTION_FINISH_CURRENT_PATH -> {
+                    finishCurrentPath()
+                    return START_STICKY
+                }
+
+                else -> {}
+            }
+        }
+
+        startForeground(
+            locationNotificationInteractor.getNotificationId(),
+            locationNotificationInteractor.getNotification(lastLocation)
         )
 
-        if (startedFromNotification) {
-            stopLocationUpdates()
-            stopSelf()
-        }
-        return START_NOT_STICKY
+        return START_STICKY
     }
 
-    override fun onConfigurationChanged(newConfig: Configuration) {
-        super.onConfigurationChanged(newConfig)
-        changingConfiguration = true
+    override fun onBind(intent: Intent): IBinder? {
+        return null
     }
 
-    override fun onBind(intent: Intent): IBinder {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            stopForeground(STOP_FOREGROUND_REMOVE)
-        } else {
-            stopForeground(true)
-        }
-        changingConfiguration = false
-        return binder
+    override fun onDestroy() {
+        locationUpdatesRepository.stopLocationUpdates()
+        super.onDestroy()
     }
 
-    override fun onRebind(intent: Intent) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            stopForeground(STOP_FOREGROUND_REMOVE)
-        } else {
-            stopForeground(true)
-        }
-        changingConfiguration = false
-        super.onRebind(intent)
-    }
-
-    override fun onUnbind(intent: Intent): Boolean {
-        Log.i(TAG, "Last client unbound from service")
-
-        if (!changingConfiguration && writingPathStatesRepository.isWritingPathNow()) {
-            Log.i(TAG, "Starting foreground service")
-            startForeground(
-                locationNotificationInteractor.getNotificationId(),
-                locationNotificationInteractor.getNotification(lastLocation)
-            )
-        }
-        return true
-    }
-
-    fun startLocationUpdates() {
+    private fun startLocationUpdates() {
         Log.i(TAG, "Requesting location updates")
-        startService(Intent(applicationContext, LocationUpdatesService::class.java))
         locationUpdatesRepository.startLocationUpdates()
     }
 
-    fun stopLocationUpdates() {
+    private fun stopLocationUpdates() {
         Log.i(TAG, "Removing location updates")
         try {
             locationUpdatesRepository.stopLocationUpdates()
-            stopSelf()
         } catch (unlikely: SecurityException) {
             Log.e(
                 TAG,
@@ -229,12 +224,7 @@ class LocationUpdatesService : Service() {
         }
     }
 
-    fun finishCurrentPath() {
+    private fun finishCurrentPath() {
         pathInteractor.finishCurrentPath()
-    }
-
-    inner class LocalBinder : Binder() {
-        val service: LocationUpdatesService
-            get() = this@LocationUpdatesService
     }
 }

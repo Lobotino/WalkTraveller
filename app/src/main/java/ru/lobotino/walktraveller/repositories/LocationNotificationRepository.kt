@@ -13,7 +13,7 @@ import ru.lobotino.walktraveller.R
 import ru.lobotino.walktraveller.repositories.interfaces.ILocationNotificationRepository
 import java.lang.ref.WeakReference
 import java.text.DateFormat
-import java.util.*
+import java.util.Date
 
 class LocationNotificationRepository(
     private val appContext: Context,
@@ -51,7 +51,7 @@ class LocationNotificationRepository(
             .setContentText(notificationText)
             .setContentTitle(getLocationTitle(appContext))
             .setOngoing(true)
-            .setPriority(if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) NotificationManager.IMPORTANCE_HIGH else Notification.PRIORITY_HIGH)
+            .setPriority(if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) NotificationManager.IMPORTANCE_DEFAULT else Notification.PRIORITY_DEFAULT)
             .setSmallIcon(R.mipmap.ic_launcher)
             .setTicker(notificationText)
             .setWhen(System.currentTimeMillis()).apply {

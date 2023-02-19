@@ -52,6 +52,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     private var backgroundCachingPathsInfoJob: Job? = null
     private var lastPaintedPoint: MapPoint? = null
 
+    private var notificationsPermissionsInteractor: IPermissionsInteractor? = null
     private var geoPermissionsInteractor: IPermissionsInteractor? = null
     private var volumeKeysListenerPermissionsInteractor: IPermissionsInteractor? = null
     private lateinit var defaultLocationRepository: IDefaultLocationRepository
@@ -119,6 +120,10 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
         this.geoPermissionsInteractor = geoPermissionsInteractor
     }
 
+    fun setNotificationsPermissionsInteractor(notificationsPermissionsInteractor: IPermissionsInteractor) {
+        this.notificationsPermissionsInteractor = notificationsPermissionsInteractor
+    }
+
     fun setVolumeKeysListenerPermissionsInteractor(volumeKeysListenerPermissionsInteractor: IPermissionsInteractor) {
         this.volumeKeysListenerPermissionsInteractor = volumeKeysListenerPermissionsInteractor
     }
@@ -158,6 +163,12 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
             permissionsDeniedSharedFlow.tryEmit(deniedPermissions)
         })
 
+        notificationsPermissionsInteractor?.requestPermissions(someDenied = { deniedPermissions ->
+            permissionsDeniedSharedFlow.tryEmit(
+                deniedPermissions
+            )
+        })
+
         updateCurrentMapCenterToUserLocation()
 
         userRotationRepository.startTrackUserRotation()
@@ -180,21 +191,6 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
         updatingYetUnpaintedPaths = false
         if (!writingPathStatesRepository.isWritingPathNow()) {
             regularLocationUpdateStateFlow.tryEmit(false)
-        }
-    }
-
-    fun onGeoLocationUpdaterConnected() {
-        geoPermissionsInteractor?.requestPermissions(someDenied = { deniedPermissions ->
-            permissionsDeniedSharedFlow.tryEmit(deniedPermissions)
-        })
-    }
-
-    fun onGeoLocationUpdaterDisconnected() {
-        writingPathNowState.tryEmit(false)
-        mapUiStateFlow.update { uiState ->
-            uiState.copy(
-                isPathFinished = false
-            )
         }
     }
 

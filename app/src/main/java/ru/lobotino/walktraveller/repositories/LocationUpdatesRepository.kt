@@ -1,6 +1,7 @@
 package ru.lobotino.walktraveller.repositories
 
 import android.location.Location
+import android.os.Looper
 import android.util.Log
 import com.google.android.gms.location.CurrentLocationRequest
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -75,7 +76,7 @@ class LocationUpdatesRepository(
             fusedLocationClient.requestLocationUpdates(
                 regularLocationRequest,
                 onNewLocation,
-                null
+                Looper.myLooper()
             )
         } catch (unlikely: SecurityException) {
             val errorMessage = "Lost location permission. Could not request updates. $unlikely"
