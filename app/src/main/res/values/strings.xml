@@ -3,4 +3,6 @@
     <string name="location_updated">Location Updated: %1$s</string>
     <string name="permissions_denied">Some permissions are denied. Check application settings.</string>
     <string name="paths_list_title">Paths list</string>
+    <string name="notification_path_tracking_info">The path track is recorded in the background</string>
+    <string name="notification_path_tracking_title">Track recording</string>
 </resources>

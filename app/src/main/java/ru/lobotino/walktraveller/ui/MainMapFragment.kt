@@ -7,6 +7,7 @@ import android.hardware.SensorManager
 import android.location.Location
 import android.os.Build
 import android.os.Bundle
+import android.os.IBinder
 import android.util.ArrayMap
 import android.view.LayoutInflater
 import android.view.MotionEvent.ACTION_DOWN
@@ -54,9 +55,7 @@ import ru.lobotino.walktraveller.model.map.MapPathSegment
 import ru.lobotino.walktraveller.model.map.MapRatingPath
 import ru.lobotino.walktraveller.repositories.*
 import ru.lobotino.walktraveller.services.LocationUpdatesService
-import ru.lobotino.walktraveller.services.LocationUpdatesService.Companion.ACTION_FINISH_CURRENT_PATH
 import ru.lobotino.walktraveller.services.LocationUpdatesService.Companion.ACTION_START_LOCATION_UPDATES
-import ru.lobotino.walktraveller.services.LocationUpdatesService.Companion.ACTION_STOP_LOCATION_UPDATES
 import ru.lobotino.walktraveller.services.LocationUpdatesService.Companion.EXTRA_LOCATION
 import ru.lobotino.walktraveller.services.VolumeKeysDetectorService
 import ru.lobotino.walktraveller.ui.model.*
@@ -118,9 +117,22 @@ class MainMapFragment : Fragment() {
     private var currentPathPolyline: Polyline? = null
     private var lastCurrentPathRating: SegmentRating? = null
 
+    private var locationUpdatesService: LocationUpdatesService? = null
+
     private var stopAcceptProgressJob: Job? = null
 
     private lateinit var sharedPreferences: SharedPreferences
+
+    private val serviceConnectionListener: ServiceConnection = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName, service: IBinder) {
+            locationUpdatesService =
+                (service as LocationUpdatesService.LocationUpdatesBinder).locationUpdatesService
+        }
+
+        override fun onServiceDisconnected(name: ComponentName) {
+            locationUpdatesService = null
+        }
+    }
 
     private val locationChangeReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -388,7 +400,11 @@ class MainMapFragment : Fragment() {
                         }.launchIn(lifecycleScope)
 
                         observeRegularLocationUpdate.onEach { needToUpdateLocation ->
-                            setNeedToUpdateLocationState(needToUpdateLocation)
+                            if (needToUpdateLocation) {
+                                sendStartLocationUpdatesAction()
+                            } else {
+                                sendStopLocationUpdatesAction()
+                            }
                         }.launchIn(lifecycleScope)
 
                         observeNewPathsInfoList.onEach { newPathsInfoList ->
@@ -424,20 +440,12 @@ class MainMapFragment : Fragment() {
 
                         observeWritingPathNow.onEach { isWritingPathNow ->
                             if (isWritingPathNow) {
+                                sendStartCurrentPathAction()
                                 walkStartButton.visibility = GONE
                                 walkStopButton.visibility = VISIBLE
                                 ratingButtonsHolder.visibility = VISIBLE
                             } else {
-                                activity?.let { activity ->
-                                    activity.startService(
-                                        Intent(
-                                            activity,
-                                            LocationUpdatesService::class.java
-                                        ).apply {
-                                            action = ACTION_FINISH_CURRENT_PATH
-                                        }
-                                    )
-                                }
+                                sendFinishCurrentPathAction()
                                 walkStartButton.visibility = VISIBLE
                                 walkStopButton.visibility = GONE
                                 ratingButtonsHolder.visibility = GONE
@@ -458,31 +466,40 @@ class MainMapFragment : Fragment() {
         }
     }
 
-    private fun setNeedToUpdateLocationState(needToUpdateLocation: Boolean) {
-        activity?.let { activity ->
+    private fun sendStartLocationUpdatesAction() {
+        locationUpdatesService?.startLocationUpdates() ?: activity?.let { activity ->
             activity.startService(
                 Intent(activity, LocationUpdatesService::class.java).apply {
-                    action = if (needToUpdateLocation) {
-                        ACTION_START_LOCATION_UPDATES
-                    } else {
-                        ACTION_STOP_LOCATION_UPDATES
-                    }
+                    action = ACTION_START_LOCATION_UPDATES
                 }
             )
         }
     }
 
+    private fun sendStopLocationUpdatesAction() {
+        locationUpdatesService?.stopLocationUpdates()
+    }
+
+    private fun sendStartCurrentPathAction() {
+        locationUpdatesService?.startWritingPath()
+    }
+
+    private fun sendFinishCurrentPathAction() {
+        locationUpdatesService?.finishWritingPath()
+    }
+
     override fun onStart() {
-        activity?.let { activity ->
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                activity.startForegroundService(
-                    Intent(activity, LocationUpdatesService::class.java)
-                )
-            } else {
-                activity.startService(Intent(activity, LocationUpdatesService::class.java))
-            }
-        }
+        activity?.bindService(
+            Intent(activity, LocationUpdatesService::class.java),
+            serviceConnectionListener,
+            Context.BIND_AUTO_CREATE
+        )
         super.onStart()
+    }
+
+    override fun onStop() {
+        activity?.unbindService(serviceConnectionListener)
+        super.onStop()
     }
 
     override fun onResume() {

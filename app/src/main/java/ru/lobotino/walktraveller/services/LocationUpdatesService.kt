@@ -7,9 +7,9 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.graphics.Color
 import android.location.Location
+import android.os.Binder
 import android.os.Build
 import android.os.IBinder
-import android.provider.ContactsContract
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
@@ -22,22 +22,22 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import ru.lobotino.walktraveller.App
 import ru.lobotino.walktraveller.App.Companion.PATH_DATABASE_NAME
+import ru.lobotino.walktraveller.BuildConfig
 import ru.lobotino.walktraveller.R
 import ru.lobotino.walktraveller.database.AppDatabase
 import ru.lobotino.walktraveller.repositories.DatabasePathRepository
-import ru.lobotino.walktraveller.repositories.LocationNotificationRepository
 import ru.lobotino.walktraveller.repositories.LocationUpdatesRepository
 import ru.lobotino.walktraveller.repositories.PathRatingRepository
+import ru.lobotino.walktraveller.repositories.PathWritingNowNotificationRepository
 import ru.lobotino.walktraveller.repositories.WritingPathStatesRepository
 import ru.lobotino.walktraveller.repositories.interfaces.ILocationUpdatesRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IWritingPathStatesRepository
-import ru.lobotino.walktraveller.ui.MainActivity
 import ru.lobotino.walktraveller.usecases.CurrentPathInteractor
 import ru.lobotino.walktraveller.usecases.LocationMediator
-import ru.lobotino.walktraveller.usecases.LocationNotificationInteractor
+import ru.lobotino.walktraveller.usecases.PathWritingNowNotificationInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.ICurrentPathInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.ILocationMediator
-import ru.lobotino.walktraveller.usecases.interfaces.ILocationNotificationInteractor
+import ru.lobotino.walktraveller.usecases.interfaces.INotificationInteractor
 import ru.lobotino.walktraveller.utils.ext.toMapPoint
 
 
@@ -45,22 +45,23 @@ class LocationUpdatesService : Service() {
 
     companion object {
         private val TAG = LocationUpdatesService::class.java.simpleName
-        private const val PACKAGE_NAME = ContactsContract.Directory.PACKAGE_NAME
+        private const val APPLICATION_ID = BuildConfig.APPLICATION_ID
         private const val CHANNEL_ID = "walk_traveller_notifications_channel"
-        const val EXTRA_LOCATION = "$PACKAGE_NAME.location"
-        const val ACTION_BROADCAST = "$PACKAGE_NAME.broadcast"
-        const val ACTION_START_LOCATION_UPDATES = "$PACKAGE_NAME.start_location_updates"
-        const val ACTION_STOP_LOCATION_UPDATES = "$PACKAGE_NAME.stop_location_updates"
-        const val ACTION_FINISH_CURRENT_PATH = "$PACKAGE_NAME.finish_current_path"
+        const val EXTRA_LOCATION = "$APPLICATION_ID.location"
+        const val ACTION_BROADCAST = "$APPLICATION_ID.broadcast"
+        const val ACTION_START_LOCATION_UPDATES = "$APPLICATION_ID.start_location_updates"
+        const val ACTION_STOP_LOCATION_UPDATES = "$APPLICATION_ID.stop_location_updates"
+        const val ACTION_FINISH_WRITING_PATH = "$APPLICATION_ID.finish_writing_path"
     }
 
+    private val binder: IBinder = LocationUpdatesBinder()
     private lateinit var sharedPreferences: SharedPreferences
 
     private var lastLocation: Location? = null
 
     private lateinit var writingPathStatesRepository: IWritingPathStatesRepository
     private lateinit var locationUpdatesRepository: ILocationUpdatesRepository
-    private lateinit var locationNotificationInteractor: ILocationNotificationInteractor
+    private lateinit var notificationInteractor: INotificationInteractor
     private lateinit var locationMediator: ILocationMediator
     private lateinit var pathInteractor: ICurrentPathInteractor
 
@@ -100,15 +101,14 @@ class LocationUpdatesService : Service() {
             5000
         ).apply {
             observeLocationUpdates().onEach { location ->
-                onNewPathLocation(location)
+                onNewLocation(location)
             }.launchIn(CoroutineScope(Dispatchers.Default))
         }
     }
 
     private fun initLocationNotificationInteractor() {
-        locationNotificationInteractor =
-            LocationNotificationInteractor(
-                this,
+        notificationInteractor =
+            PathWritingNowNotificationInteractor(
                 (getSystemService(NOTIFICATION_SERVICE) as NotificationManager).apply {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                         createNotificationChannel(
@@ -124,11 +124,8 @@ class LocationUpdatesService : Service() {
                         )
                     }
                 },
-                LocationNotificationRepository(
+                PathWritingNowNotificationRepository(
                     applicationContext,
-                    this,
-                    LocationUpdatesService::class.java,
-                    MainActivity::class.java,
                     CHANNEL_ID
                 )
             )
@@ -142,7 +139,7 @@ class LocationUpdatesService : Service() {
         locationMediator = LocationMediator(lastLocation)
     }
 
-    private fun onNewPathLocation(newLocation: Location) {
+    private fun onNewLocation(newLocation: Location) {
         Log.d(TAG, "New location: ${newLocation.latitude}, ${newLocation.longitude}")
         locationMediator.onNewLocation(newLocation) { location ->
             lastLocation = location
@@ -157,49 +154,56 @@ class LocationUpdatesService : Service() {
                 .sendBroadcast(Intent(ACTION_BROADCAST).apply {
                     putExtra(EXTRA_LOCATION, location)
                 })
+        }
+    }
 
-            locationNotificationInteractor.showOnLocationChangeNotification(location)
+    private fun startForegroundNotification() {
+        startForeground(
+            notificationInteractor.getNotificationId(),
+            notificationInteractor.getNotification()
+        )
+    }
+
+    private fun stopForegroundNotification() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            stopForeground(STOP_FOREGROUND_REMOVE)
+        } else {
+            stopForeground(true)
         }
     }
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
         intent.action?.let { action ->
+            Log.d(TAG, action)
             when (action) {
                 ACTION_START_LOCATION_UPDATES -> {
                     startLocationUpdates()
-                    return START_STICKY
                 }
 
                 ACTION_STOP_LOCATION_UPDATES -> {
                     stopLocationUpdates()
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                        stopForeground(STOP_FOREGROUND_REMOVE)
-                    } else {
-                        stopForeground(true)
-                    }
                     stopSelf()
-                    return START_STICKY
                 }
 
-                ACTION_FINISH_CURRENT_PATH -> {
-                    finishCurrentPath()
-                    return START_STICKY
+                ACTION_FINISH_WRITING_PATH -> {
+                    finishWritingPath()
                 }
 
                 else -> {}
             }
         }
 
-        startForeground(
-            locationNotificationInteractor.getNotificationId(),
-            locationNotificationInteractor.getNotification(lastLocation)
-        )
-
         return START_STICKY
     }
 
-    override fun onBind(intent: Intent): IBinder? {
-        return null
+    override fun onBind(intent: Intent): IBinder {
+        Log.i(TAG, "Client bound to service")
+        return binder
+    }
+
+    override fun onUnbind(intent: Intent): Boolean {
+        Log.i(TAG, "Last client unbound from service")
+        return true
     }
 
     override fun onDestroy() {
@@ -207,12 +211,12 @@ class LocationUpdatesService : Service() {
         super.onDestroy()
     }
 
-    private fun startLocationUpdates() {
+    fun startLocationUpdates() {
         Log.i(TAG, "Requesting location updates")
         locationUpdatesRepository.startLocationUpdates()
     }
 
-    private fun stopLocationUpdates() {
+    fun stopLocationUpdates() {
         Log.i(TAG, "Removing location updates")
         try {
             locationUpdatesRepository.stopLocationUpdates()
@@ -224,7 +228,17 @@ class LocationUpdatesService : Service() {
         }
     }
 
-    private fun finishCurrentPath() {
+    fun startWritingPath() {
+        startForegroundNotification()
+    }
+
+    fun finishWritingPath() {
         pathInteractor.finishCurrentPath()
+        stopForegroundNotification()
+    }
+
+    inner class LocationUpdatesBinder : Binder() {
+        val locationUpdatesService: LocationUpdatesService
+            get() = this@LocationUpdatesService
     }
 }
