@@ -175,7 +175,22 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
 
         clearMap()
 
+        syncWritingPathState()
+
         isInitialized = true
+    }
+
+    private fun syncWritingPathState() {
+        writingPathStatesRepository.isWritingPathNow().let { isWritingPathNow ->
+            if (isWritingPathNow != writingPathNowState.value) {
+                writingPathNowState.tryEmit(isWritingPathNow)
+            }
+        }
+        pathRatingRepository.getCurrentRating().let { currentRating ->
+            if (currentRating != mapUiStateFlow.value.newRating) {
+                mapUiStateFlow.update { mapUiState -> mapUiState.copy(newRating = currentRating) }
+            }
+        }
     }
 
     fun onResume() {
