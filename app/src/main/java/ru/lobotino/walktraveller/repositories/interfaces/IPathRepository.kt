@@ -3,8 +3,8 @@ package ru.lobotino.walktraveller.repositories.interfaces
 import ru.lobotino.walktraveller.database.model.EntityPath
 import ru.lobotino.walktraveller.database.model.EntityPathSegment
 import ru.lobotino.walktraveller.database.model.EntityPoint
-import ru.lobotino.walktraveller.model.map.MapPoint
 import ru.lobotino.walktraveller.model.SegmentRating
+import ru.lobotino.walktraveller.model.map.MapPoint
 
 interface IPathRepository {
 
@@ -16,7 +16,7 @@ interface IPathRepository {
         segmentRating: SegmentRating = SegmentRating.NORMAL
     ): Long
 
-    suspend fun getAllPaths(): List<EntityPath>
+    suspend fun getAllPathsInfo(): List<EntityPath>
 
     suspend fun getAllPathPoints(pathId: Long): List<EntityPoint>
 

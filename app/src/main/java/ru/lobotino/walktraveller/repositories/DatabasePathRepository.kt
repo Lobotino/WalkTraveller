@@ -1,6 +1,5 @@
 package ru.lobotino.walktraveller.repositories
 
-import android.content.SharedPreferences
 import android.util.Log
 import ru.lobotino.walktraveller.database.AppDatabase
 import ru.lobotino.walktraveller.database.model.EntityPath
@@ -9,18 +8,18 @@ import ru.lobotino.walktraveller.database.model.EntityPathSegment
 import ru.lobotino.walktraveller.database.model.EntityPoint
 import ru.lobotino.walktraveller.model.SegmentRating
 import ru.lobotino.walktraveller.model.map.MapPoint
+import ru.lobotino.walktraveller.repositories.interfaces.ILastCreatedPathIdRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IPathRepository
 import java.sql.Timestamp
 import java.util.Date
 
 class DatabasePathRepository(
     database: AppDatabase,
-    private val sharedPreferences: SharedPreferences
+    private val lastCreatedPathIdRepository: ILastCreatedPathIdRepository
 ) : IPathRepository {
 
     companion object {
         private val TAG = DatabasePathRepository::class.java.canonicalName
-        private const val KEY_LAST_PATH_ID = "last_path_id"
     }
 
     private val pathsPointsRelationsDao = database.getPathPointsRelationsDao()
@@ -35,7 +34,7 @@ class DatabasePathRepository(
             pathsDao.insertPaths(listOf(EntityPath(startPointId = insertedPointId)))
                 .let { insertedPathsIds ->
                     val insertedPathId = insertedPathsIds[0]
-                    setLastPathId(insertedPathId)
+                    lastCreatedPathIdRepository.setLastCreatedPathId(insertedPathId)
                     insertNewPathPointRelation(insertedPathId, insertedPointId)
                     Log.i(TAG, "createNewPath $insertedPathId with startPoint $startPoint")
                     return insertedPathId
@@ -113,7 +112,7 @@ class DatabasePathRepository(
         return pathFinishPoint
     }
 
-    override suspend fun getAllPaths(): List<EntityPath> {
+    override suspend fun getAllPathsInfo(): List<EntityPath> {
         return pathsDao.getAllPaths()
     }
 
@@ -128,13 +127,13 @@ class DatabasePathRepository(
     }
 
     override suspend fun getLastPathInfo(): EntityPath? {
-        val pathId = getLastPathId()
+        val pathId = lastCreatedPathIdRepository.getLastCreatedPathId()
         return if (pathId != null) pathsDao.getPathById(pathId) else null
     }
 
     override suspend fun getLastPathSegments(): List<EntityPathSegment> {
         return ArrayList<EntityPathSegment>().apply {
-            val pathId = getLastPathId()
+            val pathId = lastCreatedPathIdRepository.getLastCreatedPathId()
             if (pathId != null) {
                 getAllPathSegments(pathId)
             }
@@ -194,17 +193,5 @@ class DatabasePathRepository(
             pointsDao.deletePointById(pointId)
         }
         pathsDao.deletePathById(pathId)
-    }
-
-    private fun getLastPathId(): Long? {
-        val lastPathId = sharedPreferences.getLong(KEY_LAST_PATH_ID, -1L)
-        return if (lastPathId == -1L) null else lastPathId
-    }
-
-    private fun setLastPathId(pathId: Long) {
-        sharedPreferences.edit().apply {
-            putLong(KEY_LAST_PATH_ID, pathId)
-            apply()
-        }
     }
 }

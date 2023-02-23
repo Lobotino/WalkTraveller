@@ -1,6 +1,10 @@
 package ru.lobotino.walktraveller.usecases
 
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withContext
 import ru.lobotino.walktraveller.database.model.EntityPath
 import ru.lobotino.walktraveller.database.model.EntityPathSegment
 import ru.lobotino.walktraveller.model.SegmentRating
@@ -9,8 +13,10 @@ import ru.lobotino.walktraveller.model.map.MapPathInfo
 import ru.lobotino.walktraveller.model.map.MapPathSegment
 import ru.lobotino.walktraveller.model.map.MapRatingPath
 import ru.lobotino.walktraveller.repositories.interfaces.ICachePathsRepository
+import ru.lobotino.walktraveller.repositories.interfaces.ILastCreatedPathIdRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IPathColorGenerator
 import ru.lobotino.walktraveller.repositories.interfaces.IPathRepository
+import ru.lobotino.walktraveller.repositories.interfaces.IWritingPathStatesRepository
 import ru.lobotino.walktraveller.usecases.interfaces.IMapPathsInteractor
 import ru.lobotino.walktraveller.utils.ext.toMapPoint
 
@@ -18,7 +24,9 @@ class LocalMapPathsInteractor(
     private val databasePathRepository: IPathRepository,
     private val cachePathRepository: ICachePathsRepository,
     private val defaultDispatcher: CoroutineDispatcher = Dispatchers.IO,
-    private val pathColorGenerator: IPathColorGenerator
+    private val pathColorGenerator: IPathColorGenerator,
+    private val writingPathStatesRepository: IWritingPathStatesRepository,
+    private val lastCreatedPathIdRepository: ILastCreatedPathIdRepository
 ) : IMapPathsInteractor {
 
     companion object {
@@ -28,7 +36,7 @@ class LocalMapPathsInteractor(
     override suspend fun getAllSavedCommonPaths(): List<MapCommonPath> {
         return coroutineScope {
             ArrayList<MapCommonPath>().apply {
-                for (path in withContext(defaultDispatcher) { databasePathRepository.getAllPaths() }) {
+                for (path in withContext(defaultDispatcher) { databasePathRepository.getAllPathsInfo() }) {
                     val cachedPath = cachePathRepository.getCommonPath(path.id)
                     if (cachedPath != null) {
                         add(cachedPath)
@@ -62,9 +70,7 @@ class LocalMapPathsInteractor(
     override suspend fun getLastSavedRatingPath(): MapRatingPath? {
         return coroutineScope {
             mapRatingPath(withContext(defaultDispatcher) { databasePathRepository.getLastPathInfo() })?.also { ratingPath ->
-                cachePathRepository.saveRatingPath(
-                    ratingPath
-                )
+                tryCacheRatingPath(ratingPath)
             }
         }
     }
@@ -72,7 +78,7 @@ class LocalMapPathsInteractor(
     override suspend fun getAllSavedRatingPaths(): List<MapRatingPath> {
         return coroutineScope {
             ArrayList<MapRatingPath>().apply {
-                for (path in withContext(defaultDispatcher) { databasePathRepository.getAllPaths() }) {
+                for (path in withContext(defaultDispatcher) { databasePathRepository.getAllPathsInfo() }) {
                     val cachedPath = cachePathRepository.getRatingPath(path.id)
                     if (cachedPath != null) {
                         add(cachedPath)
@@ -81,7 +87,7 @@ class LocalMapPathsInteractor(
 
                     mapRatingPath(path)?.let { ratingPath ->
                         add(ratingPath)
-                        cachePathRepository.saveRatingPath(ratingPath)
+                        tryCacheRatingPath(ratingPath)
                     }
                 }
             }
@@ -117,7 +123,7 @@ class LocalMapPathsInteractor(
     override suspend fun getAllSavedPathsInfo(): List<MapPathInfo> {
         return coroutineScope {
             ArrayList<MapPathInfo>().apply {
-                for (path in withContext(defaultDispatcher) { databasePathRepository.getAllPaths() }) {
+                for (path in withContext(defaultDispatcher) { databasePathRepository.getAllPathsInfo() }) {
                     val cachedPathInfo = cachePathRepository.getPathInfo(path.id)
                     if (cachedPathInfo != null) {
                         add(cachedPathInfo)
@@ -162,9 +168,7 @@ class LocalMapPathsInteractor(
                     resultPathSegments[0].startPoint,
                     resultPathSegments
                 ).also { ratingPath ->
-                    cachePathRepository.saveRatingPath(
-                        ratingPath
-                    )
+                    tryCacheRatingPath(ratingPath)
                 }
             } else {
                 null
@@ -211,6 +215,16 @@ class LocalMapPathsInteractor(
                 finishPoint.toMapPoint(),
                 ratingList[rating]
             )
+        }
+    }
+
+    private fun tryCacheRatingPath(ratingPath: MapRatingPath) {
+        if (writingPathStatesRepository.isWritingPathNow()) {
+            if (ratingPath.pathId != lastCreatedPathIdRepository.getLastCreatedPathId()) {
+                cachePathRepository.saveRatingPath(ratingPath)
+            }
+        } else {
+            cachePathRepository.saveRatingPath(ratingPath)
         }
     }
 }

@@ -136,8 +136,8 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
         this.defaultLocationRepository = defaultLocationRepository
     }
 
-    fun setLocationUpdatesStatesRepository(locationUpdatesStatesRepository: IWritingPathStatesRepository) {
-        this.writingPathStatesRepository = locationUpdatesStatesRepository
+    fun setWritingPathStatesRepository(writingPathStatesRepository: IWritingPathStatesRepository) {
+        this.writingPathStatesRepository = writingPathStatesRepository
     }
 
     fun setPathRatingRepository(pathRatingRepository: IPathRatingRepository) {

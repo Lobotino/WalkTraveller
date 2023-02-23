@@ -26,6 +26,7 @@ import ru.lobotino.walktraveller.BuildConfig
 import ru.lobotino.walktraveller.R
 import ru.lobotino.walktraveller.database.AppDatabase
 import ru.lobotino.walktraveller.repositories.DatabasePathRepository
+import ru.lobotino.walktraveller.repositories.LastCreatedPathIdRepository
 import ru.lobotino.walktraveller.repositories.LocationUpdatesRepository
 import ru.lobotino.walktraveller.repositories.PathRatingRepository
 import ru.lobotino.walktraveller.repositories.PathWritingNowNotificationRepository
@@ -89,7 +90,7 @@ class LocationUpdatesService : Service() {
                     applicationContext,
                     AppDatabase::class.java, PATH_DATABASE_NAME
                 ).build(),
-                sharedPreferences
+                LastCreatedPathIdRepository(sharedPreferences)
             ),
             PathRatingRepository(sharedPreferences)
         )

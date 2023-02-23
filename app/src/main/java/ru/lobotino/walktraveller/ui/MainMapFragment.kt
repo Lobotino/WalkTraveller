@@ -336,6 +336,12 @@ class MainMapFragment : Fragment() {
                             )
                         )
 
+                        val writingPathStatesRepository =
+                            WritingPathStatesRepository(sharedPreferences)
+
+                        val lastCreatedPathIdRepository =
+                            LastCreatedPathIdRepository(sharedPreferences)
+
                         setMapPathInteractor(
                             LocalMapPathsInteractor(
                                 databasePathRepository = DatabasePathRepository(
@@ -343,20 +349,20 @@ class MainMapFragment : Fragment() {
                                         requireContext().applicationContext,
                                         AppDatabase::class.java, PATH_DATABASE_NAME
                                     ).build(),
-                                    sharedPreferences
+                                    lastCreatedPathIdRepository
                                 ),
                                 pathColorGenerator = PathColorGenerator(requireContext()),
-                                cachePathRepository = CachePathsRepository()
+                                cachePathRepository = CachePathsRepository(),
+                                writingPathStatesRepository = writingPathStatesRepository,
+                                lastCreatedPathIdRepository = lastCreatedPathIdRepository
                             )
+                        )
+
+                        setWritingPathStatesRepository(
+                            writingPathStatesRepository
                         )
 
                         setDefaultLocationRepository(DefaultLocationRepository(sharedPreferences))
-
-                        setLocationUpdatesStatesRepository(
-                            WritingPathStatesRepository(
-                                sharedPreferences
-                            )
-                        )
 
                         setPathRatingRepository(PathRatingRepository(sharedPreferences))
 
