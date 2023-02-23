@@ -7,11 +7,11 @@ import ru.lobotino.walktraveller.database.model.EntityPath
 import ru.lobotino.walktraveller.database.model.EntityPathPointRelation
 import ru.lobotino.walktraveller.database.model.EntityPathSegment
 import ru.lobotino.walktraveller.database.model.EntityPoint
-import ru.lobotino.walktraveller.model.map.MapPoint
 import ru.lobotino.walktraveller.model.SegmentRating
+import ru.lobotino.walktraveller.model.map.MapPoint
 import ru.lobotino.walktraveller.repositories.interfaces.IPathRepository
 import java.sql.Timestamp
-import java.util.*
+import java.util.Date
 
 class DatabasePathRepository(
     database: AppDatabase,
@@ -37,6 +37,7 @@ class DatabasePathRepository(
                     val insertedPathId = insertedPathsIds[0]
                     setLastPathId(insertedPathId)
                     insertNewPathPointRelation(insertedPathId, insertedPointId)
+                    Log.i(TAG, "createNewPath $insertedPathId with startPoint $startPoint")
                     return insertedPathId
                 }
         }
@@ -48,6 +49,7 @@ class DatabasePathRepository(
         segmentRating: SegmentRating
     ): Long {
         insertNewPoint(point).let { insertedPointId ->
+            Log.i(TAG, "addNewPathPoint $insertedPointId to pathId $pathId")
             insertNewPathPointRelation(pathId, insertedPointId)
             insertNewPathSegment(pathId, insertedPointId, segmentRating)
             return insertedPointId
@@ -93,6 +95,7 @@ class DatabasePathRepository(
                     )
                 )
             )
+            Log.d(TAG, "insertNewPathSegment with start point id: ${pathFinishPoint.id}")
         } else {
             throw RuntimeException("Trying to add next point to path without start point!")
         }
