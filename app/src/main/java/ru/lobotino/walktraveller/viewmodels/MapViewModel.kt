@@ -183,7 +183,11 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     private fun syncWritingPathState() {
         writingPathStatesRepository.isWritingPathNow().let { isWritingPathNow ->
             if (isWritingPathNow != writingPathNowState.value) {
-                writingPathNowState.tryEmit(isWritingPathNow)
+                if (isWritingPathNow) {
+                    updateNewPointsIfNeeded()
+                } else {
+                    writingPathNowState.tryEmit(false)
+                }
             }
         }
         pathRatingRepository.getCurrentRating().let { currentRating ->
@@ -312,32 +316,34 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun updateNewPointsIfNeeded() {
-        updatingYetUnpaintedPaths = true
-        if (writingPathStatesRepository.isWritingPathNow()) {
-            var needToUpdateAllPath = false
+        if (!updatingYetUnpaintedPaths) {
+            updatingYetUnpaintedPaths = true
+            if (writingPathStatesRepository.isWritingPathNow()) {
+                var needToUpdateAllPath = false
 
-            if (!writingPathNowState.value) {
-                writingPathNowState.tryEmit(true)
-                needToUpdateAllPath = true
-            }
-
-            updateCurrentSavedPath?.cancel()
-            updateCurrentSavedPath = viewModelScope.launch {
-                mapPathsInteractor.getLastSavedRatingPath()?.let { lastSavedPath ->
-
-                    if (lastSavedPath.pathSegments.isNotEmpty()) {
-                        if (needToUpdateAllPath) {
-                            clearMap()
-                            lastPaintedPoint = lastSavedPath.pathSegments.first().startPoint
-                        }
-                        drawUnpaintedYetPathSegments(lastSavedPath.pathSegments)
-                        newCurrentUserLocationFlow.tryEmit(lastSavedPath.pathSegments.last().finishPoint)
-                    }
-                    updatingYetUnpaintedPaths = false
+                if (!writingPathNowState.value) {
+                    writingPathNowState.tryEmit(true)
+                    needToUpdateAllPath = true
                 }
+
+                updateCurrentSavedPath?.cancel()
+                updateCurrentSavedPath = viewModelScope.launch {
+                    mapPathsInteractor.getLastSavedRatingPath()?.let { lastSavedPath ->
+
+                        if (lastSavedPath.pathSegments.isNotEmpty()) {
+                            if (needToUpdateAllPath) {
+                                clearMap()
+                                lastPaintedPoint = lastSavedPath.pathSegments.first().startPoint
+                            }
+                            drawUnpaintedYetPathSegments(lastSavedPath.pathSegments)
+                            newCurrentUserLocationFlow.tryEmit(lastSavedPath.pathSegments.last().finishPoint)
+                        }
+                        updatingYetUnpaintedPaths = false
+                    }
+                }
+            } else {
+                updatingYetUnpaintedPaths = false
             }
-        } else {
-            updatingYetUnpaintedPaths = false
         }
     }
 
@@ -358,6 +364,11 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
             } else {
                 if (segment.finishPoint == lastPaintedPoint) {
                     needToDraw = true
+                } else {
+                    if (segment.startPoint == lastPaintedPoint) {
+                        needToDraw = true
+                        newPathSegmentFlow.tryEmit(segment)
+                    }
                 }
             }
         }
