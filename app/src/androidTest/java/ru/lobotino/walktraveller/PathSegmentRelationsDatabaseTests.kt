@@ -5,6 +5,8 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.matcher.ViewMatchers.assertThat
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.runTest
 import org.hamcrest.CoreMatchers.equalTo
 import org.junit.After
 import org.junit.Before
@@ -18,11 +20,15 @@ import ru.lobotino.walktraveller.database.model.EntityPoint
 import ru.lobotino.walktraveller.model.SegmentRating
 import java.io.IOException
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
 class PathSegmentRelationsDatabaseTests {
     private lateinit var pathSegmentRelationsDao: PathSegmentRelationsDao
     private lateinit var pointsDao: PointsDao
     private lateinit var db: AppDatabase
+
+    private lateinit var firstPoint: EntityPoint
+    private lateinit var secondPoint: EntityPoint
 
     private lateinit var expectedSegment: EntityPathSegment
 
@@ -40,6 +46,8 @@ class PathSegmentRelationsDatabaseTests {
             rating = SegmentRating.NORMAL.ordinal,
             timestamp = 1000
         )
+        firstPoint = EntityPoint(1, 1.0, 1.0)
+        secondPoint = EntityPoint(2, 2.0, 2.0)
     }
 
     @After
@@ -50,8 +58,8 @@ class PathSegmentRelationsDatabaseTests {
 
     @Test
     @Throws(Exception::class)
-    suspend fun insertPathSegment() {
-        val expectedPointsList = listOf(EntityPoint(1, 1.0, 1.0), EntityPoint(2, 2.0, 2.0))
+    fun insertPathSegment() = runTest {
+        val expectedPointsList = listOf(firstPoint, secondPoint)
         pointsDao.insertPoints(expectedPointsList)
 
         pathSegmentRelationsDao.insertPathSegments(
@@ -65,27 +73,27 @@ class PathSegmentRelationsDatabaseTests {
 
     @Test
     @Throws(Exception::class)
-    suspend fun getNextPointWithPathSegment() {
-        val expectedPointsList = listOf(EntityPoint(1, 1.0, 1.0), EntityPoint(2, 2.0, 2.0))
+    fun getNextPointWithPathSegment() = runTest {
+        val expectedPointsList = listOf(firstPoint, secondPoint)
         pointsDao.insertPoints(expectedPointsList)
 
         pathSegmentRelationsDao.insertPathSegments(listOf(expectedSegment))
         assertThat(
-            EntityPoint(2, 2.0, 2.0),
-            equalTo(pathSegmentRelationsDao.getNextPathPoint(1))
+            secondPoint,
+            equalTo(pathSegmentRelationsDao.getNextPathPoint(firstPoint.id))
         )
     }
 
     @Test
     @Throws(Exception::class)
-    suspend fun getNullNextPointWithPathSegment() {
-        val expectedPointsList = listOf(EntityPoint(1, 1.0, 1.0), EntityPoint(2, 2.0, 2.0))
+    fun getNullNextPointWithPathSegment() = runTest {
+        val expectedPointsList = listOf(firstPoint, secondPoint)
         pointsDao.insertPoints(expectedPointsList)
 
         pathSegmentRelationsDao.insertPathSegments(listOf(expectedSegment))
         assertThat(
             null,
-            equalTo(pathSegmentRelationsDao.getNextPathPoint(2))
+            equalTo(pathSegmentRelationsDao.getNextPathPoint(secondPoint.id))
         )
     }
 }

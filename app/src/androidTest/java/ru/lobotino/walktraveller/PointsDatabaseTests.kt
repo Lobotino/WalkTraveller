@@ -5,6 +5,8 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.matcher.ViewMatchers.assertThat
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.runTest
 import org.hamcrest.CoreMatchers.equalTo
 import org.junit.After
 import org.junit.Before
@@ -13,13 +15,17 @@ import org.junit.runner.RunWith
 import ru.lobotino.walktraveller.database.AppDatabase
 import ru.lobotino.walktraveller.database.dao.PointsDao
 import ru.lobotino.walktraveller.database.model.EntityPoint
-import ru.lobotino.walktraveller.model.map.MapPoint
 import java.io.IOException
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
 class PointsDatabaseTests {
     private lateinit var pointsDao: PointsDao
     private lateinit var db: AppDatabase
+
+    private lateinit var firstPoint: EntityPoint
+    private lateinit var secondPoint: EntityPoint
+    private lateinit var thirdPoint: EntityPoint
 
     @Before
     fun createDb() {
@@ -28,6 +34,9 @@ class PointsDatabaseTests {
             context, AppDatabase::class.java
         ).build()
         pointsDao = db.getPointsDao()
+        firstPoint = EntityPoint(1, 1.0, 1.0)
+        secondPoint = EntityPoint(2, 2.0, 2.0)
+        thirdPoint = EntityPoint(3, 3.0, 3.0)
     }
 
     @After
@@ -38,29 +47,35 @@ class PointsDatabaseTests {
 
     @Test
     @Throws(Exception::class)
-    suspend fun writePointsAndReadInList() {
+    fun writePointsAndReadInList() = runTest {
         val insertedPoints =
             listOf(
-                EntityPoint(latitude = 1.0, longitude = 1.0),
-                EntityPoint(latitude = 2.0, longitude = 2.0),
-                EntityPoint(latitude = 3.0, longitude = 3.0)
+                firstPoint,
+                secondPoint,
+                thirdPoint
             )
         pointsDao.insertPoints(insertedPoints)
         val actualPointsList = pointsDao.getAllPoints()
 
         assertThat(
             actualPointsList,
-            equalTo(listOf(MapPoint(1.0, 1.0), MapPoint(2.0, 2.0), MapPoint(3.0, 3.0)))
+            equalTo(
+                listOf(
+                    firstPoint,
+                    secondPoint,
+                    thirdPoint
+                )
+            )
         )
     }
 
     @Test
     @Throws(Exception::class)
-    suspend fun deletePointById() {
-        pointsDao.insertPoints(listOf(EntityPoint(1, 1.0, 1.0)))
-        assertThat(pointsDao.getAllPoints(), equalTo(listOf(MapPoint(1.0, 1.0))))
+    fun deletePointById() = runTest {
+        pointsDao.insertPoints(listOf(firstPoint))
+        assertThat(pointsDao.getAllPoints(), equalTo(listOf(firstPoint)))
 
-        pointsDao.deletePointById(1)
+        pointsDao.deletePointById(firstPoint.id)
         assertThat(pointsDao.getAllPoints(), equalTo(emptyList()))
     }
 }

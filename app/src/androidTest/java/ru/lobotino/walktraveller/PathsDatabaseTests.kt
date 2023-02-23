@@ -5,6 +5,8 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.matcher.ViewMatchers.assertThat
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.runTest
 import org.hamcrest.CoreMatchers.equalTo
 import org.junit.After
 import org.junit.Before
@@ -17,11 +19,18 @@ import ru.lobotino.walktraveller.database.model.EntityPath
 import ru.lobotino.walktraveller.database.model.EntityPoint
 import java.io.IOException
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
 class PathsDatabaseTests {
     private lateinit var pathsDao: PathsDao
     private lateinit var pointsDao: PointsDao
     private lateinit var db: AppDatabase
+
+    private lateinit var firstPoint: EntityPoint
+    private lateinit var secondPoint: EntityPoint
+
+    private lateinit var firstPath: EntityPath
+    private lateinit var secondPath: EntityPath
 
     @Before
     fun createDb() {
@@ -31,6 +40,10 @@ class PathsDatabaseTests {
         ).build()
         pointsDao = db.getPointsDao()
         pathsDao = db.getPathsDao()
+        firstPoint = EntityPoint(1, 1.0, 1.0)
+        secondPoint = EntityPoint(2, 2.0, 2.0)
+        firstPath = EntityPath(1, 1)
+        secondPath = EntityPath(2, 2)
     }
 
     @After
@@ -41,23 +54,23 @@ class PathsDatabaseTests {
 
     @Test
     @Throws(Exception::class)
-    suspend fun insertPathAndGetById() {
-        pointsDao.insertPoints(listOf(EntityPoint(1, 1.0, 1.0)))
+    fun insertPathAndGetById() = runTest {
+        pointsDao.insertPoints(listOf(firstPoint))
 
-        pathsDao.insertPaths(listOf(EntityPath(1, 1)))
+        pathsDao.insertPaths(listOf(firstPath))
 
         assertThat(
-            pathsDao.getPathById(1),
-            equalTo(EntityPath(1, 1))
+            pathsDao.getPathById(firstPath.id),
+            equalTo(firstPath)
         )
     }
 
     @Test
     @Throws(Exception::class)
-    suspend fun insertPathsAndGetAll() {
-        pointsDao.insertPoints(listOf(EntityPoint(1, 1.0, 1.0), EntityPoint(2, 2.0, 2.0)))
+    fun insertPathsAndGetAll() = runTest {
+        pointsDao.insertPoints(listOf(firstPoint, secondPoint))
 
-        val insertedPaths = listOf(EntityPath(1, 1), EntityPath(2, 2))
+        val insertedPaths = listOf(firstPath, secondPath)
         pathsDao.insertPaths(insertedPaths)
 
         assertThat(
@@ -68,31 +81,31 @@ class PathsDatabaseTests {
 
     @Test
     @Throws(Exception::class)
-    suspend fun insertPathAndGetStartPoint() {
-        pointsDao.insertPoints(listOf(EntityPoint(1, 1.0, 1.0)))
+    fun insertPathAndGetStartPoint() = runTest {
+        pointsDao.insertPoints(listOf(firstPoint))
 
-        val insertedPaths = listOf(EntityPath(1, 1))
+        val insertedPaths = listOf(firstPath)
         pathsDao.insertPaths(insertedPaths)
 
         assertThat(
-            pathsDao.getPathStartPoint(1),
-            equalTo(EntityPoint(1, 1.0, 1.0))
+            pathsDao.getPathStartPoint(firstPoint.id),
+            equalTo(firstPoint)
         )
     }
 
     @Test
     @Throws(Exception::class)
-    suspend fun deletePathsAndGetAll() {
-        pointsDao.insertPoints(listOf(EntityPoint(1, 1.0, 1.0), EntityPoint(2, 2.0, 2.0)))
+    fun deletePathsAndGetAll() = runTest {
+        pointsDao.insertPoints(listOf(firstPoint, secondPoint))
 
-        val insertedPaths = listOf(EntityPath(1, 1), EntityPath(2, 2))
+        val insertedPaths = listOf(firstPath, secondPath)
         pathsDao.insertPaths(insertedPaths)
 
-        pathsDao.deletePathById(1)
+        pathsDao.deletePathById(firstPath.id)
 
         assertThat(
             pathsDao.getAllPaths(),
-            equalTo(listOf(EntityPath(2, 2)))
+            equalTo(listOf(secondPath))
         )
     }
 }

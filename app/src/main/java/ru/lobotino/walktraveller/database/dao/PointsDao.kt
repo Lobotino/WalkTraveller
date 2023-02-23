@@ -5,12 +5,11 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy.REPLACE
 import androidx.room.Query
 import ru.lobotino.walktraveller.database.model.EntityPoint
-import ru.lobotino.walktraveller.model.map.MapPoint
 
 @Dao
 interface PointsDao {
-    @Query("SELECT latitude, longitude FROM points")
-    suspend fun getAllPoints(): List<MapPoint>
+    @Query("SELECT * FROM points")
+    suspend fun getAllPoints(): List<EntityPoint>
 
     @Query("SELECT * FROM points WHERE id = :pointId")
     suspend fun getPointById(pointId: Long): EntityPoint?
