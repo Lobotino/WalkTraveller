@@ -424,15 +424,8 @@ class MainMapFragment : Fragment() {
                             }
                         }.launchIn(lifecycleScope)
 
-                        observeNewPathInfoListItemState.onEach { pathInfoItemState ->
-                            if (pathInfoItemState.first == -1L) {
-                                pathsInfoListAdapter.setAllPathsShowState(pathInfoItemState.second)
-                            } else {
-                                pathsInfoListAdapter.setPathShowState(
-                                    pathInfoItemState.first,
-                                    pathInfoItemState.second
-                                )
-                            }
+                        observeNewPathInfoListItemState.onEach { newPathInfoState ->
+                            syncNewPathInfoState(newPathInfoState)
                         }.launchIn(lifecycleScope)
 
                         observeHidePath.onEach { pathId ->
@@ -787,5 +780,20 @@ class MainMapFragment : Fragment() {
 
     private fun addUserLocationTracker() {
         mapView.overlays.add(userLocationOverlay)
+    }
+
+    private fun syncNewPathInfoState(newPathInfoState: PathInfoItemState) {
+        if (newPathInfoState.pathId == -1L) {
+            pathsInfoListAdapter.setAllPathsShowState(newPathInfoState.showButtonState)
+        } else {
+            if (newPathInfoState.isDeleted) {
+                pathsInfoListAdapter.deletePathInfoItem(newPathInfoState.pathId)
+            } else {
+                pathsInfoListAdapter.setPathShowState(
+                    newPathInfoState.pathId,
+                    newPathInfoState.showButtonState
+                )
+            }
+        }
     }
 }

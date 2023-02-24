@@ -23,11 +23,13 @@ import ru.lobotino.walktraveller.repositories.interfaces.IPathRatingRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IUserRotationRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IWritingPathStatesRepository
 import ru.lobotino.walktraveller.ui.PathsInfoAdapter
+import ru.lobotino.walktraveller.ui.PathsInfoAdapter.PathItemButtonType.DELETE
 import ru.lobotino.walktraveller.ui.PathsInfoAdapter.PathItemButtonType.SHOW
 import ru.lobotino.walktraveller.ui.model.BottomMenuState
 import ru.lobotino.walktraveller.ui.model.FindMyLocationButtonState
 import ru.lobotino.walktraveller.ui.model.MapUiState
 import ru.lobotino.walktraveller.ui.model.PathInfoItemShowButtonState
+import ru.lobotino.walktraveller.ui.model.PathInfoItemState
 import ru.lobotino.walktraveller.ui.model.PathsInfoListState
 import ru.lobotino.walktraveller.ui.model.ShowPathsButtonState
 import ru.lobotino.walktraveller.usecases.IUserLocationInteractor
@@ -80,7 +82,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     private val newMapCenterFlow =
         MutableSharedFlow<MapPoint>(1, 0, BufferOverflow.DROP_OLDEST)
     private val newPathInfoListItemStateFlow =
-        MutableSharedFlow<Pair<Long, PathInfoItemShowButtonState>>(1, 0, BufferOverflow.DROP_OLDEST)
+        MutableSharedFlow<PathInfoItemState>(1, 0, BufferOverflow.DROP_OLDEST)
     private val newCurrentUserLocationFlow =
         MutableSharedFlow<MapPoint>(1, 0, BufferOverflow.DROP_OLDEST)
     private val writingPathNowState = MutableStateFlow(false)
@@ -104,8 +106,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     val observeRegularLocationUpdate: Flow<Boolean> = regularLocationUpdateStateFlow
     val observeNewPathsInfoList: Flow<List<MapPathInfo>> = newPathsInfoListFlow
     val observeNewMapCenter: Flow<MapPoint> = newMapCenterFlow
-    val observeNewPathInfoListItemState: Flow<Pair<Long, PathInfoItemShowButtonState>> =
-        newPathInfoListItemStateFlow
+    val observeNewPathInfoListItemState: Flow<PathInfoItemState> = newPathInfoListItemStateFlow
     val observeHidePath: Flow<Long> = hidePathFlow
     val observeNewCurrentUserLocation: Flow<MapPoint> = newCurrentUserLocationFlow
     val observeWritingPathNow: Flow<Boolean> = writingPathNowState
@@ -261,7 +262,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
                 uiState.copy(showPathsButtonState = ShowPathsButtonState.DEFAULT)
             }
             newPathInfoListItemStateFlow.tryEmit(
-                Pair(
+                PathInfoItemState(
                     -1,
                     PathInfoItemShowButtonState.DEFAULT
                 )
@@ -273,7 +274,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
                     uiState.copy(showPathsButtonState = ShowPathsButtonState.DEFAULT)
                 }
                 newPathInfoListItemStateFlow.tryEmit(
-                    Pair(
+                    PathInfoItemState(
                         -1,
                         PathInfoItemShowButtonState.DEFAULT
                     )
@@ -284,7 +285,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
                     uiState.copy(showPathsButtonState = ShowPathsButtonState.LOADING)
                 }
                 newPathInfoListItemStateFlow.tryEmit(
-                    Pair(
+                    PathInfoItemState(
                         -1,
                         PathInfoItemShowButtonState.LOADING
                     )
@@ -294,7 +295,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
                     for (path in mapPathsInteractor.getAllSavedRatingPaths()) {
                         showRatingPathOnMap(path)
                         newPathInfoListItemStateFlow.tryEmit(
-                            Pair(
+                            PathInfoItemState(
                                 path.pathId,
                                 PathInfoItemShowButtonState.HIDE
                             )
@@ -415,14 +416,14 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
                 if (showedPathIdsList.contains(pathId)) {
                     hidePathFromMap(pathId)
                     newPathInfoListItemStateFlow.tryEmit(
-                        Pair(
+                        PathInfoItemState(
                             pathId,
                             PathInfoItemShowButtonState.DEFAULT
                         )
                     )
                 } else {
                     newPathInfoListItemStateFlow.tryEmit(
-                        Pair(
+                        PathInfoItemState(
                             pathId,
                             PathInfoItemShowButtonState.LOADING
                         )
@@ -432,7 +433,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
                         if (savedRatingPath != null) {
                             showRatingPathOnMap(savedRatingPath)
                             newPathInfoListItemStateFlow.tryEmit(
-                                Pair(
+                                PathInfoItemState(
                                     pathId,
                                     PathInfoItemShowButtonState.HIDE
                                 )
@@ -442,6 +443,20 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
                         }
                     }
                 }
+            }
+
+            DELETE -> {
+                viewModelScope.launch {
+                    mapPathsInteractor.deletePath(pathId)
+                }
+                hidePathFromMap(pathId)
+                newPathInfoListItemStateFlow.tryEmit(
+                    PathInfoItemState(
+                        pathId,
+                        PathInfoItemShowButtonState.DEFAULT,
+                        true
+                    )
+                )
             }
 
             else -> {

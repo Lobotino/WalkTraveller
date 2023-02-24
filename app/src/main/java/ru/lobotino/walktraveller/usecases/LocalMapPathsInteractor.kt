@@ -227,4 +227,12 @@ class LocalMapPathsInteractor(
             cachePathRepository.saveRatingPath(ratingPath)
         }
     }
+
+    override suspend fun deletePath(pathId: Long) {
+        return coroutineScope {
+            withContext(defaultDispatcher) {
+                databasePathRepository.deletePath(pathId)
+            }
+        }
+    }
 }

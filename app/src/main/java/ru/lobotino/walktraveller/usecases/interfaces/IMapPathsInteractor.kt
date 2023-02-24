@@ -18,4 +18,6 @@ interface IMapPathsInteractor {
 
     suspend fun getSavedRatingPath(pathId: Long): MapRatingPath?
 
+    suspend fun deletePath(pathId: Long)
+
 }

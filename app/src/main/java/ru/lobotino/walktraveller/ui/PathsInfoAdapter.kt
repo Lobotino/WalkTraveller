@@ -21,11 +21,11 @@ import java.util.*
 class PathsInfoAdapter(private val itemButtonClickedListener: (Long, PathItemButtonType) -> Unit) :
     RecyclerView.Adapter<PathsInfoAdapter.PathInfoItem>() {
 
-    private var pathsItems: List<PathInfoItemModel> = ArrayList<PathInfoItemModel>()
+    private var pathsItems: MutableList<PathInfoItemModel> = ArrayList<PathInfoItemModel>()
 
     @SuppressLint("NotifyDataSetChanged")
     fun setPathsInfoItems(pathInfoItems: List<MapPathInfo>) {
-        pathsItems = pathInfoItems.map { PathInfoItemModel(pathInfo = it) }
+        pathsItems = pathInfoItems.map { PathInfoItemModel(pathInfo = it) }.toMutableList()
         notifyDataSetChanged()
     }
 
@@ -44,6 +44,16 @@ class PathsInfoAdapter(private val itemButtonClickedListener: (Long, PathItemBut
             path.pathInfoItemShowButtonState = pathInfoItemShowButtonState
         }
         notifyItemRangeChanged(0, pathsItems.size)
+    }
+
+    fun deletePathInfoItem(pathId: Long) {
+        for (index in pathsItems.indices) {
+            if (pathsItems[index].pathInfo.pathId == pathId) {
+                pathsItems.removeAt(index)
+                notifyItemRemoved(index)
+                break
+            }
+        }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PathInfoItem {
@@ -79,6 +89,7 @@ class PathsInfoAdapter(private val itemButtonClickedListener: (Long, PathItemBut
         private val pathButtonShowImage: ImageView
         private val pathButtonHideImage: ImageView
         private val pathButtonShowProgress: CircularProgressIndicator
+        private val pathButtonDelete: CardView
 
         init {
             pathLength = view.findViewById(R.id.path_length)
@@ -88,6 +99,7 @@ class PathsInfoAdapter(private val itemButtonClickedListener: (Long, PathItemBut
             pathButtonShowImage = view.findViewById(R.id.path_button_show_image)
             pathButtonHideImage = view.findViewById(R.id.show_all_paths_hide_image)
             pathButtonShowProgress = view.findViewById(R.id.path_button_show_progress)
+            pathButtonDelete = view.findViewById(R.id.path_button_delete)
         }
 
         fun bind(
@@ -99,6 +111,9 @@ class PathsInfoAdapter(private val itemButtonClickedListener: (Long, PathItemBut
             pathLength.text = "13km" //TODO calculate path length
             pathButtonShow.setOnClickListener {
                 itemButtonClickedListener.invoke(path.pathInfo.pathId, PathItemButtonType.SHOW)
+            }
+            pathButtonDelete.setOnClickListener {
+                itemButtonClickedListener.invoke(path.pathInfo.pathId, PathItemButtonType.DELETE)
             }
             pathButtonShowImage.visibility = when (path.pathInfoItemShowButtonState) {
                 PathInfoItemShowButtonState.DEFAULT -> View.VISIBLE
