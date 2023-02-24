@@ -135,7 +135,7 @@ class DatabasePathRepository(
         return ArrayList<EntityPathSegment>().apply {
             val pathId = lastCreatedPathIdRepository.getLastCreatedPathId()
             if (pathId != null) {
-                getAllPathSegments(pathId)
+                addAll(getAllPathSegments(pathId))
             }
         }
     }
