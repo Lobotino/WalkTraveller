@@ -173,8 +173,8 @@ class LocationUpdatesService : Service() {
         }
     }
 
-    override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
-        intent.action?.let { action ->
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        intent?.action?.let { action ->
             Log.d(TAG, action)
             when (action) {
                 ACTION_START_LOCATION_UPDATES -> {
