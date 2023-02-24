@@ -5,4 +5,8 @@
     <string name="paths_list_title">Paths list</string>
     <string name="notification_path_tracking_info">The path track is recorded in the background</string>
     <string name="notification_path_tracking_title">Track recording</string>
+    <string name="delete_path_confirm_title">Delete path?</string>
+    <string name="delete_path_confirm_description">Are you sure you want to delete path?</string>
+    <string name="cancel_button">Cancel</string>
+    <string name="delete_button">Delete</string>
 </resources>

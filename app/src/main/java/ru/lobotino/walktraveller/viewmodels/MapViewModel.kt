@@ -26,6 +26,8 @@ import ru.lobotino.walktraveller.ui.PathsInfoAdapter
 import ru.lobotino.walktraveller.ui.PathsInfoAdapter.PathItemButtonType.DELETE
 import ru.lobotino.walktraveller.ui.PathsInfoAdapter.PathItemButtonType.SHOW
 import ru.lobotino.walktraveller.ui.model.BottomMenuState
+import ru.lobotino.walktraveller.ui.model.ConfirmDialogInfo
+import ru.lobotino.walktraveller.ui.model.ConfirmDialogType
 import ru.lobotino.walktraveller.ui.model.FindMyLocationButtonState
 import ru.lobotino.walktraveller.ui.model.MapUiState
 import ru.lobotino.walktraveller.ui.model.PathInfoItemShowButtonState
@@ -85,8 +87,10 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
         MutableSharedFlow<PathInfoItemState>(1, 0, BufferOverflow.DROP_OLDEST)
     private val newCurrentUserLocationFlow =
         MutableSharedFlow<MapPoint>(1, 0, BufferOverflow.DROP_OLDEST)
-    private val writingPathNowState = MutableStateFlow(false)
+    private val newConfirmDialogFlow =
+        MutableSharedFlow<ConfirmDialogInfo>(1, 0, BufferOverflow.DROP_OLDEST)
 
+    private val writingPathNowState = MutableStateFlow(false)
     private val regularLocationUpdateStateFlow = MutableStateFlow(false)
 
     private var clearMapNowListener: (() -> Unit)? = null
@@ -110,6 +114,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     val observeHidePath: Flow<Long> = hidePathFlow
     val observeNewCurrentUserLocation: Flow<MapPoint> = newCurrentUserLocationFlow
     val observeWritingPathNow: Flow<Boolean> = writingPathNowState
+    val observeNewConfirmDialog: Flow<ConfirmDialogInfo> = newConfirmDialogFlow
 
     fun observeNewUserRotation(): Flow<Float> = userRotationRepository.observeUserRotation()
 
@@ -446,15 +451,10 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
             }
 
             DELETE -> {
-                viewModelScope.launch {
-                    mapPathsInteractor.deletePath(pathId)
-                }
-                hidePathFromMap(pathId)
-                newPathInfoListItemStateFlow.tryEmit(
-                    PathInfoItemState(
-                        pathId,
-                        PathInfoItemShowButtonState.DEFAULT,
-                        true
+                newConfirmDialogFlow.tryEmit(
+                    ConfirmDialogInfo(
+                        ConfirmDialogType.DELETE_PATH,
+                        pathId
                     )
                 )
             }
@@ -539,6 +539,20 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
                 setLoadingStateWithDelayJob.cancel()
                 setLocationButtonStateToError()
             }
+        )
+    }
+
+    fun onConfirmPathDelete(pathId: Long) {
+        viewModelScope.launch {
+            mapPathsInteractor.deletePath(pathId)
+        }
+        hidePathFromMap(pathId)
+        newPathInfoListItemStateFlow.tryEmit(
+            PathInfoItemState(
+                pathId,
+                PathInfoItemShowButtonState.DEFAULT,
+                true
+            )
         )
     }
 }

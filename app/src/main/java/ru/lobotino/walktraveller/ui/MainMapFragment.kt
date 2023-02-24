@@ -451,6 +451,10 @@ class MainMapFragment : Fragment() {
                             }
                         }.launchIn(lifecycleScope)
 
+                        observeNewConfirmDialog.onEach { confirmDialogInfo ->
+                            showConfirmDialog(confirmDialogInfo)
+                        }.launchIn(lifecycleScope)
+
                         observeNewUserRotation().onEach { newUserRotation ->
                             userLocationOverlay.setRotation(newUserRotation)
                             refreshMapNow()
@@ -462,6 +466,18 @@ class MainMapFragment : Fragment() {
 
                         onInitFinish()
                     }
+        }
+    }
+
+    private fun showConfirmDialog(confirmDialogInfo: ConfirmDialogInfo) {
+        context?.let { context ->
+            when (confirmDialogInfo.dialogType) {
+                ConfirmDialogType.DELETE_PATH -> {
+                    DeleteConfirmDialog(
+                        context = context,
+                        onConfirm = { viewModel.onConfirmPathDelete(confirmDialogInfo.additionalInfo as Long) }).show()
+                }
+            }
         }
     }
 
