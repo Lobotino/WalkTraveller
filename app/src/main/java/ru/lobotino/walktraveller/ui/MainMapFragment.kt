@@ -84,10 +84,12 @@ class MainMapFragment : Fragment() {
     private lateinit var ratingNormalButton: CardView
     private lateinit var ratingGoodButton: CardView
     private lateinit var ratingPerfectButton: CardView
+    private lateinit var ratingNoneButton: CardView
     private lateinit var ratingBadlyButtonStar: ImageView
     private lateinit var ratingNormalButtonStar: ImageView
     private lateinit var ratingGoodButtonStar: ImageView
     private lateinit var ratingPerfectButtonStar: ImageView
+    private lateinit var ratingNoneButtonStar: ImageView
     private lateinit var walkStopAcceptProgress: CircularProgressIndicator
     private lateinit var showAllPathsButton: CardView
     private lateinit var showAllPathsProgress: CircularProgressIndicator
@@ -110,6 +112,7 @@ class MainMapFragment : Fragment() {
     private var ratingGoodColor by Delegates.notNull<@ColorInt Int>()
     private var ratingNormalColor by Delegates.notNull<@ColorInt Int>()
     private var ratingBadlyColor by Delegates.notNull<@ColorInt Int>()
+    private var ratingNoneColor by Delegates.notNull<@ColorInt Int>()
     private var commonPathColor by Delegates.notNull<@ColorInt Int>()
 
     private val showingPathsPolylines = ArrayMap<Long, List<Polyline>>()
@@ -170,6 +173,7 @@ class MainMapFragment : Fragment() {
     private fun initColors() {
         context?.let { context ->
             ratingWhiteColor = ContextCompat.getColor(context, R.color.white)
+            ratingNoneColor = ContextCompat.getColor(context, R.color.rating_none_color)
             ratingPerfectColor = ContextCompat.getColor(context, R.color.rating_perfect_color)
             ratingGoodColor = ContextCompat.getColor(context, R.color.rating_good_color)
             ratingNormalColor = ContextCompat.getColor(context, R.color.rating_normal_color)
@@ -233,6 +237,12 @@ class MainMapFragment : Fragment() {
                     setOnClickListener { viewModel.onRatingButtonClicked(BADLY) }
                 }
             ratingBadlyButtonStar = view.findViewById(R.id.rating_badly_star)
+
+            ratingNoneButton = view.findViewById<CardView>(R.id.rating_none)
+                .apply {
+                    setOnClickListener { viewModel.onRatingButtonClicked(NONE) }
+                }
+            ratingNoneButtonStar = view.findViewById(R.id.rating_none_star)
 
             walkStopAcceptProgress = view.findViewById(R.id.walk_stop_accept_progress)
 
@@ -622,6 +632,13 @@ class MainMapFragment : Fragment() {
             ratingWhiteColor,
             currentRating == BADLY
         )
+        selectRatingButton(
+            ratingNoneButton,
+            ratingNoneButtonStar,
+            ratingNoneColor,
+            ratingWhiteColor,
+            currentRating == NONE
+        )
     }
 
     private fun selectRatingButton(
@@ -752,6 +769,7 @@ class MainMapFragment : Fragment() {
                 )
 
                 BADLY -> return@getRatingColor ContextCompat.getColor(context, R.color.rating_badly)
+                NONE -> return@getRatingColor ContextCompat.getColor(context, R.color.rating_none)
             }
         }
         return null
