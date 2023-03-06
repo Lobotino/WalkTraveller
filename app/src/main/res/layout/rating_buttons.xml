@@ -4,7 +4,7 @@
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     app:cardBackgroundColor="@color/light_gray"
-    app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.CardView">
+    app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.SmallCardView">
 
     <LinearLayout
         android:layout_width="wrap_content"

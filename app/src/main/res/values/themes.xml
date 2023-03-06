@@ -1,4 +1,4 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
+<resources>
     <!-- Base application theme. -->
     <style name="Theme.WalkTraveller" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
         <item name="windowActionBar">false</item>
@@ -17,13 +17,22 @@
         <!-- Customize your theme here. -->
     </style>
 
-    <style name="ShapeAppearanceOverlay.CardView" parent="">
+    <style name="ShapeAppearanceOverlay.SmallCardView" parent="">
         <item name="cornerFamilyBottomLeft">rounded</item>
         <item name="cornerFamilyBottomRight">rounded</item>
         <item name="cornerSizeBottomLeft">0%</item>
         <item name="cornerSizeTopLeft">20%</item>
         <item name="cornerSizeTopRight">20%</item>
         <item name="cornerSizeBottomRight">0%</item>
+    </style>
+
+    <style name="ShapeAppearanceOverlay.LargeCardView" parent="">
+        <item name="cornerFamilyBottomLeft">rounded</item>
+        <item name="cornerFamilyBottomRight">rounded</item>
+        <item name="cornerSizeBottomLeft">0dp</item>
+        <item name="cornerSizeTopLeft">12dp</item>
+        <item name="cornerSizeTopRight">12dp</item>
+        <item name="cornerSizeBottomRight">0dp</item>
     </style>
 
 </resources>

@@ -19,7 +19,7 @@
         android:id="@+id/my_location_button"
         android:layout_width="46dp"
         android:layout_height="46dp"
-        android:layout_marginEnd="18dp"
+        android:layout_marginEnd="22dp"
         android:layout_marginBottom="20dp"
         app:cardBackgroundColor="@color/white_button_color"
         app:cardCornerRadius="23dp"
@@ -27,16 +27,18 @@
         app:layout_constraintBottom_toTopOf="@id/bottom_menu"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <androidx.cardview.widget.CardView
+    <com.google.android.material.card.MaterialCardView
         android:id="@+id/bottom_menu"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginStart="4dp"
+        android:layout_marginEnd="4dp"
         app:cardBackgroundColor="@color/light_gray"
-        app:cardCornerRadius="8dp"
         app:cardElevation="4dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
+        app:layout_constraintStart_toStartOf="parent"
+        app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.LargeCardView">
 
         <FrameLayout
             android:layout_width="match_parent"
@@ -67,8 +69,8 @@
                         app:cardElevation="4dp">
 
                         <ImageView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
+                            android:layout_width="80dp"
+                            android:layout_height="80dp"
                             android:layout_gravity="center"
                             android:src="@drawable/ic_launcher_foreground"
                             tools:ignore="ContentDescription" />
@@ -137,9 +139,10 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintTop_toTopOf="parent"
+                tools:visibility="gone" />
         </FrameLayout>
-    </androidx.cardview.widget.CardView>
+    </com.google.android.material.card.MaterialCardView>
 
     <include
         android:id="@+id/rating_buttons_holder"
