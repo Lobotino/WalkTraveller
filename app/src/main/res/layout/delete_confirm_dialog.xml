@@ -50,7 +50,7 @@
             android:backgroundTint="@color/cancel_button_color"
             android:text="@string/cancel_button"
             android:textAllCaps="false"
-            android:textColor="@color/white"
+            android:textColor="@color/cancel_button_text_color"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@id/confirm_button"
             app:layout_constraintStart_toStartOf="parent"

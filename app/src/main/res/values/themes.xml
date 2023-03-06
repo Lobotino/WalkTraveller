@@ -26,13 +26,4 @@
         <item name="cornerSizeBottomRight">0%</item>
     </style>
 
-    <style name="ShapeAppearanceOverlay.LargeCardView" parent="">
-        <item name="cornerFamilyBottomLeft">rounded</item>
-        <item name="cornerFamilyBottomRight">rounded</item>
-        <item name="cornerSizeBottomLeft">0dp</item>
-        <item name="cornerSizeTopLeft">12dp</item>
-        <item name="cornerSizeTopRight">12dp</item>
-        <item name="cornerSizeBottomRight">0dp</item>
-    </style>
-
 </resources>

@@ -11,8 +11,8 @@
     <color name="gray">#2C3039</color>
     <color name="white_button_pressed_state">#E3E3E3</color>
     <color name="common_path_color">#1EF6E1</color>
-    <color name="light_green">@android:color/holo_green_light</color>
-    <color name="dark_green">#78B500</color>
+    <color name="bottom_button_color">#3B8F67</color>
+    <color name="bottom_button_color_dark">#2C6B4E</color>
     <color name="current_path">#DD0034CF</color>
     <color name="finished_path">#9C27B0</color>
     <color name="rating_perfect">#00BF54</color>
@@ -28,6 +28,7 @@
     <color name="user_marker_color">#187AA7</color>
     <color name="find_my_location_loading_color">@color/rating_perfect</color>
     <color name="find_my_location_error_color">@color/rating_badly</color>
-    <color name="cancel_button_color">#627d98</color>
+    <color name="cancel_button_color">#e5e5e5</color>
+    <color name="cancel_button_text_color">#878787</color>
     <color name="delete_button_color">@color/rating_badly</color>
 </resources>

@@ -13,7 +13,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        tools:background="@color/dark_green" />
+        tools:background="@color/bottom_button_color_dark" />
 
     <ru.lobotino.walktraveller.ui.FindMyLocationButton
         android:id="@+id/my_location_button"
@@ -33,16 +33,18 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="4dp"
         android:layout_marginEnd="4dp"
+        android:layout_marginBottom="-10dp"
         app:cardBackgroundColor="@color/light_gray"
+        app:cardCornerRadius="10dp"
         app:cardElevation="4dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.LargeCardView">
+        app:layout_constraintStart_toStartOf="parent">
 
         <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp">
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/walk_buttons_holder"
