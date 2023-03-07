@@ -297,7 +297,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
                 )
                 backgroundCachingRatingPathsJob?.cancel()
                 downloadRatingPathsJob = viewModelScope.launch {
-                    for (path in mapPathsInteractor.getAllSavedRatingPaths()) {
+                    for (path in mapPathsInteractor.getAllSavedRatingPaths(true)) {
                         showRatingPathOnMap(path)
                         newPathInfoListItemStateFlow.tryEmit(
                             PathInfoItemState(
@@ -434,7 +434,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
                         )
                     )
                     viewModelScope.launch {
-                        val savedRatingPath = mapPathsInteractor.getSavedRatingPath(pathId)
+                        val savedRatingPath = mapPathsInteractor.getSavedRatingPath(pathId, false)
                         if (savedRatingPath != null) {
                             showRatingPathOnMap(savedRatingPath)
                             newPathInfoListItemStateFlow.tryEmit(
@@ -493,7 +493,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun startBackgroundCachingPaths() {
         backgroundCachingRatingPathsJob = viewModelScope.launch {
-            mapPathsInteractor.getAllSavedRatingPaths()
+            mapPathsInteractor.getAllSavedRatingPaths(false)
         }
         backgroundCachingCommonPathsJob = viewModelScope.launch {
             mapPathsInteractor.getAllSavedCommonPaths()

@@ -75,19 +75,19 @@ class LocalMapPathsInteractor(
         }
     }
 
-    override suspend fun getAllSavedRatingPaths(): List<MapRatingPath> {
+    override suspend fun getAllSavedRatingPaths(withRatingOnly: Boolean): List<MapRatingPath> {
         return coroutineScope {
             ArrayList<MapRatingPath>().apply {
                 for (path in withContext(defaultDispatcher) { databasePathRepository.getAllPathsInfo() }) {
                     val cachedPath = cachePathRepository.getRatingPath(path.id)
                     if (cachedPath != null) {
-                        add(cachedPath)
+                        add(if (withRatingOnly) cachedPath.toRatingOnlyPath() else cachedPath)
                         continue
                     }
 
                     mapRatingPath(path)?.let { ratingPath ->
-                        add(ratingPath)
                         tryCacheRatingPath(ratingPath)
+                        add(if (withRatingOnly) ratingPath.toRatingOnlyPath() else ratingPath)
                     }
                 }
             }
@@ -147,9 +147,10 @@ class LocalMapPathsInteractor(
         }
     }
 
-    override suspend fun getSavedRatingPath(pathId: Long): MapRatingPath? {
+    override suspend fun getSavedRatingPath(pathId: Long, withRatingOnly: Boolean): MapRatingPath? {
         return coroutineScope {
-            cachePathRepository.getRatingPath(pathId)?.let { return@coroutineScope it }
+            cachePathRepository.getRatingPath(pathId)
+                ?.let { cachedPath -> return@coroutineScope if (withRatingOnly) cachedPath.toRatingOnlyPath() else cachedPath }
 
             val pathSegments = withContext(defaultDispatcher) {
                 databasePathRepository.getAllPathSegments(pathId)
@@ -159,7 +160,9 @@ class LocalMapPathsInteractor(
 
             val resultPathSegments = ArrayList<MapPathSegment>()
             for (path in pathSegments) {
-                resultPathSegments.add(path.toMapPathSegment() ?: continue)
+                if (withRatingOnly && path.rating != SegmentRating.NONE.ordinal || !withRatingOnly) {
+                    resultPathSegments.add(path.toMapPathSegment() ?: continue)
+                }
             }
 
             if (resultPathSegments.isNotEmpty()) {
@@ -234,5 +237,9 @@ class LocalMapPathsInteractor(
                 databasePathRepository.deletePath(pathId)
             }
         }
+    }
+
+    private fun MapRatingPath.toRatingOnlyPath(): MapRatingPath {
+        return this.copy(pathSegments = this.pathSegments.filter { it.rating != SegmentRating.NONE })
     }
 }

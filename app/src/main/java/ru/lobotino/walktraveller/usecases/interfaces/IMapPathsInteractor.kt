@@ -12,11 +12,11 @@ interface IMapPathsInteractor {
 
     suspend fun getLastSavedRatingPath(): MapRatingPath?
 
-    suspend fun getAllSavedRatingPaths(): List<MapRatingPath>
+    suspend fun getAllSavedRatingPaths(withRatingOnly: Boolean): List<MapRatingPath>
 
     suspend fun getAllSavedPathsInfo(): List<MapPathInfo>
 
-    suspend fun getSavedRatingPath(pathId: Long): MapRatingPath?
+    suspend fun getSavedRatingPath(pathId: Long, withRatingOnly: Boolean): MapRatingPath?
 
     suspend fun deletePath(pathId: Long)
 

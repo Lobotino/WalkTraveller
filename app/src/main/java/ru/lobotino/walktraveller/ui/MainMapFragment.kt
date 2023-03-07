@@ -692,18 +692,18 @@ class MainMapFragment : Fragment() {
     private fun paintNewRatingPath(path: MapRatingPath) {
         val resultPolylineList = ArrayList<Polyline>()
         var lastAddedPolyline: Polyline? = null
-        var lastSegmentRating: SegmentRating? = null
+        var lastSegment: MapPathSegment? = null
         for (segment in path.pathSegments) {
             if (lastAddedPolyline == null) {
                 lastAddedPolyline = createRatingSegmentPolyline(segment)
-                lastSegmentRating = segment.rating
+                lastSegment = segment
                 resultPolylineList.add(lastAddedPolyline)
             } else {
-                if (segment.rating == lastSegmentRating) {
+                if (lastSegment != null && segment.rating == lastSegment.rating && segment.startPoint == lastSegment.finishPoint) {
                     lastAddedPolyline.addPoint(segment.finishPoint.toGeoPoint())
                 } else {
                     lastAddedPolyline = createRatingSegmentPolyline(segment)
-                    lastSegmentRating = segment.rating
+                    lastSegment = segment
                     resultPolylineList.add(lastAddedPolyline)
                 }
             }
