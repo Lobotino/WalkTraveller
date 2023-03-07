@@ -1,18 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="purple_200">#FFBB86FC</color>
-    <color name="purple_500">#FF6200EE</color>
-    <color name="purple_700">#FF3700B3</color>
-    <color name="teal_200">#FF03DAC5</color>
-    <color name="teal_700">#FF018786</color>
+    <color name="primary_green">#3B8F67</color>
+    <color name="primary_green_dark">#2C6B4E</color>
     <color name="black">#1A1A1A</color>
     <color name="white">#FFFFFFFF</color>
     <color name="light_gray">#F8F8F8</color>
     <color name="gray">#2C3039</color>
     <color name="white_button_pressed_state">#E3E3E3</color>
     <color name="common_path_color">#1EF6E1</color>
-    <color name="bottom_button_color">#3B8F67</color>
-    <color name="bottom_button_color_dark">#2C6B4E</color>
+    <color name="bottom_button_color">@color/primary_green</color>
+    <color name="bottom_button_color_dark">@color/primary_green_dark</color>
     <color name="current_path">#DD0034CF</color>
     <color name="finished_path">#9C27B0</color>
     <color name="rating_perfect">#00BF54</color>
