@@ -32,7 +32,7 @@ class CachePathsRepository : ICachePathsRepository {
         return cachedMapCommonPaths[pathId]
     }
 
-    override fun getPathInfo(pathId: Long): MapPathInfo? {
+    override fun getMapPathInfo(pathId: Long): MapPathInfo? {
         return cachedMapPathsInfo[pathId]
     }
 }

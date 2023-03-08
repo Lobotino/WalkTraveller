@@ -31,7 +31,7 @@ class DatabasePathRepository(
         startPoint: MapPoint
     ): Long {
         insertNewPoint(startPoint).let { insertedPointId ->
-            pathsDao.insertPaths(listOf(EntityPath(startPointId = insertedPointId)))
+            pathsDao.insertPaths(listOf(EntityPath(startPointId = insertedPointId, length = 0f)))
                 .let { insertedPathsIds ->
                     val insertedPathId = insertedPathsIds[0]
                     lastCreatedPathIdRepository.setLastCreatedPathId(insertedPathId)
@@ -193,5 +193,9 @@ class DatabasePathRepository(
             pointsDao.deletePointById(pointId)
         }
         pathsDao.deletePathById(pathId)
+    }
+
+    override suspend fun updatePathLength(pathId: Long, length: Float) {
+        pathsDao.updatePathLength(pathId, length)
     }
 }

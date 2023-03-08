@@ -3,10 +3,9 @@ package ru.lobotino.walktraveller.utils.ext
 import org.osmdroid.util.GeoPoint
 import ru.lobotino.walktraveller.model.map.CoordinatePoint
 import ru.lobotino.walktraveller.model.map.MapPoint
+import ru.lobotino.walktraveller.utils.EARTH_RADIUS_IN_METERS
 import kotlin.math.ln
 import kotlin.math.tan
-
-const val EARTH_RADIUS = 6378137.0
 
 fun MapPoint.toGeoPoint(): GeoPoint {
     return GeoPoint(latitude, longitude)
@@ -17,7 +16,7 @@ fun MapPoint.toGeoPoint(): GeoPoint {
  */
 fun MapPoint.toCoordinatePoint(): CoordinatePoint {
     return CoordinatePoint(
-        Math.toRadians(latitude) * EARTH_RADIUS,
-        ln(tan(Math.PI / 4 + Math.toRadians(longitude) / 2)) * EARTH_RADIUS
+        Math.toRadians(latitude) * EARTH_RADIUS_IN_METERS,
+        ln(tan(Math.PI / 4 + Math.toRadians(longitude) / 2)) * EARTH_RADIUS_IN_METERS
     )
 }

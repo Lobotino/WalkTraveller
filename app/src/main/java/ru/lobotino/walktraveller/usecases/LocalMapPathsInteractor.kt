@@ -18,6 +18,7 @@ import ru.lobotino.walktraveller.repositories.interfaces.IPathColorGenerator
 import ru.lobotino.walktraveller.repositories.interfaces.IPathRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IWritingPathStatesRepository
 import ru.lobotino.walktraveller.usecases.interfaces.IMapPathsInteractor
+import ru.lobotino.walktraveller.usecases.interfaces.IPathRedactor
 import ru.lobotino.walktraveller.utils.ext.toMapPoint
 
 class LocalMapPathsInteractor(
@@ -26,7 +27,8 @@ class LocalMapPathsInteractor(
     private val defaultDispatcher: CoroutineDispatcher = Dispatchers.IO,
     private val pathColorGenerator: IPathColorGenerator,
     private val writingPathStatesRepository: IWritingPathStatesRepository,
-    private val lastCreatedPathIdRepository: ILastCreatedPathIdRepository
+    private val lastCreatedPathIdRepository: ILastCreatedPathIdRepository,
+    private val pathRedactor: IPathRedactor
 ) : IMapPathsInteractor {
 
     companion object {
@@ -124,9 +126,19 @@ class LocalMapPathsInteractor(
         return coroutineScope {
             ArrayList<MapPathInfo>().apply {
                 for (path in withContext(defaultDispatcher) { databasePathRepository.getAllPathsInfo() }) {
-                    val cachedPathInfo = cachePathRepository.getPathInfo(path.id)
-                    if (cachedPathInfo != null) {
-                        add(cachedPathInfo)
+                    var cachedMapPathInfo = cachePathRepository.getMapPathInfo(path.id)
+                    if (cachedMapPathInfo != null) {
+                        if (cachedMapPathInfo.length == 0f) {
+                            val savedCommonPath = getSavedCommonPath(path.id)
+                            if (savedCommonPath != null) {
+                                cachedMapPathInfo = cachedMapPathInfo.copy(
+                                    length = pathRedactor.updatePathLength(savedCommonPath)
+                                )
+                                cachePathRepository.savePathInfo(cachedMapPathInfo)
+                            }
+                        }
+
+                        add(cachedMapPathInfo)
                         continue
                     }
 
@@ -134,11 +146,20 @@ class LocalMapPathsInteractor(
                         databasePathRepository.getPathStartSegment(path.id)
                     } ?: continue
 
+                    var pathLength = path.length
+                    if (pathLength == 0f) {
+                        val savedCommonPath = getSavedCommonPath(path.id)
+                        if (savedCommonPath != null) {
+                            pathLength = pathRedactor.updatePathLength(savedCommonPath)
+                        }
+                    }
+
                     add(
                         MapPathInfo(
                             path.id,
                             pathStartSegment.timestamp,
-                            pathColorGenerator.getColorForPath(path.id)
+                            pathColorGenerator.getColorForPath(path.id),
+                            pathLength
                         ).also { pathInfo -> cachePathRepository.savePathInfo(pathInfo) }
                     )
                 }
@@ -228,14 +249,6 @@ class LocalMapPathsInteractor(
             }
         } else {
             cachePathRepository.saveRatingPath(ratingPath)
-        }
-    }
-
-    override suspend fun deletePath(pathId: Long) {
-        return coroutineScope {
-            withContext(defaultDispatcher) {
-                databasePathRepository.deletePath(pathId)
-            }
         }
     }
 

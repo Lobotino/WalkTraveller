@@ -32,4 +32,6 @@ interface IPathRepository {
 
     suspend fun deletePath(pathId: Long)
 
+    suspend fun updatePathLength(pathId: Long, length: Float)
+
 }

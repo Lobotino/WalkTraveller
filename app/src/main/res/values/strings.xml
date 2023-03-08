@@ -9,4 +9,7 @@
     <string name="delete_path_confirm_description">Are you sure you want to delete path?</string>
     <string name="cancel_button">Cancel</string>
     <string name="delete_button">Delete</string>
+    <string name="meters_full">Meters</string>
+    <string name="kilometers_full">Kilometers</string>
+    <string name="kilometers_short">Km</string>
 </resources>

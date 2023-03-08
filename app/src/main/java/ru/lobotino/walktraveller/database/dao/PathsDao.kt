@@ -24,4 +24,7 @@ interface PathsDao {
     @Query("DELETE FROM paths WHERE id = :pathId")
     suspend fun deletePathById(pathId: Long)
 
+    @Query("UPDATE paths SET length = :length WHERE id = :pathId")
+    suspend fun updatePathLength(pathId: Long, length: Float)
+
 }

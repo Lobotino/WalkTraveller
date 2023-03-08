@@ -57,8 +57,10 @@ import ru.lobotino.walktraveller.services.LocationUpdatesService.Companion.ACTIO
 import ru.lobotino.walktraveller.services.LocationUpdatesService.Companion.EXTRA_LOCATION
 import ru.lobotino.walktraveller.services.VolumeKeysDetectorService
 import ru.lobotino.walktraveller.ui.model.*
+import ru.lobotino.walktraveller.usecases.DistanceInMetersToStringFormatter
 import ru.lobotino.walktraveller.usecases.GeoPermissionsInteractor
 import ru.lobotino.walktraveller.usecases.LocalMapPathsInteractor
+import ru.lobotino.walktraveller.usecases.LocalPathRedactor
 import ru.lobotino.walktraveller.usecases.NotificationsPermissionsInteractor
 import ru.lobotino.walktraveller.usecases.UserLocationInteractor
 import ru.lobotino.walktraveller.usecases.VolumeKeysListenerPermissionsInteractor
@@ -286,9 +288,10 @@ class MainMapFragment : Fragment() {
             pathsMenu = view.findViewById(R.id.paths_menu)
             walkButtonsHolder = view.findViewById(R.id.walk_buttons_holder)
             pathsInfoList = view.findViewById<RecyclerView>(R.id.paths_list).apply {
-                pathsInfoListAdapter = PathsInfoAdapter { pathId, itemButtonClickedType ->
-                    viewModel.onPathInListButtonClicked(pathId, itemButtonClickedType)
-                }
+                pathsInfoListAdapter =
+                    PathsInfoAdapter(DistanceInMetersToStringFormatter(requireContext())) { pathId, itemButtonClickedType ->
+                        viewModel.onPathInListButtonClicked(pathId, itemButtonClickedType)
+                    }
                 if (itemAnimator is SimpleItemAnimator) {
                     (itemAnimator as SimpleItemAnimator).supportsChangeAnimations = false
                 }
@@ -355,15 +358,25 @@ class MainMapFragment : Fragment() {
                             lastCreatedPathIdRepository
                         )
 
-                        val localMapPathInteractor = LocalMapPathsInteractor(
-                            databasePathRepository = databasePathRepository,
-                            cachePathRepository = CachePathsRepository(),
-                            pathColorGenerator = PathColorGenerator(requireContext()),
-                            writingPathStatesRepository = writingPathStatesRepository,
-                            lastCreatedPathIdRepository = lastCreatedPathIdRepository
+                        val pathRedactor = LocalPathRedactor(
+                            databasePathRepository,
+                            PathLengthInMetersRepository(LocationsDistanceRepository())
                         )
 
-                        setMapPathInteractor(localMapPathInteractor)
+                        setPathRedactor(
+                            pathRedactor
+                        )
+
+                        setMapPathInteractor(
+                            LocalMapPathsInteractor(
+                                databasePathRepository = databasePathRepository,
+                                cachePathRepository = CachePathsRepository(),
+                                pathColorGenerator = PathColorGenerator(requireContext()),
+                                writingPathStatesRepository = writingPathStatesRepository,
+                                lastCreatedPathIdRepository = lastCreatedPathIdRepository,
+                                pathRedactor = pathRedactor
+                            )
+                        )
 
                         setWritingPathStatesRepository(
                             writingPathStatesRepository

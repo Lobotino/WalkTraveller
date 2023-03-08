@@ -14,11 +14,15 @@ import ru.lobotino.walktraveller.R
 import ru.lobotino.walktraveller.model.map.MapPathInfo
 import ru.lobotino.walktraveller.ui.model.PathInfoItemModel
 import ru.lobotino.walktraveller.ui.model.PathInfoItemShowButtonState
+import ru.lobotino.walktraveller.usecases.interfaces.IDistanceToStringFormatter
 import java.text.SimpleDateFormat
 import java.util.*
 
 
-class PathsInfoAdapter(private val itemButtonClickedListener: (Long, PathItemButtonType) -> Unit) :
+class PathsInfoAdapter(
+    private val distanceFormatter: IDistanceToStringFormatter,
+    private val itemButtonClickedListener: (Long, PathItemButtonType) -> Unit
+) :
     RecyclerView.Adapter<PathsInfoAdapter.PathInfoItem>() {
 
     private var pathsItems: MutableList<PathInfoItemModel> = ArrayList<PathInfoItemModel>()
@@ -68,7 +72,7 @@ class PathsInfoAdapter(private val itemButtonClickedListener: (Long, PathItemBut
     }
 
     override fun onBindViewHolder(holder: PathInfoItem, position: Int) {
-        holder.bind(pathsItems[position], itemButtonClickedListener)
+        holder.bind(pathsItems[position], itemButtonClickedListener, distanceFormatter)
     }
 
     override fun getItemCount(): Int {
@@ -104,11 +108,12 @@ class PathsInfoAdapter(private val itemButtonClickedListener: (Long, PathItemBut
 
         fun bind(
             path: PathInfoItemModel,
-            itemButtonClickedListener: (Long, PathItemButtonType) -> Unit
+            itemButtonClickedListener: (Long, PathItemButtonType) -> Unit,
+            distanceFormatter: IDistanceToStringFormatter
         ) {
             pathColor.setCardBackgroundColor(Color.parseColor(path.pathInfo.color))
             pathDate.text = formatTimestampDate(path.pathInfo.timestamp)
-            pathLength.text = "13km" //TODO calculate path length
+            pathLength.text = distanceFormatter.formatDistance(path.pathInfo.length)
             pathButtonShow.setOnClickListener {
                 itemButtonClickedListener.invoke(path.pathInfo.pathId, PathItemButtonType.SHOW)
             }

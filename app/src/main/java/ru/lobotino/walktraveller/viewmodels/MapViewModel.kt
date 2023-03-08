@@ -36,6 +36,7 @@ import ru.lobotino.walktraveller.ui.model.PathsInfoListState
 import ru.lobotino.walktraveller.ui.model.ShowPathsButtonState
 import ru.lobotino.walktraveller.usecases.IUserLocationInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IMapPathsInteractor
+import ru.lobotino.walktraveller.usecases.interfaces.IPathRedactor
 import ru.lobotino.walktraveller.usecases.interfaces.IPermissionsInteractor
 import ru.lobotino.walktraveller.utils.ext.toMapPoint
 
@@ -59,13 +60,14 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     private var notificationsPermissionsInteractor: IPermissionsInteractor? = null
     private var geoPermissionsInteractor: IPermissionsInteractor? = null
     private var volumeKeysListenerPermissionsInteractor: IPermissionsInteractor? = null
+
     private lateinit var defaultLocationRepository: IDefaultLocationRepository
     private lateinit var writingPathStatesRepository: IWritingPathStatesRepository
     private lateinit var pathRatingRepository: IPathRatingRepository
     private lateinit var userLocationInteractor: IUserLocationInteractor
     private lateinit var userRotationRepository: IUserRotationRepository
-
     private lateinit var mapPathsInteractor: IMapPathsInteractor
+    private lateinit var pathRedactor: IPathRedactor
 
     private var showedPathIdsList: MutableList<Long> = ArrayList()
 
@@ -136,6 +138,10 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setMapPathInteractor(mapPathsInteractor: IMapPathsInteractor) {
         this.mapPathsInteractor = mapPathsInteractor
+    }
+
+    fun setPathRedactor(pathRedactor: IPathRedactor) {
+        this.pathRedactor = pathRedactor
     }
 
     fun setDefaultLocationRepository(defaultLocationRepository: IDefaultLocationRepository) {
@@ -544,7 +550,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
 
     fun onConfirmPathDelete(pathId: Long) {
         viewModelScope.launch {
-            mapPathsInteractor.deletePath(pathId)
+            pathRedactor.deletePath(pathId)
         }
         hidePathFromMap(pathId)
         newPathInfoListItemStateFlow.tryEmit(
