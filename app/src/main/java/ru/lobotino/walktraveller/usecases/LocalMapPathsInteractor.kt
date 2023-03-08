@@ -139,6 +139,18 @@ class LocalMapPathsInteractor(
                             }
                         }
 
+                        if (cachedMapPathInfo.mostCommonRating == MostCommonRating.UNKNOWN && cachedMapPathInfo.length > 0f) {
+                            val savedRatingPath = getSavedRatingPath(path.id, false)
+                            if (savedRatingPath != null) {
+                                cachedMapPathInfo = cachedMapPathInfo.copy(
+                                    mostCommonRating = pathRedactor.updatePathMostCommonRating(
+                                        savedRatingPath
+                                    )
+                                )
+                                cachePathRepository.savePathInfo(cachedMapPathInfo)
+                            }
+                        }
+
                         add(cachedMapPathInfo)
                         continue
                     }
@@ -155,11 +167,20 @@ class LocalMapPathsInteractor(
                         }
                     }
 
+                    var pathMostCommonRating = MostCommonRating.values()[path.mostCommonRating]
+                    if (pathMostCommonRating == MostCommonRating.UNKNOWN && pathLength > 0f) {
+                        val savedRatingPath = getSavedRatingPath(path.id, false)
+                        if (savedRatingPath != null) {
+                            pathMostCommonRating =
+                                pathRedactor.updatePathMostCommonRating(savedRatingPath)
+                        }
+                    }
+
                     add(
                         MapPathInfo(
                             path.id,
                             pathStartSegment.timestamp,
-                            MostCommonRating.PERFECT, //TODO
+                            pathMostCommonRating,
                             pathLength
                         ).also { pathInfo -> cachePathRepository.savePathInfo(pathInfo) }
                     )

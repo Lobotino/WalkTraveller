@@ -6,6 +6,7 @@ import ru.lobotino.walktraveller.database.model.EntityPath
 import ru.lobotino.walktraveller.database.model.EntityPathPointRelation
 import ru.lobotino.walktraveller.database.model.EntityPathSegment
 import ru.lobotino.walktraveller.database.model.EntityPoint
+import ru.lobotino.walktraveller.model.MostCommonRating
 import ru.lobotino.walktraveller.model.SegmentRating
 import ru.lobotino.walktraveller.model.map.MapPoint
 import ru.lobotino.walktraveller.repositories.interfaces.ILastCreatedPathIdRepository
@@ -31,7 +32,15 @@ class DatabasePathRepository(
         startPoint: MapPoint
     ): Long {
         insertNewPoint(startPoint).let { insertedPointId ->
-            pathsDao.insertPaths(listOf(EntityPath(startPointId = insertedPointId, length = 0f)))
+            pathsDao.insertPaths(
+                listOf(
+                    EntityPath(
+                        startPointId = insertedPointId,
+                        length = 0f,
+                        mostCommonRating = MostCommonRating.UNKNOWN.ordinal
+                    )
+                )
+            )
                 .let { insertedPathsIds ->
                     val insertedPathId = insertedPathsIds[0]
                     lastCreatedPathIdRepository.setLastCreatedPathId(insertedPathId)
@@ -197,5 +206,12 @@ class DatabasePathRepository(
 
     override suspend fun updatePathLength(pathId: Long, length: Float) {
         pathsDao.updatePathLength(pathId, length)
+    }
+
+    override suspend fun updatePathMostCommonRating(
+        pathId: Long,
+        mostCommonRating: MostCommonRating
+    ) {
+        pathsDao.updatePathMostCommonRating(pathId, mostCommonRating.ordinal)
     }
 }

@@ -27,4 +27,7 @@ interface PathsDao {
     @Query("UPDATE paths SET length = :length WHERE id = :pathId")
     suspend fun updatePathLength(pathId: Long, length: Float)
 
+    @Query("UPDATE paths SET most_common_rating = :mostCommonRating WHERE id = :pathId")
+    suspend fun updatePathMostCommonRating(pathId: Long, mostCommonRating: Int)
+
 }

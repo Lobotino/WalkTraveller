@@ -369,7 +369,7 @@ class MainMapFragment : Fragment() {
 
                         val pathRedactor = LocalPathRedactor(
                             databasePathRepository,
-                            PathLengthInMetersRepository(LocationsDistanceRepository())
+                            PathDistancesInMetersRepository(LocationsDistanceRepository())
                         )
 
                         setPathRedactor(

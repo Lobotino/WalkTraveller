@@ -22,9 +22,16 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
     }
 }
 
+val MIGRATION_2_3 = object : Migration(2, 3) {
+    override fun migrate(database: SupportSQLiteDatabase) {
+        //Default value 5 because it's ordinal of UNKNOWN state in MostCommonRating model
+        database.execSQL("ALTER TABLE paths ADD COLUMN most_common_rating INTEGER DEFAULT 5 NOT NULL")
+    }
+}
+
 @Database(
     entities = [EntityPoint::class, EntityPath::class, EntityPathPointRelation::class, EntityPathSegment::class],
-    version = 2
+    version = 3
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun getPathSegmentRelationsDao(): PathSegmentRelationsDao
@@ -37,5 +44,5 @@ fun provideDatabase(applicationContext: Context): AppDatabase {
     return Room.databaseBuilder(
         applicationContext,
         AppDatabase::class.java, App.PATH_DATABASE_NAME
-    ).addMigrations(MIGRATION_1_2).build()
+    ).addMigrations(MIGRATION_1_2).addMigrations(MIGRATION_2_3).build()
 }
