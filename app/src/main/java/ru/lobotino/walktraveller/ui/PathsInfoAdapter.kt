@@ -82,7 +82,7 @@ class PathsInfoAdapter(
     class PathInfoItem(view: View) : RecyclerView.ViewHolder(view) {
 
         companion object {
-            private const val DATE_FORMAT = "dd/MM/yyyy"
+            private const val DATE_FORMAT = "dd.MM.yyyy"
             private val dateFormat = SimpleDateFormat(DATE_FORMAT, Locale.ENGLISH)
         }
 
