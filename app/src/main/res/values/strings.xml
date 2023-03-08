@@ -12,4 +12,6 @@
     <string name="meters_full">Meters</string>
     <string name="kilometers_full">Kilometers</string>
     <string name="kilometers_short">Km</string>
+    <string name="empty_paths_list_title">No saved paths, yet</string>
+    <string name="empty_paths_list_description">Saved paths will be displayed here but for now it is empty.\n\nNow is the best time to go for a walk!</string>
 </resources>

@@ -15,6 +15,7 @@
         <!-- Status bar color. -->
         <item name="android:statusBarColor">@color/white</item>
         <!-- Customize your theme here. -->
+        <item name="android:textViewStyle">@style/RobotoTextViewStyle</item>
     </style>
 
     <style name="ShapeAppearanceOverlay.SmallCardView" parent="">
@@ -24,6 +25,10 @@
         <item name="cornerSizeTopLeft">20%</item>
         <item name="cornerSizeTopRight">20%</item>
         <item name="cornerSizeBottomRight">0%</item>
+    </style>
+
+    <style name="RobotoTextViewStyle" parent="android:Widget.TextView">
+        <item name="android:fontFamily">@font/open_sans_medium</item>
     </style>
 
 </resources>

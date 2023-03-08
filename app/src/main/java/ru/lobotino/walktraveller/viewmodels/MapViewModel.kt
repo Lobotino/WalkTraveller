@@ -398,12 +398,22 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
             uiState.copy(pathsInfoListState = PathsInfoListState.LOADING)
         }
         downloadAllPathsInfoJob = viewModelScope.launch {
-            newPathsInfoListFlow.tryEmit(mapPathsInteractor.getAllSavedPathsInfo())
-            mapUiStateFlow.update { uiState ->
-                uiState.copy(
-                    pathsInfoListState = PathsInfoListState.DEFAULT,
-                    showPathsButtonState = ShowPathsButtonState.DEFAULT
-                )
+            val allSavedPathsList = mapPathsInteractor.getAllSavedPathsInfo()
+            if (allSavedPathsList.isNotEmpty()) {
+                newPathsInfoListFlow.tryEmit(allSavedPathsList)
+                mapUiStateFlow.update { uiState ->
+                    uiState.copy(
+                        pathsInfoListState = PathsInfoListState.DEFAULT,
+                        showPathsButtonState = ShowPathsButtonState.DEFAULT
+                    )
+                }
+            } else {
+                mapUiStateFlow.update { uiState ->
+                    uiState.copy(
+                        pathsInfoListState = PathsInfoListState.EMPTY_LIST,
+                        showPathsButtonState = ShowPathsButtonState.GONE
+                    )
+                }
             }
         }
     }
@@ -551,6 +561,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     fun onConfirmPathDelete(pathId: Long) {
         viewModelScope.launch {
             pathRedactor.deletePath(pathId)
+            checkIsPathsListNotEmptyNow()
         }
         hidePathFromMap(pathId)
         newPathInfoListItemStateFlow.tryEmit(
@@ -560,5 +571,18 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
                 true
             )
         )
+    }
+
+    private fun checkIsPathsListNotEmptyNow() {
+        viewModelScope.launch {
+            if (mapPathsInteractor.getAllSavedPathsInfo().isEmpty()) {
+                mapUiStateFlow.update { uiState ->
+                    uiState.copy(
+                        pathsInfoListState = PathsInfoListState.EMPTY_LIST,
+                        showPathsButtonState = ShowPathsButtonState.GONE
+                    )
+                }
+            }
+        }
     }
 }

@@ -102,6 +102,7 @@ class MainMapFragment : Fragment() {
     private lateinit var walkButtonsHolder: ViewGroup
     private lateinit var hidePathsMenuButton: ImageView
     private lateinit var pathsInfoList: RecyclerView
+    private lateinit var pathsEmptyListError: ViewGroup
     private lateinit var pathsInfoProgress: CircularProgressIndicator
     private lateinit var findMyLocationButton: FindMyLocationButton
 
@@ -307,6 +308,7 @@ class MainMapFragment : Fragment() {
                 adapter = pathsInfoListAdapter
             }
             pathsInfoProgress = view.findViewById(R.id.paths_list_progress)
+            pathsEmptyListError = view.findViewById(R.id.empty_paths_error)
             showPathsMenuButton = view.findViewById<CardView>(R.id.show_paths_menu_button).apply {
                 setOnClickListener { viewModel.onShowPathsMenuClicked() }
             }
@@ -595,11 +597,19 @@ class MainMapFragment : Fragment() {
             PathsInfoListState.DEFAULT -> {
                 pathsInfoList.visibility = VISIBLE
                 pathsInfoProgress.visibility = GONE
+                pathsEmptyListError.visibility = GONE
             }
 
             PathsInfoListState.LOADING -> {
                 pathsInfoList.visibility = GONE
                 pathsInfoProgress.visibility = VISIBLE
+                pathsEmptyListError.visibility = GONE
+            }
+
+            PathsInfoListState.EMPTY_LIST -> {
+                pathsInfoList.visibility = GONE
+                pathsInfoProgress.visibility = GONE
+                pathsEmptyListError.visibility = VISIBLE
             }
         }
 
