@@ -17,6 +17,7 @@
     <color name="rating_normal">#FFCC22</color>
     <color name="rating_badly">#EF434D</color>
     <color name="rating_none">#63D8CB</color>
+    <color name="rating_unknown">#FFBB86FC</color>
     <color name="rating_perfect_dark">#00B54A</color>
     <color name="rating_good_dark">#00794F</color>
     <color name="rating_normal_dark">#FFC222</color>

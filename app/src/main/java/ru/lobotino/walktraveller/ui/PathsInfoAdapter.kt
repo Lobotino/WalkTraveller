@@ -1,7 +1,6 @@
 package ru.lobotino.walktraveller.ui
 
 import android.annotation.SuppressLint
-import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -21,6 +20,7 @@ import java.util.*
 
 class PathsInfoAdapter(
     private val distanceFormatter: IDistanceToStringFormatter,
+    private val mostCommonRatingColors: List<Int>,
     private val itemButtonClickedListener: (Long, PathItemButtonType) -> Unit
 ) :
     RecyclerView.Adapter<PathsInfoAdapter.PathInfoItem>() {
@@ -72,7 +72,12 @@ class PathsInfoAdapter(
     }
 
     override fun onBindViewHolder(holder: PathInfoItem, position: Int) {
-        holder.bind(pathsItems[position], itemButtonClickedListener, distanceFormatter)
+        holder.bind(
+            pathsItems[position],
+            itemButtonClickedListener,
+            distanceFormatter,
+            mostCommonRatingColors
+        )
     }
 
     override fun getItemCount(): Int {
@@ -88,7 +93,7 @@ class PathsInfoAdapter(
 
         private val pathLength: TextView
         private val pathDate: TextView
-        private val pathColor: CardView
+        private val pathMostCommonRatingColor: CardView
         private val pathButtonShow: CardView
         private val pathButtonShowImage: ImageView
         private val pathButtonHideImage: ImageView
@@ -98,7 +103,7 @@ class PathsInfoAdapter(
         init {
             pathLength = view.findViewById(R.id.path_length)
             pathDate = view.findViewById(R.id.path_date)
-            pathColor = view.findViewById(R.id.path_color)
+            pathMostCommonRatingColor = view.findViewById(R.id.path_most_common_rating_color)
             pathButtonShow = view.findViewById(R.id.path_button_show)
             pathButtonShowImage = view.findViewById(R.id.path_button_show_image)
             pathButtonHideImage = view.findViewById(R.id.show_all_paths_hide_image)
@@ -109,9 +114,10 @@ class PathsInfoAdapter(
         fun bind(
             path: PathInfoItemModel,
             itemButtonClickedListener: (Long, PathItemButtonType) -> Unit,
-            distanceFormatter: IDistanceToStringFormatter
+            distanceFormatter: IDistanceToStringFormatter,
+            mostCommonRatingColors: List<Int>
         ) {
-            pathColor.setCardBackgroundColor(Color.parseColor(path.pathInfo.color))
+            pathMostCommonRatingColor.setCardBackgroundColor(mostCommonRatingColors[path.pathInfo.mostCommonRating.ordinal])
             pathDate.text = formatTimestampDate(path.pathInfo.timestamp)
             pathLength.text = distanceFormatter.formatDistance(path.pathInfo.length)
             pathButtonShow.setOnClickListener {

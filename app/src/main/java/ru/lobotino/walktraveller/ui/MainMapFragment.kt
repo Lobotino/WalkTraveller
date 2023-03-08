@@ -46,6 +46,7 @@ import org.osmdroid.views.overlay.Polyline
 import ru.lobotino.walktraveller.App
 import ru.lobotino.walktraveller.R
 import ru.lobotino.walktraveller.database.provideDatabase
+import ru.lobotino.walktraveller.model.MostCommonRating
 import ru.lobotino.walktraveller.model.SegmentRating
 import ru.lobotino.walktraveller.model.SegmentRating.*
 import ru.lobotino.walktraveller.model.map.MapCommonPath
@@ -64,6 +65,7 @@ import ru.lobotino.walktraveller.usecases.LocalPathRedactor
 import ru.lobotino.walktraveller.usecases.NotificationsPermissionsInteractor
 import ru.lobotino.walktraveller.usecases.UserLocationInteractor
 import ru.lobotino.walktraveller.usecases.VolumeKeysListenerPermissionsInteractor
+import ru.lobotino.walktraveller.utils.ext.toColorInt
 import ru.lobotino.walktraveller.utils.ext.toGeoPoint
 import ru.lobotino.walktraveller.viewmodels.MapViewModel
 import kotlin.properties.Delegates
@@ -294,7 +296,8 @@ class MainMapFragment : Fragment() {
                             requireContext().getString(R.string.meters_full),
                             requireContext().getString(R.string.kilometers_full),
                             requireContext().getString(R.string.kilometers_short)
-                        )
+                        ),
+                        MostCommonRating.values().map { it.toColorInt(requireContext()) }
                     ) { pathId, itemButtonClickedType ->
                         viewModel.onPathInListButtonClicked(pathId, itemButtonClickedType)
                     }

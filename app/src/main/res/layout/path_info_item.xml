@@ -18,14 +18,14 @@
             android:orientation="horizontal">
 
             <androidx.cardview.widget.CardView
-                android:id="@+id/path_color"
+                android:id="@+id/path_most_common_rating_color"
                 android:layout_width="20dp"
                 android:layout_height="20dp"
                 android:layout_gravity="center_vertical"
                 android:layout_marginStart="6dp"
                 android:layout_marginTop="12dp"
                 android:layout_marginBottom="12dp"
-                app:cardBackgroundColor="@color/rating_good"
+                app:cardBackgroundColor="@color/rating_unknown"
                 app:cardCornerRadius="6dp" />
 
             <TextView

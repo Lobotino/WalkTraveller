@@ -7,6 +7,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import ru.lobotino.walktraveller.database.model.EntityPath
 import ru.lobotino.walktraveller.database.model.EntityPathSegment
+import ru.lobotino.walktraveller.model.MostCommonRating
 import ru.lobotino.walktraveller.model.SegmentRating
 import ru.lobotino.walktraveller.model.map.MapCommonPath
 import ru.lobotino.walktraveller.model.map.MapPathInfo
@@ -158,7 +159,7 @@ class LocalMapPathsInteractor(
                         MapPathInfo(
                             path.id,
                             pathStartSegment.timestamp,
-                            pathColorGenerator.getColorForPath(path.id),
+                            MostCommonRating.PERFECT, //TODO
                             pathLength
                         ).also { pathInfo -> cachePathRepository.savePathInfo(pathInfo) }
                     )
