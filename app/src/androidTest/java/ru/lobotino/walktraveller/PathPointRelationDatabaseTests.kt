@@ -19,6 +19,7 @@ import ru.lobotino.walktraveller.database.dao.PointsDao
 import ru.lobotino.walktraveller.database.model.EntityPath
 import ru.lobotino.walktraveller.database.model.EntityPathPointRelation
 import ru.lobotino.walktraveller.database.model.EntityPoint
+import ru.lobotino.walktraveller.model.MostCommonRating
 import java.io.IOException
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -48,8 +49,8 @@ class PathPointRelationDatabaseTests {
         pointsDao = db.getPointsDao()
         pathsPointsRelationsDao = db.getPathPointsRelationsDao()
         pathsDao = db.getPathsDao()
-        firstPath = EntityPath(1, 1, 1f)
-        secondPath = EntityPath(2, 2, 2f)
+        firstPath = EntityPath(1, 1, 1f, MostCommonRating.UNKNOWN.ordinal)
+        secondPath = EntityPath(2, 2, 2f, MostCommonRating.UNKNOWN.ordinal)
         firstPoint = EntityPoint(1, 1.0, 1.0)
         secondPoint = EntityPoint(2, 2.0, 2.0)
         thirdPoint = EntityPoint(3, 3.0, 3.0)

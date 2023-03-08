@@ -21,6 +21,7 @@ import ru.lobotino.walktraveller.database.dao.PathsDao
 import ru.lobotino.walktraveller.database.dao.PointsDao
 import ru.lobotino.walktraveller.database.model.EntityPath
 import ru.lobotino.walktraveller.database.model.EntityPoint
+import ru.lobotino.walktraveller.model.MostCommonRating
 import ru.lobotino.walktraveller.model.SegmentRating
 import ru.lobotino.walktraveller.repositories.DatabasePathRepository
 import ru.lobotino.walktraveller.repositories.LastCreatedPathIdRepository
@@ -66,8 +67,8 @@ class DatabasePathRepositoryTests {
         pathSegmentRelationsDao = db.getPathSegmentRelationsDao()
         firstPoint = EntityPoint(1, 1.0, 1.0)
         secondPoint = EntityPoint(2, 2.0, 2.0)
-        firstPath = EntityPath(1, 1, 0.0f)
-        secondPath = EntityPath(2, 2, 0.0f)
+        firstPath = EntityPath(1, 1, 0.0f, MostCommonRating.UNKNOWN.ordinal)
+        secondPath = EntityPath(2, 2, 0.0f, MostCommonRating.UNKNOWN.ordinal)
     }
 
     @After
@@ -85,7 +86,12 @@ class DatabasePathRepositoryTests {
                 equalTo(databasePathRepository.getAllPathPoints(resultPathId))
             )
             assertThat(
-                EntityPath(resultPathId, firstPoint.id, firstPath.length),
+                EntityPath(
+                    resultPathId,
+                    firstPoint.id,
+                    firstPath.length,
+                    firstPath.mostCommonRating
+                ),
                 equalTo(pathsDao.getPathById(resultPathId))
             )
         }
@@ -102,7 +108,12 @@ class DatabasePathRepositoryTests {
                 equalTo(pointsDao.getAllPoints())
             )
             assertThat(
-                EntityPath(resultPathId, firstPoint.id, firstPath.length),
+                EntityPath(
+                    resultPathId,
+                    firstPoint.id,
+                    firstPath.length,
+                    firstPath.mostCommonRating
+                ),
                 equalTo(pathsDao.getPathById(resultPathId))
             )
         }
@@ -119,7 +130,12 @@ class DatabasePathRepositoryTests {
                 equalTo(databasePathRepository.getAllPathPoints(resultPathId))
             )
             assertThat(
-                EntityPath(resultPathId, firstPoint.id, firstPath.length),
+                EntityPath(
+                    resultPathId,
+                    firstPoint.id,
+                    firstPath.length,
+                    firstPath.mostCommonRating
+                ),
                 equalTo(pathsDao.getPathById(resultPathId))
             )
 
