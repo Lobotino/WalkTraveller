@@ -289,7 +289,13 @@ class MainMapFragment : Fragment() {
             walkButtonsHolder = view.findViewById(R.id.walk_buttons_holder)
             pathsInfoList = view.findViewById<RecyclerView>(R.id.paths_list).apply {
                 pathsInfoListAdapter =
-                    PathsInfoAdapter(DistanceInMetersToStringFormatter(requireContext())) { pathId, itemButtonClickedType ->
+                    PathsInfoAdapter(
+                        DistanceInMetersToStringFormatter(
+                            requireContext().getString(R.string.meters_full),
+                            requireContext().getString(R.string.kilometers_full),
+                            requireContext().getString(R.string.kilometers_short)
+                        )
+                    ) { pathId, itemButtonClickedType ->
                         viewModel.onPathInListButtonClicked(pathId, itemButtonClickedType)
                     }
                 if (itemAnimator is SimpleItemAnimator) {

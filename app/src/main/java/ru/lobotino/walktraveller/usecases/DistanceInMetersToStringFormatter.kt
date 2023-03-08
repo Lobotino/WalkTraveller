@@ -1,14 +1,12 @@
 package ru.lobotino.walktraveller.usecases
 
-import android.content.Context
-import ru.lobotino.walktraveller.R
 import ru.lobotino.walktraveller.usecases.interfaces.IDistanceToStringFormatter
 
-class DistanceInMetersToStringFormatter(context: Context) : IDistanceToStringFormatter {
-
-    private val metersFull = context.getString(R.string.meters_full)
-    private val kilometersFull = context.getString(R.string.kilometers_full)
-    private val kilometersShort = context.getString(R.string.kilometers_short)
+class DistanceInMetersToStringFormatter(
+    private val metersFull: String,
+    private val kilometersFull: String,
+    private val kilometersShort: String
+) : IDistanceToStringFormatter {
 
     override fun formatDistance(distance: Float): String {
         return if (distance >= 1000) {
@@ -19,6 +17,9 @@ class DistanceInMetersToStringFormatter(context: Context) : IDistanceToStringFor
                 "$kilometers $kilometersFull"
             } else {
                 meters /= 10
+                if (meters % 10 == 0) {
+                    meters /= 10
+                }
                 "$kilometers.$meters $kilometersShort"
             }
         } else {
