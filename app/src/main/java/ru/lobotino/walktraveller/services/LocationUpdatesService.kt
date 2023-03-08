@@ -13,7 +13,6 @@ import android.os.IBinder
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import androidx.room.Room
 import com.google.android.gms.location.LocationServices
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -21,10 +20,9 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import ru.lobotino.walktraveller.App
-import ru.lobotino.walktraveller.App.Companion.PATH_DATABASE_NAME
 import ru.lobotino.walktraveller.BuildConfig
 import ru.lobotino.walktraveller.R
-import ru.lobotino.walktraveller.database.AppDatabase
+import ru.lobotino.walktraveller.database.provideDatabase
 import ru.lobotino.walktraveller.repositories.DatabasePathRepository
 import ru.lobotino.walktraveller.repositories.LastCreatedPathIdRepository
 import ru.lobotino.walktraveller.repositories.LocationUpdatesRepository
@@ -86,10 +84,7 @@ class LocationUpdatesService : Service() {
     private fun initLocalPathRepository() {
         pathInteractor = CurrentPathInteractor(
             DatabasePathRepository(
-                Room.databaseBuilder(
-                    applicationContext,
-                    AppDatabase::class.java, PATH_DATABASE_NAME
-                ).build(),
+                provideDatabase(applicationContext),
                 LastCreatedPathIdRepository(sharedPreferences)
             ),
             PathRatingRepository(sharedPreferences)

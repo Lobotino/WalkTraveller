@@ -30,7 +30,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.SimpleItemAnimator
-import androidx.room.Room
 import com.google.android.gms.location.LocationServices
 import com.google.android.material.progressindicator.CircularProgressIndicator
 import kotlinx.coroutines.*
@@ -45,9 +44,8 @@ import org.osmdroid.views.CustomZoomButtonsController
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Polyline
 import ru.lobotino.walktraveller.App
-import ru.lobotino.walktraveller.App.Companion.PATH_DATABASE_NAME
 import ru.lobotino.walktraveller.R
-import ru.lobotino.walktraveller.database.AppDatabase
+import ru.lobotino.walktraveller.database.provideDatabase
 import ru.lobotino.walktraveller.model.SegmentRating
 import ru.lobotino.walktraveller.model.SegmentRating.*
 import ru.lobotino.walktraveller.model.map.MapCommonPath
@@ -352,21 +350,20 @@ class MainMapFragment : Fragment() {
                         val lastCreatedPathIdRepository =
                             LastCreatedPathIdRepository(sharedPreferences)
 
-                        setMapPathInteractor(
-                            LocalMapPathsInteractor(
-                                databasePathRepository = DatabasePathRepository(
-                                    Room.databaseBuilder(
-                                        requireContext().applicationContext,
-                                        AppDatabase::class.java, PATH_DATABASE_NAME
-                                    ).build(),
-                                    lastCreatedPathIdRepository
-                                ),
-                                pathColorGenerator = PathColorGenerator(requireContext()),
-                                cachePathRepository = CachePathsRepository(),
-                                writingPathStatesRepository = writingPathStatesRepository,
-                                lastCreatedPathIdRepository = lastCreatedPathIdRepository
-                            )
+                        val databasePathRepository = DatabasePathRepository(
+                            provideDatabase(requireContext().applicationContext),
+                            lastCreatedPathIdRepository
                         )
+
+                        val localMapPathInteractor = LocalMapPathsInteractor(
+                            databasePathRepository = databasePathRepository,
+                            cachePathRepository = CachePathsRepository(),
+                            pathColorGenerator = PathColorGenerator(requireContext()),
+                            writingPathStatesRepository = writingPathStatesRepository,
+                            lastCreatedPathIdRepository = lastCreatedPathIdRepository
+                        )
+
+                        setMapPathInteractor(localMapPathInteractor)
 
                         setWritingPathStatesRepository(
                             writingPathStatesRepository
