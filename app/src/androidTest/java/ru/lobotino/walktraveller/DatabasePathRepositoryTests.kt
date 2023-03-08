@@ -66,8 +66,8 @@ class DatabasePathRepositoryTests {
         pathSegmentRelationsDao = db.getPathSegmentRelationsDao()
         firstPoint = EntityPoint(1, 1.0, 1.0)
         secondPoint = EntityPoint(2, 2.0, 2.0)
-        firstPath = EntityPath(1, 1)
-        secondPath = EntityPath(2, 2)
+        firstPath = EntityPath(1, 1, 0.0f)
+        secondPath = EntityPath(2, 2, 0.0f)
     }
 
     @After
@@ -85,7 +85,7 @@ class DatabasePathRepositoryTests {
                 equalTo(databasePathRepository.getAllPathPoints(resultPathId))
             )
             assertThat(
-                EntityPath(resultPathId, firstPoint.id),
+                EntityPath(resultPathId, firstPoint.id, firstPath.length),
                 equalTo(pathsDao.getPathById(resultPathId))
             )
         }
@@ -102,7 +102,7 @@ class DatabasePathRepositoryTests {
                 equalTo(pointsDao.getAllPoints())
             )
             assertThat(
-                EntityPath(resultPathId, firstPoint.id),
+                EntityPath(resultPathId, firstPoint.id, firstPath.length),
                 equalTo(pathsDao.getPathById(resultPathId))
             )
         }
@@ -119,7 +119,7 @@ class DatabasePathRepositoryTests {
                 equalTo(databasePathRepository.getAllPathPoints(resultPathId))
             )
             assertThat(
-                EntityPath(resultPathId, firstPoint.id),
+                EntityPath(resultPathId, firstPoint.id, firstPath.length),
                 equalTo(pathsDao.getPathById(resultPathId))
             )
 

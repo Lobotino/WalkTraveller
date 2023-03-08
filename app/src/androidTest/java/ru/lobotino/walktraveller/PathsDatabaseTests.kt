@@ -42,8 +42,8 @@ class PathsDatabaseTests {
         pathsDao = db.getPathsDao()
         firstPoint = EntityPoint(1, 1.0, 1.0)
         secondPoint = EntityPoint(2, 2.0, 2.0)
-        firstPath = EntityPath(1, 1)
-        secondPath = EntityPath(2, 2)
+        firstPath = EntityPath(1, 1, 1f)
+        secondPath = EntityPath(2, 2, 2f)
     }
 
     @After
