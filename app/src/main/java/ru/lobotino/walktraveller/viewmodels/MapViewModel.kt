@@ -331,11 +331,9 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
         if (!updatingYetUnpaintedPaths) {
             updatingYetUnpaintedPaths = true
             if (writingPathStatesRepository.isWritingPathNow()) {
-                var needToUpdateAllPath = false
 
                 if (!writingPathNowState.value) {
                     writingPathNowState.tryEmit(true)
-                    needToUpdateAllPath = true
                 }
 
                 updateCurrentSavedPath?.cancel()
@@ -343,11 +341,8 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
                     mapPathsInteractor.getLastSavedRatingPath()?.let { lastSavedPath ->
 
                         if (lastSavedPath.pathSegments.isNotEmpty()) {
-                            if (needToUpdateAllPath) {
-                                clearMap()
-                                lastPaintedPoint = lastSavedPath.pathSegments.first().startPoint
-                            }
-                            drawUnpaintedYetPathSegments(lastSavedPath.pathSegments)
+                            clearMap()
+                            redrawAllPathSegments(lastSavedPath.pathSegments)
                             newCurrentUserLocationFlow.tryEmit(lastSavedPath.pathSegments.last().finishPoint)
                         }
                         updatingYetUnpaintedPaths = false
@@ -368,21 +363,10 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
         lastPaintedPoint = newPoint
     }
 
-    private fun drawUnpaintedYetPathSegments(allPathSegments: List<MapPathSegment>) {
-        var needToDraw = false
-        for (segment in allPathSegments) {
-            if (needToDraw) {
-                newPathSegmentFlow.tryEmit(segment)
-            } else {
-                if (segment.finishPoint == lastPaintedPoint) {
-                    needToDraw = true
-                } else {
-                    if (segment.startPoint == lastPaintedPoint) {
-                        needToDraw = true
-                        newPathSegmentFlow.tryEmit(segment)
-                    }
-                }
-            }
+    private fun redrawAllPathSegments(allPathSegment: List<MapPathSegment>) {
+        lastPaintedPoint = allPathSegment.last().finishPoint
+        for (segment in allPathSegment) {
+            newPathSegmentFlow.tryEmit(segment)
         }
     }
 
