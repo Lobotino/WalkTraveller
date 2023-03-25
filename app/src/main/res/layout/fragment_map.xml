@@ -146,6 +146,43 @@
         </FrameLayout>
     </com.google.android.material.card.MaterialCardView>
 
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/rating_none_button_holder"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="4dp"
+        android:visibility="gone"
+        app:cardBackgroundColor="@color/light_gray"
+        app:layout_constraintBottom_toTopOf="@id/bottom_menu"
+        app:layout_constraintEnd_toStartOf="@+id/rating_buttons_holder"
+        app:layout_constraintTop_toTopOf="@+id/rating_buttons_holder"
+        app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.SmallCardView"
+        tools:visibility="visible">
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/rating_none"
+            android:layout_width="34dp"
+            android:layout_height="34dp"
+            android:layout_marginStart="5dp"
+            android:layout_marginTop="4dp"
+            android:layout_marginEnd="5dp"
+            android:layout_marginBottom="4dp"
+            app:cardBackgroundColor="@color/white"
+            app:cardCornerRadius="17dp"
+            app:cardElevation="2dp">
+
+            <ImageView
+                android:id="@+id/rating_none_star"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_star_slash"
+                app:tint="@color/rating_none" />
+
+        </androidx.cardview.widget.CardView>
+
+    </com.google.android.material.card.MaterialCardView>
+
     <include
         android:id="@+id/rating_buttons_holder"
         layout="@layout/rating_buttons"

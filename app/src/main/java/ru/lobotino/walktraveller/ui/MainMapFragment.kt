@@ -82,6 +82,7 @@ class MainMapFragment : Fragment() {
     private lateinit var walkStartButton: CardView
     private lateinit var walkStopButton: CardView
     private lateinit var ratingButtonsHolder: View
+    private lateinit var ratingNoneButtonHolder: View
     private lateinit var ratingBadlyButton: CardView
     private lateinit var ratingNormalButton: CardView
     private lateinit var ratingGoodButton: CardView
@@ -211,6 +212,7 @@ class MainMapFragment : Fragment() {
             userLocationOverlay = UserLocationOverlay(requireContext())
 
             ratingButtonsHolder = view.findViewById<CardView>(R.id.rating_buttons_holder)
+            ratingNoneButtonHolder = view.findViewById<CardView>(R.id.rating_none_button_holder)
 
             walkStartButton = view.findViewById<CardView>(R.id.walk_start_button)
                 .apply {
@@ -474,11 +476,13 @@ class MainMapFragment : Fragment() {
                                 walkStartButton.visibility = GONE
                                 walkStopButton.visibility = VISIBLE
                                 ratingButtonsHolder.visibility = VISIBLE
+                                ratingNoneButtonHolder.visibility = VISIBLE
                             } else {
                                 sendFinishCurrentPathAction()
                                 walkStartButton.visibility = VISIBLE
                                 walkStopButton.visibility = GONE
                                 ratingButtonsHolder.visibility = GONE
+                                ratingNoneButtonHolder.visibility = GONE
                             }
                         }.launchIn(lifecycleScope)
 
