@@ -9,6 +9,12 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         supportFragmentManager.beginTransaction()
+            .add(R.id.fragment_container, FirstWelcomeFragment())
+            .commit()
+    }
+
+    fun onFinishWelcomeScreen() {
+        supportFragmentManager.beginTransaction()
             .add(R.id.fragment_container, MainMapFragment())
             .commit()
     }

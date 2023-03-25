@@ -14,4 +14,9 @@
     <string name="kilometers_short">Km</string>
     <string name="empty_paths_list_title">No saved paths, yet</string>
     <string name="empty_paths_list_description">Saved paths will be displayed here but for now it is empty.\n\nNow is the best time to go for a walk!</string>
+    <string name="welcome_continue_button_default_text">Continue</string>
+    <string name="welcome_continue_button_need_to_agreement_first">Agreement is required</string>
+    <string name="welcome_title">Welcome!</string>
+    <string name="welcome_subtitle">This application was created to record and evaluate the routes you have traveled</string>
+    <string name="welcome_privacy_policy_accepting">By clicking on the continue button, I agree to the privacy policy and terms of use</string>
 </resources>
