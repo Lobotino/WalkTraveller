@@ -11,12 +11,12 @@ import android.widget.Button
 import android.widget.TextView
 import ru.lobotino.walktraveller.R
 
-class PrivacyPolicyDialog(
+class TermsOfUseDialog(
     context: Context
 ) : Dialog(context) {
 
-    private val privacyPolicyTitle = context.getString(R.string.privacy_policy_title)
-    private val privacyPolicyText = context.getString(R.string.privacy_policy)
+    private val termsOfUseTitle = context.getString(R.string.terms_of_use_title)
+    private val termsOfUseText = context.getString(R.string.terms_of_use)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,7 +41,7 @@ class PrivacyPolicyDialog(
     }
 
     private fun setupTitle() {
-        findViewById<TextView>(R.id.dialog_title).text = privacyPolicyTitle
+        findViewById<TextView>(R.id.dialog_title).text = termsOfUseTitle
     }
 
     @Suppress("DEPRECATION")
@@ -49,9 +49,9 @@ class PrivacyPolicyDialog(
         findViewById<TextView>(R.id.dialog_text).apply {
             text =
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    Html.fromHtml(privacyPolicyText, Html.FROM_HTML_MODE_COMPACT)
+                    Html.fromHtml(termsOfUseText, Html.FROM_HTML_MODE_COMPACT)
                 } else {
-                    Html.fromHtml(privacyPolicyText)
+                    Html.fromHtml(termsOfUseText)
                 }
 
             movementMethod = LinkMovementMethod.getInstance()

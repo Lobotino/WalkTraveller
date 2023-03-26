@@ -98,7 +98,7 @@ class FirstWelcomeFragment : Fragment() {
                         object : ClickableSpan() {
                             override fun onClick(textView: View) {
                                 context?.let { context ->
-                                    PrivacyPolicyDialog(context).apply { //TODO
+                                    TermsOfUseDialog(context).apply {
                                         show()
                                         window?.setLayout(
                                             ViewGroup.LayoutParams.MATCH_PARENT,

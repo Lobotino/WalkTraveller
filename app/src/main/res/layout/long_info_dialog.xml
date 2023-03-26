@@ -24,14 +24,15 @@
                 android:orientation="horizontal">
 
                 <TextView
+                    android:id="@+id/dialog_title"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center_vertical|start"
                     android:layout_marginStart="16dp"
-                    android:text="@string/privacy_policy_title"
                     android:textColor="@color/black"
                     android:textSize="20sp"
-                    android:textStyle="bold" />
+                    android:textStyle="bold"
+                    tools:text="Long info dialog title" />
 
                 <androidx.appcompat.widget.AppCompatButton
                     android:id="@+id/close_button"
@@ -51,14 +52,14 @@
             android:layout_height="match_parent">
 
             <TextView
-                android:id="@+id/privacy_policy"
+                android:id="@+id/dialog_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="10dp"
                 android:layout_marginVertical="4dp"
                 android:textColor="@color/black"
                 android:textSize="16sp"
-                tools:text="@string/privacy_policy" />
+                tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer mi elit, accumsan eget nisi et, bibendum fermentum ex. Vivamus tincidunt arcu urna, non rutrum justo venenatis sed. Sed sit amet scelerisque libero. Etiam ligula ex, tincidunt vitae rutrum nec, tincidunt sed est. Duis id enim vel urna convallis fermentum. Nulla bibendum dui quis est ultricies euismod. Sed feugiat volutpat urna vitae euismod. Ut finibus augue id felis congue, vitae luctus lacus malesuada. In ornare interdum leo non pulvinar. Phasellus nisi justo, dictum eu erat in, eleifend aliquam urna. Aenean placerat eu nisl et fermentum. Cras lobortis, est quis malesuada molestie, mi lacus sodales urna, non venenatis justo enim efficitur sem. Interdum et malesuada fames ac ante ipsum primis in faucibus. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Vestibulum viverra ex enim, quis fringilla mi mattis vel. Aenean dignissim convallis porttitor. Maecenas ultrices ante ut purus sagittis, malesuada pretium purus vulputate. Cras sed lacinia ex. Mauris mattis leo sit amet neque viverra, vel vestibulum purus egestas. Praesent a tristique magna. Interdum et malesuada fames ac ante ipsum primis in faucibus. Nulla quam orci, mollis nec enim in, ullamcorper ultrices ligula. Nunc mattis posuere velit, vitae suscipit arcu tempus id. Donec aliquam orci dolor, aliquet fringilla lorem vestibulum porttitor. Pellentesque dignissim arcu quis metus venenatis congue. Sed aliquam nisl et ligula faucibus facilisis." />
 
         </ScrollView>
     </LinearLayout>
