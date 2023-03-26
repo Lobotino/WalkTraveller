@@ -1,6 +1,11 @@
 package ru.lobotino.walktraveller.ui
 
 import android.os.Bundle
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.TextPaint
+import android.text.method.LinkMovementMethod
+import android.text.style.ClickableSpan
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -56,7 +61,65 @@ class FirstWelcomeFragment : Fragment() {
         }
 
         privacyPolicyText = view.findViewById<TextView?>(R.id.privacy_policy_text).apply {
-            //TODO
+            val privacyPolicyTextFull = context.getString(R.string.welcome_privacy_policy_accepting)
+            val privacyPolicyTextPart = context.getString(R.string.welcome_privacy_policy_text_part)
+            val termsOfUseTextPart = context.getString(R.string.welcome_terms_of_use_text_part)
+
+            val privacyPolicyStartIndex = privacyPolicyTextFull.indexOf(privacyPolicyTextPart)
+            val termsOfUseStartIndex = privacyPolicyTextFull.indexOf(termsOfUseTextPart)
+
+            text =
+                SpannableString(privacyPolicyTextFull).apply {
+                    setSpan(
+                        object : ClickableSpan() {
+                            override fun onClick(textView: View) {
+                                context?.let { context ->
+                                    PrivacyPolicyDialog(context).apply {
+                                        show()
+                                        window?.setLayout(
+                                            ViewGroup.LayoutParams.MATCH_PARENT,
+                                            ViewGroup.LayoutParams.MATCH_PARENT
+                                        )
+                                    }
+                                }
+                            }
+
+                            override fun updateDrawState(ds: TextPaint) {
+                                super.updateDrawState(ds)
+                                ds.isUnderlineText = false
+                            }
+                        },
+                        privacyPolicyStartIndex,
+                        privacyPolicyStartIndex + privacyPolicyTextPart.length,
+                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                    )
+
+                    setSpan(
+                        object : ClickableSpan() {
+                            override fun onClick(textView: View) {
+                                context?.let { context ->
+                                    PrivacyPolicyDialog(context).apply { //TODO
+                                        show()
+                                        window?.setLayout(
+                                            ViewGroup.LayoutParams.MATCH_PARENT,
+                                            ViewGroup.LayoutParams.MATCH_PARENT
+                                        )
+                                    }
+                                }
+                            }
+
+                            override fun updateDrawState(ds: TextPaint) {
+                                super.updateDrawState(ds)
+                                ds.isUnderlineText = false
+                            }
+                        },
+                        termsOfUseStartIndex,
+                        termsOfUseStartIndex + termsOfUseTextPart.length,
+                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                    )
+                }
+
+            movementMethod = LinkMovementMethod.getInstance()
         }
     }
 

@@ -56,7 +56,7 @@
                     android:layout_weight="1"
                     android:text="@string/welcome_privacy_policy_accepting"
                     android:textColor="@color/black"
-                    android:textSize="14sp" />
+                    android:textSize="15sp" />
 
                 <CheckBox
                     android:id="@+id/privacy_policy_check_box"
