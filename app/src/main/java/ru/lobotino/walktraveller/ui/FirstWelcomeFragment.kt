@@ -143,7 +143,7 @@ class FirstWelcomeFragment : Fragment() {
                     onContinueListener = {
                         activity?.let { activity ->
                             if (activity is MainActivity) {
-                                activity.onFinishWelcomeScreen()
+                                activity.showMapFragment()
                             }
                         }
                     }
