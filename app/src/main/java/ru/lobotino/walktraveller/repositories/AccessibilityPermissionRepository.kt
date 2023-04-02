@@ -3,6 +3,7 @@ package ru.lobotino.walktraveller.repositories
 import android.content.Context
 import android.content.Intent
 import android.provider.Settings
+import android.provider.Settings.Secure.ACCESSIBILITY_ENABLED
 import android.util.Log
 import ru.lobotino.walktraveller.repositories.interfaces.IPermissionsRepository
 
@@ -27,7 +28,7 @@ class AccessibilityPermissionRepository(private val appContext: Context) : IPerm
             accessEnabled =
                 Settings.Secure.getInt(
                     appContext.contentResolver,
-                    Settings.Secure.ACCESSIBILITY_ENABLED
+                    ACCESSIBILITY_ENABLED
                 )
         } catch (e: Settings.SettingNotFoundException) {
             Log.w(TAG, "Exception on check accessibility permissions: ${e.message}")

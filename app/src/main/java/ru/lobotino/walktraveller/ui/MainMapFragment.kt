@@ -512,6 +512,12 @@ class MainMapFragment : Fragment() {
                         context = context,
                         onConfirm = { viewModel.onConfirmPathDelete(confirmDialogInfo.additionalInfo as Long) }).show()
                 }
+
+                ConfirmDialogType.GEO_LOCATION_PERMISSION_REQUIRED -> {
+                    GeoLocationRequiredDialog(
+                        context = context,
+                        onConfirm = { viewModel.onLocationPermissionDialogConfirmed() }).show()
+                }
             }
         }
     }

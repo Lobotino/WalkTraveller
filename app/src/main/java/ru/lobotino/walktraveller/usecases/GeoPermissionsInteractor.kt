@@ -1,19 +1,21 @@
 package ru.lobotino.walktraveller.usecases
 
-import ru.lobotino.walktraveller.repositories.interfaces.IPermissionsRepository
-import ru.lobotino.walktraveller.usecases.interfaces.IPermissionsInteractor
+import ru.lobotino.walktraveller.repositories.GeoPermissionsRepository
 
-class GeoPermissionsInteractor(private val permissionsRepository: IPermissionsRepository) :
-    IPermissionsInteractor {
+class GeoPermissionsInteractor(private val geoPermissionsRepository: GeoPermissionsRepository) {
 
-    override fun requestPermissions(
+    fun requestPermissions(
         allGranted: (() -> Unit)?,
         someDenied: ((List<String>) -> Unit)?
     ) {
-        permissionsRepository.requestPermissions(allGranted, someDenied)
+        geoPermissionsRepository.requestPermissions(allGranted, someDenied)
     }
 
-    override fun isPermissionsGranted(): Boolean {
-        return permissionsRepository.isPermissionsGranted()
+    fun isGeneralGeoPermissionsGranted(): Boolean {
+        return geoPermissionsRepository.isGeneralGeoPermissionsGranted()
+    }
+
+    fun isBackgroundGeoPermissionsGranted(): Boolean {
+        return geoPermissionsRepository.isBackgroundGeoPermissionsGranted()
     }
 }

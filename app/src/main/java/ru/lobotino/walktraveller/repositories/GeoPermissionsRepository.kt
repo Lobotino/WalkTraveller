@@ -7,15 +7,14 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
-import ru.lobotino.walktraveller.repositories.interfaces.IPermissionsRepository
 
-class GeoPermissionsRepository(fragment: Fragment, private val appContext: Context) :
-    IPermissionsRepository {
+class GeoPermissionsRepository(fragment: Fragment, private val appContext: Context) {
 
     private var allGrantedCallback: (() -> Unit)? = null
     private var someDeniedCallback: ((List<String>) -> Unit)? = null
 
-    private val commonGeoPermissionsRepository = PermissionsRepository(fragment,
+    private val commonGeoPermissionsRepository = PermissionsRepository(
+        fragment,
         arrayListOf(
             ACCESS_FINE_LOCATION,
             ACCESS_COARSE_LOCATION
@@ -39,27 +38,23 @@ class GeoPermissionsRepository(fragment: Fragment, private val appContext: Conte
             someDeniedCallback?.invoke(deniedPermissions)
         })
 
-    override fun requestPermissions(allGranted: (() -> Unit)?, someDenied: ((List<String>) -> Unit)?) {
+    fun requestPermissions(
+        allGranted: (() -> Unit)?,
+        someDenied: ((List<String>) -> Unit)?
+    ) {
         allGrantedCallback = allGranted
         someDeniedCallback = someDenied
         commonGeoPermissionsRepository.requestPermissions()
     }
 
-    override fun isPermissionsGranted(): Boolean {
-        return checkPermissions(
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) arrayListOf(
-                ACCESS_FINE_LOCATION, ACCESS_COARSE_LOCATION, ACCESS_BACKGROUND_LOCATION
-            ) else arrayListOf(
-                ACCESS_FINE_LOCATION, ACCESS_COARSE_LOCATION
-            )
-        )
+    fun isGeneralGeoPermissionsGranted(): Boolean {
+        return checkPermission(ACCESS_FINE_LOCATION) || checkPermission(ACCESS_COARSE_LOCATION)
     }
 
-    private fun checkPermissions(permissionList: List<String>): Boolean {
-        for (permission in permissionList) {
-            if (!checkPermission(permission)) return false
-        }
-        return true
+    fun isBackgroundGeoPermissionsGranted(): Boolean {
+        return Build.VERSION.SDK_INT < Build.VERSION_CODES.Q || checkPermission(
+            ACCESS_BACKGROUND_LOCATION
+        )
     }
 
     private fun checkPermission(permission: String): Boolean {

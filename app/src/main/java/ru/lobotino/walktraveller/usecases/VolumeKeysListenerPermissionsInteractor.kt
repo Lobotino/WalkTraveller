@@ -10,9 +10,7 @@ class VolumeKeysListenerPermissionsInteractor(private val accessibilityPermissio
         allGranted: (() -> Unit)?,
         someDenied: ((List<String>) -> Unit)?
     ) {
-        if(!isPermissionsGranted()) {
-            accessibilityPermissionRepository.requestPermissions()
-        }
+        accessibilityPermissionRepository.requestPermissions()
     }
 
     override fun isPermissionsGranted(): Boolean {
