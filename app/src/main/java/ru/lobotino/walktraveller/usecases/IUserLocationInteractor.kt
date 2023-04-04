@@ -10,6 +10,4 @@ interface IUserLocationInteractor {
         onError: (Exception) -> Unit
     )
 
-    fun getLastUserLocation(): MapPoint
-
 }

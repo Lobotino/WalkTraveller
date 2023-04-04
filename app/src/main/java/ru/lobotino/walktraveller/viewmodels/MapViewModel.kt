@@ -2,6 +2,7 @@ package ru.lobotino.walktraveller.viewmodels
 
 import android.app.Application
 import android.location.Location
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
@@ -18,7 +19,6 @@ import ru.lobotino.walktraveller.model.map.MapPathInfo
 import ru.lobotino.walktraveller.model.map.MapPathSegment
 import ru.lobotino.walktraveller.model.map.MapPoint
 import ru.lobotino.walktraveller.model.map.MapRatingPath
-import ru.lobotino.walktraveller.repositories.interfaces.IDefaultLocationRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IPathRatingRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IUserRotationRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IWritingPathStatesRepository
@@ -37,6 +37,7 @@ import ru.lobotino.walktraveller.ui.model.ShowPathsButtonState
 import ru.lobotino.walktraveller.usecases.GeoPermissionsInteractor
 import ru.lobotino.walktraveller.usecases.IUserLocationInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IMapPathsInteractor
+import ru.lobotino.walktraveller.usecases.interfaces.IMapStateInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IPathRedactor
 import ru.lobotino.walktraveller.usecases.interfaces.IPermissionsInteractor
 import ru.lobotino.walktraveller.utils.ext.toMapPoint
@@ -62,12 +63,14 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     private var volumeKeysListenerPermissionsInteractor: IPermissionsInteractor? = null
     private var geoPermissionsInteractor: GeoPermissionsInteractor? = null
 
-    private lateinit var defaultLocationRepository: IDefaultLocationRepository
+
+    private lateinit var userLocationInteractor: IUserLocationInteractor
+    private lateinit var mapPathsInteractor: IMapPathsInteractor
+    private lateinit var mapStateInteractor: IMapStateInteractor
+
     private lateinit var writingPathStatesRepository: IWritingPathStatesRepository
     private lateinit var pathRatingRepository: IPathRatingRepository
-    private lateinit var userLocationInteractor: IUserLocationInteractor
     private lateinit var userRotationRepository: IUserRotationRepository
-    private lateinit var mapPathsInteractor: IMapPathsInteractor
     private lateinit var pathRedactor: IPathRedactor
 
     private var showedPathIdsList: MutableList<Long> = ArrayList()
@@ -141,12 +144,12 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
         this.mapPathsInteractor = mapPathsInteractor
     }
 
-    fun setPathRedactor(pathRedactor: IPathRedactor) {
-        this.pathRedactor = pathRedactor
+    fun setMapStateInteractor(mapStateInteractor: IMapStateInteractor) {
+        this.mapStateInteractor = mapStateInteractor
     }
 
-    fun setDefaultLocationRepository(defaultLocationRepository: IDefaultLocationRepository) {
-        this.defaultLocationRepository = defaultLocationRepository
+    fun setPathRedactor(pathRedactor: IPathRedactor) {
+        this.pathRedactor = pathRedactor
     }
 
     fun setWritingPathStatesRepository(writingPathStatesRepository: IWritingPathStatesRepository) {
@@ -166,6 +169,8 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun onInitFinish() {
+        setupMapCenterToLastSeenLocation()
+
         startBackgroundCachingPaths()
 
         geoPermissionsInteractor?.let { geoPermissionsInteractor ->
@@ -195,6 +200,10 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
         syncWritingPathState()
 
         isInitialized = true
+    }
+
+    private fun setupMapCenterToLastSeenLocation() {
+        newMapCenterFlow.tryEmit(mapStateInteractor.getLastSeenPoint())
     }
 
     private fun syncWritingPathState() {
@@ -535,7 +544,9 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun onMapScrolled() {
+    fun onMapScrolled(mapPoint: MapPoint) {
+        mapStateInteractor.setLastSeenPoint(mapPoint)
+
         if (mapUiStateFlow.value.findMyLocationButtonState == FindMyLocationButtonState.CENTER_ON_CURRENT_LOCATION) {
             mapUiStateFlow.update { mapUiState -> mapUiState.copy(findMyLocationButtonState = FindMyLocationButtonState.DEFAULT) }
         }
@@ -563,7 +574,8 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
             }, {
                 setLoadingStateWithDelayJob.cancel()
                 setLocationButtonStateToError()
-            }, {
+            }, { error ->
+                Log.e(TAG, error.message, error)
                 setLoadingStateWithDelayJob.cancel()
                 setLocationButtonStateToError()
             }

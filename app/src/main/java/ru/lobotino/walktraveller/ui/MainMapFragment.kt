@@ -62,11 +62,13 @@ import ru.lobotino.walktraveller.usecases.DistanceInMetersToStringFormatter
 import ru.lobotino.walktraveller.usecases.GeoPermissionsInteractor
 import ru.lobotino.walktraveller.usecases.LocalMapPathsInteractor
 import ru.lobotino.walktraveller.usecases.LocalPathRedactor
+import ru.lobotino.walktraveller.usecases.MapStateInteractor
 import ru.lobotino.walktraveller.usecases.NotificationsPermissionsInteractor
 import ru.lobotino.walktraveller.usecases.UserLocationInteractor
 import ru.lobotino.walktraveller.usecases.VolumeKeysListenerPermissionsInteractor
 import ru.lobotino.walktraveller.utils.ext.toColorInt
 import ru.lobotino.walktraveller.utils.ext.toGeoPoint
+import ru.lobotino.walktraveller.utils.ext.toMapPoint
 import ru.lobotino.walktraveller.viewmodels.MapViewModel
 import kotlin.properties.Delegates
 
@@ -196,12 +198,12 @@ class MainMapFragment : Fragment() {
                 zoomController.setVisibility(CustomZoomButtonsController.Visibility.NEVER)
                 setMultiTouchControls(true)
                 addMapListener(object : MapListener {
-                    override fun onScroll(event: ScrollEvent?): Boolean {
-                        viewModel.onMapScrolled()
+                    override fun onScroll(event: ScrollEvent): Boolean {
+                        viewModel.onMapScrolled(event.source.mapCenter.toMapPoint())
                         return true
                     }
 
-                    override fun onZoom(event: ZoomEvent?): Boolean {
+                    override fun onZoom(event: ZoomEvent): Boolean {
                         viewModel.onMapZoomed()
                         return true
                     }
@@ -391,11 +393,17 @@ class MainMapFragment : Fragment() {
                             )
                         )
 
+                        setMapStateInteractor(
+                            MapStateInteractor(
+                                LastSeenPointRepository(
+                                    sharedPreferences
+                                )
+                            )
+                        )
+
                         setWritingPathStatesRepository(
                             writingPathStatesRepository
                         )
-
-                        setDefaultLocationRepository(DefaultLocationRepository(sharedPreferences))
 
                         setPathRatingRepository(PathRatingRepository(sharedPreferences))
 
@@ -404,8 +412,7 @@ class MainMapFragment : Fragment() {
                                 LocationUpdatesRepository(
                                     LocationServices.getFusedLocationProviderClient(requireActivity()),
                                     5000
-                                ),
-                                DefaultLocationRepository(sharedPreferences)
+                                )
                             )
                         )
 
