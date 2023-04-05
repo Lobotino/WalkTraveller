@@ -76,7 +76,7 @@ import kotlin.properties.Delegates
 class MainMapFragment : Fragment() {
 
     companion object {
-        private const val DEFAULT_COMFORT_ZOOM = 12.5
+        private const val DEFAULT_COMFORT_ZOOM = 15.0
     }
 
     private lateinit var mapView: MapView
@@ -460,7 +460,9 @@ class MainMapFragment : Fragment() {
                         observeNewMapCenter.onEach { newMapCenter ->
                             mapView.controller?.let { mapViewController ->
                                 mapViewController.setCenter(newMapCenter.toGeoPoint())
-                                mapViewController.setZoom(DEFAULT_COMFORT_ZOOM)
+                                if (mapView.zoomLevelDouble < DEFAULT_COMFORT_ZOOM) {
+                                    mapViewController.setZoom(DEFAULT_COMFORT_ZOOM)
+                                }
                             }
                         }.launchIn(lifecycleScope)
 
