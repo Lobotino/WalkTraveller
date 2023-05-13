@@ -23,9 +23,8 @@ android {
         applicationId "ru.lobotino.walktraveller"
         minSdk 21
         targetSdk 33
-        versionCode 1
-        versionName "1.0"
-
+        versionCode 2
+        versionName "0.1.0-alpha"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -35,6 +34,13 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+
+    android.applicationVariants.all { variant ->
+        variant.outputs.all {
+            outputFileName = "walktraveller-${variant.versionName}.apk"
+        }
+    }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
