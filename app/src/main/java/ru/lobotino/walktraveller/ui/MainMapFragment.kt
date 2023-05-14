@@ -3,6 +3,7 @@ package ru.lobotino.walktraveller.ui
 import android.content.*
 import android.content.Context.SENSOR_SERVICE
 import android.content.res.ColorStateList
+import android.graphics.Paint
 import android.hardware.SensorManager
 import android.location.Location
 import android.os.Build
@@ -769,6 +770,7 @@ class MainMapFragment : Fragment() {
                 getRatingColor(pathSegment.rating)?.let { ratingColor ->
                     color = ratingColor
                 }
+                strokeCap = Paint.Cap.ROUND
             }
         }
     }
