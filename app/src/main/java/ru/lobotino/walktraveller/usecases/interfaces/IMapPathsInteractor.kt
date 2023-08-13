@@ -6,7 +6,7 @@ import ru.lobotino.walktraveller.model.map.MapRatingPath
 
 interface IMapPathsInteractor {
 
-    suspend fun getAllSavedCommonPaths(): List<MapCommonPath>
+    suspend fun getAllSavedPathsAsCommon(): List<MapCommonPath>
 
     suspend fun getSavedCommonPath(pathId: Long): MapCommonPath?
 

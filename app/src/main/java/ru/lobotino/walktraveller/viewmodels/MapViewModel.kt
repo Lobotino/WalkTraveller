@@ -63,7 +63,7 @@ class MapViewModel(
     private var updatingYetUnpaintedPaths = false
 
     private var updateCurrentSavedPath: Job? = null
-    private var downloadRatingPathsJob: Job? = null
+    private var downloadAllPathsJob: Job? = null
     private var downloadAllPathsInfoJob: Job? = null
     private var backgroundCachingRatingPathsJob: Job? = null
     private var backgroundCachingCommonPathsJob: Job? = null
@@ -240,9 +240,9 @@ class MapViewModel(
     }
 
     fun onShowAllPathsButtonClicked() {
-        if (downloadRatingPathsJob?.isActive == true || mapUiStateFlow.value.showPathsButtonState == ShowPathsButtonState.LOADING) {
-            downloadRatingPathsJob?.cancel()
-            downloadRatingPathsJob = null
+        if (downloadAllPathsJob?.isActive == true || mapUiStateFlow.value.showPathsButtonState == ShowPathsButtonState.LOADING) {
+            downloadAllPathsJob?.cancel()
+            downloadAllPathsJob = null
             mapUiStateFlow.update { uiState ->
                 uiState.copy(showPathsButtonState = ShowPathsButtonState.DEFAULT)
             }
@@ -276,34 +276,86 @@ class MapViewModel(
                     )
                 )
                 backgroundCachingRatingPathsJob?.cancel()
-                downloadRatingPathsJob = viewModelScope.launch {
-                    for (path in mapPathsInteractor.getAllSavedRatingPaths(true)) {
-                        showRatingPathOnMap(path)
-                        newPathInfoListItemStateFlow.tryEmit(
-                            PathInfoItemState(
-                                path.pathId,
-                                PathInfoItemShowButtonState.HIDE
-                            )
-                        )
-                    }
-                    mapUiStateFlow.update { uiState ->
-                        uiState.copy(showPathsButtonState = ShowPathsButtonState.HIDE)
+
+                when (mapUiStateFlow.value.showPathsFilterButtonState) {
+                    ShowPathsFilterButtonState.RATED_ONLY -> startDownloadAllRatedPaths()
+                    ShowPathsFilterButtonState.ALL_IN_COMMON_COLOR -> startDownloadAllPathsAsCommon()
+                    else -> {
+                        mapUiStateFlow.update { uiState ->
+                            uiState.copy(showPathsButtonState = ShowPathsButtonState.HIDE)
+                        }
                     }
                 }
             }
         }
     }
 
+    private fun startDownloadAllRatedPaths() {
+        downloadAllPathsJob?.cancel()
+        downloadAllPathsJob = viewModelScope.launch {
+            for (path in mapPathsInteractor.getAllSavedRatingPaths(true)) {
+                showRatingPathOnMap(path)
+                newPathInfoListItemStateFlow.tryEmit(
+                    PathInfoItemState(
+                        path.pathId,
+                        PathInfoItemShowButtonState.HIDE
+                    )
+                )
+            }
+            mapUiStateFlow.update { uiState ->
+                uiState.copy(showPathsButtonState = ShowPathsButtonState.HIDE)
+            }
+        }
+    }
+
+    private fun startDownloadAllPathsAsCommon() {
+        downloadAllPathsJob?.cancel()
+        downloadAllPathsJob = viewModelScope.launch {
+            for (path in mapPathsInteractor.getAllSavedPathsAsCommon()) {
+                showCommonPathOnMap(path)
+                newPathInfoListItemStateFlow.tryEmit(
+                    PathInfoItemState(
+                        path.pathId,
+                        PathInfoItemShowButtonState.HIDE
+                    )
+                )
+            }
+            mapUiStateFlow.update { uiState ->
+                uiState.copy(showPathsButtonState = ShowPathsButtonState.HIDE)
+            }
+        }
+    }
+
     fun onShowPathsFilterButtonClicked() {
+        val newFilterValue = when (mapUiStateFlow.value.showPathsFilterButtonState) {
+            ShowPathsFilterButtonState.RATED_ONLY -> ShowPathsFilterButtonState.ALL_IN_COMMON_COLOR
+            ShowPathsFilterButtonState.ALL_IN_COMMON_COLOR -> ShowPathsFilterButtonState.RATED_ONLY
+            ShowPathsFilterButtonState.GONE -> ShowPathsFilterButtonState.GONE
+        }
+
         mapUiStateFlow.update { uiState ->
             uiState.copy(
-                showPathsFilterButtonState =
-                if (uiState.showPathsFilterButtonState == ShowPathsFilterButtonState.RATED_ONLY) {
-                    ShowPathsFilterButtonState.ALL_IN_COMMON_COLOR
-                } else {
-                    ShowPathsFilterButtonState.RATED_ONLY
-                }
+                showPathsFilterButtonState = newFilterValue
             )
+        }
+        when (mapUiStateFlow.value.showPathsButtonState) {
+            ShowPathsButtonState.LOADING -> {
+                when (newFilterValue) {
+                    ShowPathsFilterButtonState.RATED_ONLY -> startDownloadAllRatedPaths()
+                    ShowPathsFilterButtonState.ALL_IN_COMMON_COLOR -> startDownloadAllPathsAsCommon()
+                    else -> {
+                        mapUiStateFlow.update { uiState ->
+                            uiState.copy(showPathsButtonState = ShowPathsButtonState.HIDE)
+                        }
+                    }
+                }
+            }
+
+            ShowPathsButtonState.HIDE -> {
+                mapUiStateFlow.update { uiState -> uiState.copy(showPathsButtonState = ShowPathsButtonState.DEFAULT) }
+            }
+
+            else -> {}
         }
     }
 
@@ -362,7 +414,7 @@ class MapViewModel(
             uiState.copy(bottomMenuState = BottomMenuState.PATHS_MENU)
         }
 
-        downloadRatingPathsJob?.cancel()
+        downloadAllPathsJob?.cancel()
         backgroundCachingPathsInfoJob?.cancel()
 
         mapUiStateFlow.update { uiState ->
@@ -392,7 +444,7 @@ class MapViewModel(
     }
 
     fun onHidePathsMenuClicked() {
-        downloadRatingPathsJob?.cancel()
+        downloadAllPathsJob?.cancel()
         mapUiStateFlow.update { uiState ->
             uiState.copy(
                 bottomMenuState = BottomMenuState.DEFAULT,
@@ -486,7 +538,7 @@ class MapViewModel(
             mapPathsInteractor.getAllSavedRatingPaths(false)
         }
         backgroundCachingCommonPathsJob = viewModelScope.launch {
-            mapPathsInteractor.getAllSavedCommonPaths()
+            mapPathsInteractor.getAllSavedPathsAsCommon()
         }
         backgroundCachingPathsInfoJob = viewModelScope.launch {
             mapPathsInteractor.getAllSavedPathsInfo()

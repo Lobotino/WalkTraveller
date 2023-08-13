@@ -36,7 +36,7 @@ class LocalMapPathsInteractor(
         private val ratingList = SegmentRating.values()
     }
 
-    override suspend fun getAllSavedCommonPaths(): List<MapCommonPath> {
+    override suspend fun getAllSavedPathsAsCommon(): List<MapCommonPath> {
         return coroutineScope {
             ArrayList<MapCommonPath>().apply {
                 for (path in withContext(defaultDispatcher) { databasePathRepository.getAllPathsInfo() }) {
