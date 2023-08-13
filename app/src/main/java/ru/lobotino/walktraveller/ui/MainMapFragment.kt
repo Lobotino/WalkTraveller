@@ -98,6 +98,9 @@ class MainMapFragment : Fragment() {
     private lateinit var ratingPerfectButtonStar: ImageView
     private lateinit var ratingNoneButtonStar: ImageView
     private lateinit var walkStopAcceptProgress: CircularProgressIndicator
+    private lateinit var showPathsFilterButton: CardView
+    private lateinit var showPathsFilterRatedOnlyStateImage: View
+    private lateinit var showPathsFilterAllInCommonStateImage: View
     private lateinit var showAllPathsButton: CardView
     private lateinit var showAllPathsProgress: CircularProgressIndicator
     private lateinit var showAllPathsDefaultImage: ImageView
@@ -293,6 +296,12 @@ class MainMapFragment : Fragment() {
             showAllPathsProgress = view.findViewById(R.id.show_all_paths_progress)
             showAllPathsDefaultImage = view.findViewById(R.id.show_all_paths_default_image)
             showAllPathsHideImage = view.findViewById(R.id.show_all_paths_hide_image)
+
+            showPathsFilterButton = view.findViewById<CardView>(R.id.show_paths_filter_button).apply {
+                setOnClickListener { viewModel.onShowPathsFilterButtonClicked() }
+            }
+            showPathsFilterAllInCommonStateImage = view.findViewById(R.id.show_paths_filter_button_all_in_common_state)
+            showPathsFilterRatedOnlyStateImage = view.findViewById(R.id.show_paths_filter_button_rated_only_state)
 
             pathsMenu = view.findViewById(R.id.paths_menu)
             walkButtonsHolder = view.findViewById(R.id.walk_buttons_holder)
@@ -588,6 +597,18 @@ class MainMapFragment : Fragment() {
         }
         showAllPathsProgress.visibility = when (mapUiState.showPathsButtonState) {
             ShowPathsButtonState.LOADING -> VISIBLE
+            else -> GONE
+        }
+        showPathsFilterButton.visibility = when (mapUiState.showPathsFilterButtonState) {
+            ShowPathsFilterButtonState.GONE -> GONE
+            else -> VISIBLE
+        }
+        showPathsFilterAllInCommonStateImage.visibility = when (mapUiState.showPathsFilterButtonState) {
+            ShowPathsFilterButtonState.ALL_IN_COMMON_COLOR -> VISIBLE
+            else -> GONE
+        }
+        showPathsFilterRatedOnlyStateImage.visibility = when (mapUiState.showPathsFilterButtonState) {
+            ShowPathsFilterButtonState.RATED_ONLY -> VISIBLE
             else -> GONE
         }
 

@@ -33,6 +33,7 @@ import ru.lobotino.walktraveller.ui.model.PathInfoItemShowButtonState
 import ru.lobotino.walktraveller.ui.model.PathInfoItemState
 import ru.lobotino.walktraveller.ui.model.PathsInfoListState
 import ru.lobotino.walktraveller.ui.model.ShowPathsButtonState
+import ru.lobotino.walktraveller.ui.model.ShowPathsFilterButtonState
 import ru.lobotino.walktraveller.usecases.GeoPermissionsInteractor
 import ru.lobotino.walktraveller.usecases.IUserLocationInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IMapPathsInteractor
@@ -293,6 +294,19 @@ class MapViewModel(
         }
     }
 
+    fun onShowPathsFilterButtonClicked() {
+        mapUiStateFlow.update { uiState ->
+            uiState.copy(
+                showPathsFilterButtonState =
+                if (uiState.showPathsFilterButtonState == ShowPathsFilterButtonState.RATED_ONLY) {
+                    ShowPathsFilterButtonState.ALL_IN_COMMON_COLOR
+                } else {
+                    ShowPathsFilterButtonState.RATED_ONLY
+                }
+            )
+        }
+    }
+
     fun onRatingButtonClicked(ratingGiven: SegmentRating) {
         pathRatingRepository.setCurrentRating(ratingGiven)
         mapUiStateFlow.update { uiState ->
@@ -361,14 +375,16 @@ class MapViewModel(
                 mapUiStateFlow.update { uiState ->
                     uiState.copy(
                         pathsInfoListState = PathsInfoListState.DEFAULT,
-                        showPathsButtonState = ShowPathsButtonState.DEFAULT
+                        showPathsButtonState = ShowPathsButtonState.DEFAULT,
+                        showPathsFilterButtonState = ShowPathsFilterButtonState.RATED_ONLY
                     )
                 }
             } else {
                 mapUiStateFlow.update { uiState ->
                     uiState.copy(
                         pathsInfoListState = PathsInfoListState.EMPTY_LIST,
-                        showPathsButtonState = ShowPathsButtonState.GONE
+                        showPathsButtonState = ShowPathsButtonState.GONE,
+                        showPathsFilterButtonState = ShowPathsFilterButtonState.GONE
                     )
                 }
             }
@@ -380,7 +396,8 @@ class MapViewModel(
         mapUiStateFlow.update { uiState ->
             uiState.copy(
                 bottomMenuState = BottomMenuState.DEFAULT,
-                showPathsButtonState = ShowPathsButtonState.GONE
+                showPathsButtonState = ShowPathsButtonState.GONE,
+                showPathsFilterButtonState = ShowPathsFilterButtonState.GONE
             )
         }
     }
@@ -560,7 +577,8 @@ class MapViewModel(
                 mapUiStateFlow.update { uiState ->
                     uiState.copy(
                         pathsInfoListState = PathsInfoListState.EMPTY_LIST,
-                        showPathsButtonState = ShowPathsButtonState.GONE
+                        showPathsButtonState = ShowPathsButtonState.GONE,
+                        showPathsFilterButtonState = ShowPathsFilterButtonState.GONE
                     )
                 }
             }
