@@ -23,14 +23,14 @@
 
             <ImageView
                 android:id="@+id/paths_menu_back_button"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
+                android:layout_width="40dp"
+                android:layout_height="44dp"
+                android:padding="8dp"
                 android:layout_gravity="start|center_vertical"
-                android:layout_margin="8dp"
                 android:src="@drawable/ic_baseline_arrow_back_24"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                tools:ignore="ContentDescription" />
+                tools:ignore="ContentDescription"/>
 
             <TextView
                 android:id="@+id/paths_list_title"
