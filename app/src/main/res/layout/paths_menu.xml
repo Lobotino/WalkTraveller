@@ -119,36 +119,40 @@
                         android:rowCount="2">
 
                         <androidx.cardview.widget.CardView
-                            android:layout_width="8dp"
-                            android:layout_height="8dp"
+                            android:layout_width="9dp"
+                            android:layout_height="9dp"
                             android:layout_gravity="center"
                             android:layout_margin="1dp"
                             app:cardBackgroundColor="@color/rating_badly"
-                            app:cardCornerRadius="6dp"/>
+                            app:cardCornerRadius="6dp"
+                            app:cardElevation="0dp"/>
 
                         <androidx.cardview.widget.CardView
-                            android:layout_width="8dp"
-                            android:layout_height="8dp"
+                            android:layout_width="9dp"
+                            android:layout_height="9dp"
                             android:layout_gravity="center"
                             android:layout_margin="1dp"
                             app:cardBackgroundColor="@color/rating_normal"
-                            app:cardCornerRadius="6dp"/>
+                            app:cardCornerRadius="6dp"
+                            app:cardElevation="0dp"/>
 
                         <androidx.cardview.widget.CardView
-                            android:layout_width="8dp"
-                            android:layout_height="8dp"
+                            android:layout_width="9dp"
+                            android:layout_height="9dp"
                             android:layout_gravity="center"
                             android:layout_margin="1dp"
                             app:cardBackgroundColor="@color/rating_good"
-                            app:cardCornerRadius="6dp"/>
+                            app:cardCornerRadius="6dp"
+                            app:cardElevation="0dp"/>
 
                         <androidx.cardview.widget.CardView
-                            android:layout_width="8dp"
-                            android:layout_height="8dp"
+                            android:layout_width="9dp"
+                            android:layout_height="9dp"
                             android:layout_gravity="center"
                             android:layout_margin="1dp"
                             app:cardBackgroundColor="@color/rating_perfect"
-                            app:cardCornerRadius="6dp"/>
+                            app:cardCornerRadius="6dp"
+                            app:cardElevation="0dp"/>
 
                     </GridLayout>
 
