@@ -47,6 +47,7 @@ import org.osmdroid.views.overlay.Polyline
 import ru.lobotino.walktraveller.App
 import ru.lobotino.walktraveller.R
 import ru.lobotino.walktraveller.database.provideDatabase
+import ru.lobotino.walktraveller.di.MapViewModelFactory
 import ru.lobotino.walktraveller.model.MostCommonRating
 import ru.lobotino.walktraveller.model.SegmentRating
 import ru.lobotino.walktraveller.model.SegmentRating.*
@@ -173,7 +174,7 @@ class MainMapFragment : Fragment() {
         return inflater.inflate(R.layout.fragment_map, container, false).also { view ->
             initColors()
             initViews(view)
-            initViewModel()
+            initViewModel(savedInstanceState)
         }
     }
 
@@ -327,190 +328,167 @@ class MainMapFragment : Fragment() {
         }
     }
 
-    private fun initViewModel() {
+    private fun initViewModel(bundle: Bundle?) {
         if (activity != null && context != null) {
+            sharedPreferences = requireContext().getSharedPreferences(
+                App.SHARED_PREFS_TAG,
+                AppCompatActivity.MODE_PRIVATE
+            )
+
+            val writingPathStatesRepository =
+                WritingPathStatesRepository(sharedPreferences)
+
+            val lastCreatedPathIdRepository =
+                LastCreatedPathIdRepository(sharedPreferences)
+
+            val databasePathRepository = DatabasePathRepository(
+                provideDatabase(requireContext().applicationContext),
+                lastCreatedPathIdRepository
+            )
+
+            val pathRedactor = LocalPathRedactor(
+                databasePathRepository,
+                PathDistancesInMetersRepository(LocationsDistanceRepository())
+            )
+
             viewModel =
-                ViewModelProvider.AndroidViewModelFactory.getInstance(requireActivity().application)
-                    .create(MapViewModel::class.java).apply {
-                        sharedPreferences = requireContext().getSharedPreferences(
-                            App.SHARED_PREFS_TAG,
-                            AppCompatActivity.MODE_PRIVATE
-                        )
-
-                        setGeoPermissionsInteractor(
-                            GeoPermissionsInteractor(
-                                GeoPermissionsRepository(
-                                    this@MainMapFragment,
-                                    requireContext().applicationContext
-                                )
+                ViewModelProvider(
+                    this, MapViewModelFactory(
+                        notificationsPermissionsInteractor = NotificationsPermissionsInteractor(
+                            NotificationsPermissionsRepository(
+                                this@MainMapFragment,
+                                requireContext().applicationContext
                             )
-                        )
-
-                        setNotificationsPermissionsInteractor(
-                            NotificationsPermissionsInteractor(
-                                NotificationsPermissionsRepository(
-                                    this@MainMapFragment,
-                                    requireContext().applicationContext
-                                )
+                        ),
+                        volumeKeysListenerPermissionsInteractor = VolumeKeysListenerPermissionsInteractor(
+                            AccessibilityPermissionRepository(
+                                requireContext().applicationContext
                             )
-                        )
-
-                        setVolumeKeysListenerPermissionsInteractor(
-                            VolumeKeysListenerPermissionsInteractor(
-                                AccessibilityPermissionRepository(
-                                    requireContext().applicationContext
-                                )
+                        ),
+                        geoPermissionsInteractor = GeoPermissionsInteractor(
+                            GeoPermissionsRepository(
+                                this@MainMapFragment,
+                                requireContext().applicationContext
                             )
-                        )
-
-                        val writingPathStatesRepository =
-                            WritingPathStatesRepository(sharedPreferences)
-
-                        val lastCreatedPathIdRepository =
-                            LastCreatedPathIdRepository(sharedPreferences)
-
-                        val databasePathRepository = DatabasePathRepository(
-                            provideDatabase(requireContext().applicationContext),
-                            lastCreatedPathIdRepository
-                        )
-
-                        val pathRedactor = LocalPathRedactor(
-                            databasePathRepository,
-                            PathDistancesInMetersRepository(LocationsDistanceRepository())
-                        )
-
-                        setPathRedactor(
-                            pathRedactor
-                        )
-
-                        setMapPathInteractor(
-                            LocalMapPathsInteractor(
-                                databasePathRepository = databasePathRepository,
-                                cachePathRepository = CachePathsRepository(),
-                                pathColorGenerator = PathColorGenerator(requireContext()),
-                                writingPathStatesRepository = writingPathStatesRepository,
-                                lastCreatedPathIdRepository = lastCreatedPathIdRepository,
-                                pathRedactor = pathRedactor
+                        ),
+                        userLocationInteractor = UserLocationInteractor(
+                            LocationUpdatesRepository(
+                                LocationServices.getFusedLocationProviderClient(requireActivity()),
+                                5000
                             )
-                        )
-
-                        setMapStateInteractor(
-                            MapStateInteractor(
-                                LastSeenPointRepository(
-                                    sharedPreferences
-                                )
+                        ),
+                        mapPathsInteractor = LocalMapPathsInteractor(
+                            databasePathRepository = databasePathRepository,
+                            cachePathRepository = CachePathsRepository(),
+                            pathColorGenerator = PathColorGenerator(requireContext()),
+                            writingPathStatesRepository = writingPathStatesRepository,
+                            lastCreatedPathIdRepository = lastCreatedPathIdRepository,
+                            pathRedactor = pathRedactor
+                        ),
+                        mapStateInteractor = MapStateInteractor(
+                            LastSeenPointRepository(
+                                sharedPreferences
                             )
-                        )
+                        ),
+                        writingPathStatesRepository = writingPathStatesRepository,
+                        pathRatingRepository = PathRatingRepository(sharedPreferences),
+                        userRotationRepository = UserRotationRepository(
+                            requireActivity().getSystemService(
+                                SENSOR_SERVICE
+                            ) as SensorManager,
+                            lifecycleScope
+                        ),
+                        pathRedactor = pathRedactor,
+                        owner = this,
+                        bundle = bundle
+                    )
+                )[MapViewModel::class.java].apply {
 
-                        setWritingPathStatesRepository(
-                            writingPathStatesRepository
-                        )
+                    observePermissionsDeniedResult.onEach {
+                        showPermissionsDeniedError()
+                    }.launchIn(lifecycleScope)
 
-                        setPathRatingRepository(PathRatingRepository(sharedPreferences))
+                    observeNewPathSegment.onEach { pathSegment ->
+                        paintNewCurrentPathSegment(pathSegment)
+                    }.launchIn(lifecycleScope)
 
-                        setUserLocationInteractor(
-                            UserLocationInteractor(
-                                LocationUpdatesRepository(
-                                    LocationServices.getFusedLocationProviderClient(requireActivity()),
-                                    5000
-                                )
-                            )
-                        )
+                    observeNewCommonPath.onEach { path ->
+                        paintNewCommonPath(path, commonPathColor)
+                    }.launchIn(lifecycleScope)
 
-                        setUserRotationRepository(
-                            UserRotationRepository(
-                                requireActivity().getSystemService(
-                                    SENSOR_SERVICE
-                                ) as SensorManager,
-                                lifecycleScope
-                            )
-                        )
+                    observeNewRatingPath.onEach { path ->
+                        paintNewRatingPath(path)
+                    }.launchIn(lifecycleScope)
 
-                        observePermissionsDeniedResult.onEach {
-                            showPermissionsDeniedError()
-                        }.launchIn(lifecycleScope)
+                    observeMapUiState.onEach { mapUiState ->
+                        updateMapUiState(mapUiState)
+                    }.launchIn(lifecycleScope)
 
-                        observeNewPathSegment.onEach { pathSegment ->
-                            paintNewCurrentPathSegment(pathSegment)
-                        }.launchIn(lifecycleScope)
-
-                        observeNewCommonPath.onEach { path ->
-                            paintNewCommonPath(path, commonPathColor)
-                        }.launchIn(lifecycleScope)
-
-                        observeNewRatingPath.onEach { path ->
-                            paintNewRatingPath(path)
-                        }.launchIn(lifecycleScope)
-
-                        observeMapUiState.onEach { mapUiState ->
-                            updateMapUiState(mapUiState)
-                        }.launchIn(lifecycleScope)
-
-                        observeRegularLocationUpdate.onEach { needToUpdateLocation ->
-                            if (needToUpdateLocation) {
-                                sendStartLocationUpdatesAction()
-                            } else {
-                                sendStopLocationUpdatesAction()
-                            }
-                        }.launchIn(lifecycleScope)
-
-                        observeNewPathsInfoList.onEach { newPathsInfoList ->
-                            pathsInfoListAdapter.setPathsInfoItems(newPathsInfoList)
-                        }.launchIn(lifecycleScope)
-
-                        observeNewMapCenter.onEach { newMapCenter ->
-                            mapView.controller?.let { mapViewController ->
-                                mapViewController.setCenter(newMapCenter.toGeoPoint())
-                                if (mapView.zoomLevelDouble < DEFAULT_COMFORT_ZOOM) {
-                                    mapViewController.setZoom(DEFAULT_COMFORT_ZOOM)
-                                }
-                            }
-                        }.launchIn(lifecycleScope)
-
-                        observeNewPathInfoListItemState.onEach { newPathInfoState ->
-                            syncNewPathInfoState(newPathInfoState)
-                        }.launchIn(lifecycleScope)
-
-                        observeHidePath.onEach { pathId ->
-                            hidePathById(pathId)
-                        }.launchIn(lifecycleScope)
-
-                        observeNewCurrentUserLocation.onEach { newUserLocation ->
-                            userLocationOverlay.setPosition(newUserLocation.toGeoPoint())
-                            refreshMapNow()
-                        }.launchIn(lifecycleScope)
-
-                        observeWritingPathNow.onEach { isWritingPathNow ->
-                            if (isWritingPathNow) {
-                                sendStartCurrentPathAction()
-                                walkStartButton.visibility = GONE
-                                walkStopButton.visibility = VISIBLE
-                                ratingButtonsHolder.visibility = VISIBLE
-                                ratingNoneButtonHolder.visibility = VISIBLE
-                            } else {
-                                sendFinishCurrentPathAction()
-                                walkStartButton.visibility = VISIBLE
-                                walkStopButton.visibility = GONE
-                                ratingButtonsHolder.visibility = GONE
-                                ratingNoneButtonHolder.visibility = GONE
-                            }
-                        }.launchIn(lifecycleScope)
-
-                        observeNewConfirmDialog.onEach { confirmDialogInfo ->
-                            showConfirmDialog(confirmDialogInfo)
-                        }.launchIn(lifecycleScope)
-
-                        observeNewUserRotation().onEach { newUserRotation ->
-                            userLocationOverlay.setRotation(newUserRotation)
-                            refreshMapNow()
-                        }.launchIn(lifecycleScope)
-
-                        observeNeedToClearMapNow {
-                            clearMap()
+                    observeRegularLocationUpdate.onEach { needToUpdateLocation ->
+                        if (needToUpdateLocation) {
+                            sendStartLocationUpdatesAction()
+                        } else {
+                            sendStopLocationUpdatesAction()
                         }
+                    }.launchIn(lifecycleScope)
 
-                        onInitFinish()
+                    observeNewPathsInfoList.onEach { newPathsInfoList ->
+                        pathsInfoListAdapter.setPathsInfoItems(newPathsInfoList)
+                    }.launchIn(lifecycleScope)
+
+                    observeNewMapCenter.onEach { newMapCenter ->
+                        mapView.controller?.let { mapViewController ->
+                            mapViewController.setCenter(newMapCenter.toGeoPoint())
+                            if (mapView.zoomLevelDouble < DEFAULT_COMFORT_ZOOM) {
+                                mapViewController.setZoom(DEFAULT_COMFORT_ZOOM)
+                            }
+                        }
+                    }.launchIn(lifecycleScope)
+
+                    observeNewPathInfoListItemState.onEach { newPathInfoState ->
+                        syncNewPathInfoState(newPathInfoState)
+                    }.launchIn(lifecycleScope)
+
+                    observeHidePath.onEach { pathId ->
+                        hidePathById(pathId)
+                    }.launchIn(lifecycleScope)
+
+                    observeNewCurrentUserLocation.onEach { newUserLocation ->
+                        userLocationOverlay.setPosition(newUserLocation.toGeoPoint())
+                        refreshMapNow()
+                    }.launchIn(lifecycleScope)
+
+                    observeWritingPathNow.onEach { isWritingPathNow ->
+                        if (isWritingPathNow) {
+                            sendStartCurrentPathAction()
+                            walkStartButton.visibility = GONE
+                            walkStopButton.visibility = VISIBLE
+                            ratingButtonsHolder.visibility = VISIBLE
+                            ratingNoneButtonHolder.visibility = VISIBLE
+                        } else {
+                            sendFinishCurrentPathAction()
+                            walkStartButton.visibility = VISIBLE
+                            walkStopButton.visibility = GONE
+                            ratingButtonsHolder.visibility = GONE
+                            ratingNoneButtonHolder.visibility = GONE
+                        }
+                    }.launchIn(lifecycleScope)
+
+                    observeNewConfirmDialog.onEach { confirmDialogInfo ->
+                        showConfirmDialog(confirmDialogInfo)
+                    }.launchIn(lifecycleScope)
+
+                    observeNewUserRotation().onEach { newUserRotation ->
+                        userLocationOverlay.setRotation(newUserRotation)
+                        refreshMapNow()
+                    }.launchIn(lifecycleScope)
+
+                    observeNeedToClearMapNow {
+                        clearMap()
                     }
+
+                    onInitFinish()
+                }
         }
     }
 

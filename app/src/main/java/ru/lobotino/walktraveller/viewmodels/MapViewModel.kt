@@ -1,9 +1,8 @@
 package ru.lobotino.walktraveller.viewmodels
 
-import android.app.Application
 import android.location.Location
 import android.util.Log
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
@@ -42,7 +41,18 @@ import ru.lobotino.walktraveller.usecases.interfaces.IPathRedactor
 import ru.lobotino.walktraveller.usecases.interfaces.IPermissionsInteractor
 import ru.lobotino.walktraveller.utils.ext.toMapPoint
 
-class MapViewModel(application: Application) : AndroidViewModel(application) {
+class MapViewModel(
+    private val notificationsPermissionsInteractor: IPermissionsInteractor,
+    private val volumeKeysListenerPermissionsInteractor: IPermissionsInteractor,
+    private val geoPermissionsInteractor: GeoPermissionsInteractor,
+    private val userLocationInteractor: IUserLocationInteractor,
+    private val mapPathsInteractor: IMapPathsInteractor,
+    private val mapStateInteractor: IMapStateInteractor,
+    private val writingPathStatesRepository: IWritingPathStatesRepository,
+    private val pathRatingRepository: IPathRatingRepository,
+    private val userRotationRepository: IUserRotationRepository,
+    private val pathRedactor: IPathRedactor
+) : ViewModel() {
 
     companion object {
         private val TAG = MapViewModel::class.java.canonicalName
@@ -58,20 +68,6 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     private var backgroundCachingCommonPathsJob: Job? = null
     private var backgroundCachingPathsInfoJob: Job? = null
     private var lastPaintedPoint: MapPoint? = null
-
-    private var notificationsPermissionsInteractor: IPermissionsInteractor? = null
-    private var volumeKeysListenerPermissionsInteractor: IPermissionsInteractor? = null
-    private var geoPermissionsInteractor: GeoPermissionsInteractor? = null
-
-
-    private lateinit var userLocationInteractor: IUserLocationInteractor
-    private lateinit var mapPathsInteractor: IMapPathsInteractor
-    private lateinit var mapStateInteractor: IMapStateInteractor
-
-    private lateinit var writingPathStatesRepository: IWritingPathStatesRepository
-    private lateinit var pathRatingRepository: IPathRatingRepository
-    private lateinit var userRotationRepository: IUserRotationRepository
-    private lateinit var pathRedactor: IPathRedactor
 
     private var showedPathIdsList: MutableList<Long> = ArrayList()
 
@@ -128,52 +124,12 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
         clearMapNowListener = listener
     }
 
-    fun setGeoPermissionsInteractor(geoPermissionsInteractor: GeoPermissionsInteractor) {
-        this.geoPermissionsInteractor = geoPermissionsInteractor
-    }
-
-    fun setNotificationsPermissionsInteractor(notificationsPermissionsInteractor: IPermissionsInteractor) {
-        this.notificationsPermissionsInteractor = notificationsPermissionsInteractor
-    }
-
-    fun setVolumeKeysListenerPermissionsInteractor(volumeKeysListenerPermissionsInteractor: IPermissionsInteractor) {
-        this.volumeKeysListenerPermissionsInteractor = volumeKeysListenerPermissionsInteractor
-    }
-
-    fun setMapPathInteractor(mapPathsInteractor: IMapPathsInteractor) {
-        this.mapPathsInteractor = mapPathsInteractor
-    }
-
-    fun setMapStateInteractor(mapStateInteractor: IMapStateInteractor) {
-        this.mapStateInteractor = mapStateInteractor
-    }
-
-    fun setPathRedactor(pathRedactor: IPathRedactor) {
-        this.pathRedactor = pathRedactor
-    }
-
-    fun setWritingPathStatesRepository(writingPathStatesRepository: IWritingPathStatesRepository) {
-        this.writingPathStatesRepository = writingPathStatesRepository
-    }
-
-    fun setPathRatingRepository(pathRatingRepository: IPathRatingRepository) {
-        this.pathRatingRepository = pathRatingRepository
-    }
-
-    fun setUserLocationInteractor(userLocationInteractor: IUserLocationInteractor) {
-        this.userLocationInteractor = userLocationInteractor
-    }
-
-    fun setUserRotationRepository(userRotationRepository: IUserRotationRepository) {
-        this.userRotationRepository = userRotationRepository
-    }
-
     fun onInitFinish() {
         setupMapCenterToLastSeenLocation()
 
         startBackgroundCachingPaths()
 
-        geoPermissionsInteractor?.let { geoPermissionsInteractor ->
+        geoPermissionsInteractor.let { geoPermissionsInteractor ->
             if (geoPermissionsInteractor.isGeneralGeoPermissionsGranted()) {
                 regularLocationUpdateStateFlow.tryEmit(true)
                 updateCurrentMapCenterToUserLocation()
@@ -187,7 +143,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
 
-        notificationsPermissionsInteractor?.requestPermissions(someDenied = { deniedPermissions ->
+        notificationsPermissionsInteractor.requestPermissions(someDenied = { deniedPermissions ->
             permissionsDeniedSharedFlow.tryEmit(
                 deniedPermissions
             )
@@ -224,7 +180,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun onResume() {
-        if (geoPermissionsInteractor?.isGeneralGeoPermissionsGranted() == true) {
+        if (geoPermissionsInteractor.isGeneralGeoPermissionsGranted() == true) {
             regularLocationUpdateStateFlow.tryEmit(true)
         }
 
@@ -521,25 +477,26 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun onFindMyLocationButtonClicked() {
-        geoPermissionsInteractor?.let { geoPermissionsInteractor ->
+        geoPermissionsInteractor.let { geoPermissionsInteractor ->
             if (geoPermissionsInteractor.isGeneralGeoPermissionsGranted()) {
                 updateCurrentMapCenterToUserLocation()
             } else {
-                geoPermissionsInteractor.requestPermissions({
-                    regularLocationUpdateStateFlow.tryEmit(true)
-                    updateCurrentMapCenterToUserLocation()
-                }, {
-                    if (geoPermissionsInteractor.isGeneralGeoPermissionsGranted()) {
-                        regularLocationUpdateStateFlow.tryEmit(true)
-                        updateCurrentMapCenterToUserLocation()
-                    } else {
-                        mapUiStateFlow.update { mapUiState ->
-                            mapUiState.copy(
-                                findMyLocationButtonState = FindMyLocationButtonState.ERROR
-                            )
-                        }
-                    }
-                })
+                geoPermissionsInteractor
+                    .requestPermissions({
+                                            regularLocationUpdateStateFlow.tryEmit(true)
+                                            updateCurrentMapCenterToUserLocation()
+                                        }, {
+                                            if (geoPermissionsInteractor.isGeneralGeoPermissionsGranted()) {
+                                                regularLocationUpdateStateFlow.tryEmit(true)
+                                                updateCurrentMapCenterToUserLocation()
+                                            } else {
+                                                mapUiStateFlow.update { mapUiState ->
+                                                    mapUiState.copy(
+                                                        findMyLocationButtonState = FindMyLocationButtonState.ERROR
+                                                    )
+                                                }
+                                            }
+                                        })
             }
         }
     }
