@@ -1,7 +1,13 @@
 package ru.lobotino.walktraveller.ui
 
-import android.content.*
+import android.content.BroadcastReceiver
+import android.content.ComponentName
+import android.content.Context
 import android.content.Context.SENSOR_SERVICE
+import android.content.Intent
+import android.content.IntentFilter
+import android.content.ServiceConnection
+import android.content.SharedPreferences
 import android.content.res.ColorStateList
 import android.graphics.Paint
 import android.hardware.SensorManager
@@ -33,9 +39,14 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.SimpleItemAnimator
 import com.google.android.gms.location.LocationServices
 import com.google.android.material.progressindicator.CircularProgressIndicator
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.osmdroid.events.MapListener
 import org.osmdroid.events.ScrollEvent
 import org.osmdroid.events.ZoomEvent
@@ -50,16 +61,40 @@ import ru.lobotino.walktraveller.database.provideDatabase
 import ru.lobotino.walktraveller.di.MapViewModelFactory
 import ru.lobotino.walktraveller.model.MostCommonRating
 import ru.lobotino.walktraveller.model.SegmentRating
-import ru.lobotino.walktraveller.model.SegmentRating.*
+import ru.lobotino.walktraveller.model.SegmentRating.BADLY
+import ru.lobotino.walktraveller.model.SegmentRating.GOOD
+import ru.lobotino.walktraveller.model.SegmentRating.NONE
+import ru.lobotino.walktraveller.model.SegmentRating.NORMAL
+import ru.lobotino.walktraveller.model.SegmentRating.PERFECT
 import ru.lobotino.walktraveller.model.map.MapCommonPath
 import ru.lobotino.walktraveller.model.map.MapPathSegment
 import ru.lobotino.walktraveller.model.map.MapRatingPath
-import ru.lobotino.walktraveller.repositories.*
+import ru.lobotino.walktraveller.repositories.AccessibilityPermissionRepository
+import ru.lobotino.walktraveller.repositories.CachePathsRepository
+import ru.lobotino.walktraveller.repositories.DatabasePathRepository
+import ru.lobotino.walktraveller.repositories.GeoPermissionsRepository
+import ru.lobotino.walktraveller.repositories.LastCreatedPathIdRepository
+import ru.lobotino.walktraveller.repositories.LastSeenPointRepository
+import ru.lobotino.walktraveller.repositories.LocationUpdatesRepository
+import ru.lobotino.walktraveller.repositories.LocationsDistanceRepository
+import ru.lobotino.walktraveller.repositories.NotificationsPermissionsRepository
+import ru.lobotino.walktraveller.repositories.PathColorGenerator
+import ru.lobotino.walktraveller.repositories.PathDistancesInMetersRepository
+import ru.lobotino.walktraveller.repositories.PathRatingRepository
+import ru.lobotino.walktraveller.repositories.UserRotationRepository
+import ru.lobotino.walktraveller.repositories.WritingPathStatesRepository
 import ru.lobotino.walktraveller.services.LocationUpdatesService
 import ru.lobotino.walktraveller.services.LocationUpdatesService.Companion.ACTION_START_LOCATION_UPDATES
 import ru.lobotino.walktraveller.services.LocationUpdatesService.Companion.EXTRA_LOCATION
 import ru.lobotino.walktraveller.services.VolumeKeysDetectorService
-import ru.lobotino.walktraveller.ui.model.*
+import ru.lobotino.walktraveller.ui.model.BottomMenuState
+import ru.lobotino.walktraveller.ui.model.ConfirmDialogInfo
+import ru.lobotino.walktraveller.ui.model.ConfirmDialogType
+import ru.lobotino.walktraveller.ui.model.MapUiState
+import ru.lobotino.walktraveller.ui.model.PathInfoItemState
+import ru.lobotino.walktraveller.ui.model.PathsInfoListState
+import ru.lobotino.walktraveller.ui.model.ShowPathsButtonState
+import ru.lobotino.walktraveller.ui.model.ShowPathsFilterButtonState
 import ru.lobotino.walktraveller.usecases.DistanceInMetersToStringFormatter
 import ru.lobotino.walktraveller.usecases.GeoPermissionsInteractor
 import ru.lobotino.walktraveller.usecases.LocalMapPathsInteractor
@@ -85,6 +120,7 @@ class MainMapFragment : Fragment() {
     private lateinit var viewModel: MapViewModel
     private lateinit var walkStartButton: CardView
     private lateinit var walkStopButton: CardView
+    private lateinit var openNavigationButton: CardView
     private lateinit var ratingButtonsHolder: View
     private lateinit var ratingNoneButtonHolder: View
     private lateinit var ratingBadlyButton: CardView
@@ -297,11 +333,14 @@ class MainMapFragment : Fragment() {
             showAllPathsDefaultImage = view.findViewById(R.id.show_all_paths_default_image)
             showAllPathsHideImage = view.findViewById(R.id.show_all_paths_hide_image)
 
-            showPathsFilterButton = view.findViewById<CardView>(R.id.show_paths_filter_button).apply {
-                setOnClickListener { viewModel.onShowPathsFilterButtonClicked() }
-            }
-            showPathsFilterAllInCommonStateImage = view.findViewById(R.id.show_paths_filter_button_all_in_common_state)
-            showPathsFilterRatedOnlyStateImage = view.findViewById(R.id.show_paths_filter_button_rated_only_state)
+            showPathsFilterButton =
+                view.findViewById<CardView>(R.id.show_paths_filter_button).apply {
+                    setOnClickListener { viewModel.onShowPathsFilterButtonClicked() }
+                }
+            showPathsFilterAllInCommonStateImage =
+                view.findViewById(R.id.show_paths_filter_button_all_in_common_state)
+            showPathsFilterRatedOnlyStateImage =
+                view.findViewById(R.id.show_paths_filter_button_rated_only_state)
 
             pathsMenu = view.findViewById(R.id.paths_menu)
             walkButtonsHolder = view.findViewById(R.id.walk_buttons_holder)
@@ -330,6 +369,14 @@ class MainMapFragment : Fragment() {
             hidePathsMenuButton = view.findViewById<ImageView>(R.id.paths_menu_back_button).apply {
                 setOnClickListener { viewModel.onHidePathsMenuClicked() }
             }
+            openNavigationButton =
+                view.findViewById<CardView>(R.id.show_navigation_menu_button).apply {
+                    setOnClickListener {
+                        if (activity != null) {
+                            (requireActivity() as MainActivity).openNavigationMenu() //fixme
+                        }
+                    }
+                }
             findMyLocationButton =
                 view.findViewById<FindMyLocationButton>(R.id.my_location_button).apply {
                     setOnClickListener { viewModel.onFindMyLocationButtonClicked() }
@@ -603,14 +650,16 @@ class MainMapFragment : Fragment() {
             ShowPathsFilterButtonState.GONE -> GONE
             else -> VISIBLE
         }
-        showPathsFilterAllInCommonStateImage.visibility = when (mapUiState.showPathsFilterButtonState) {
-            ShowPathsFilterButtonState.ALL_IN_COMMON_COLOR -> VISIBLE
-            else -> GONE
-        }
-        showPathsFilterRatedOnlyStateImage.visibility = when (mapUiState.showPathsFilterButtonState) {
-            ShowPathsFilterButtonState.RATED_ONLY -> VISIBLE
-            else -> GONE
-        }
+        showPathsFilterAllInCommonStateImage.visibility =
+            when (mapUiState.showPathsFilterButtonState) {
+                ShowPathsFilterButtonState.ALL_IN_COMMON_COLOR -> VISIBLE
+                else -> GONE
+            }
+        showPathsFilterRatedOnlyStateImage.visibility =
+            when (mapUiState.showPathsFilterButtonState) {
+                ShowPathsFilterButtonState.RATED_ONLY -> VISIBLE
+                else -> GONE
+            }
 
         when (mapUiState.pathsInfoListState) {
             PathsInfoListState.DEFAULT -> {

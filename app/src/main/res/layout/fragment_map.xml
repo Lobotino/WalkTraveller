@@ -132,6 +132,30 @@
                         tools:ignore="ContentDescription" />
 
                 </androidx.cardview.widget.CardView>
+
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/show_navigation_menu_button"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:layout_marginStart="16dp"
+                    app:cardBackgroundColor="@color/track_start_color"
+                    app:cardCornerRadius="25dp"
+                    app:cardElevation="4dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent">
+
+                    <ImageView
+                        android:id="@+id/show_navigation_menu_default_image"
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:layout_gravity="center"
+                        android:layout_margin="8dp"
+                        android:src="@drawable/ic_baseline_menu_24"
+                        tools:ignore="ContentDescription" />
+
+                </androidx.cardview.widget.CardView>
+
             </androidx.constraintlayout.widget.ConstraintLayout>
 
             <include

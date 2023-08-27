@@ -28,4 +28,10 @@
     <string name="ok_button">OK</string>
     <string name="geo_location_required_dialog_title">Geo location required</string>
     <string name="geo_location_required_dialog_description">This application is designed to allow you to record and track your paths.\nThis requires access to the location.\n\nThe application does not transmit geolocation data anywhere. Recorded tracks remain only on your device.</string>
+    <string name="menu_settings_title">Settings</string>
+    <string name="menu_about_title">About project</string>
+    <string name="nav_open">Open navigation menu</string>
+    <string name="nav_close">Close navigation menu</string>
+    <string name="walk_traveller">Walk Traveller</string>
+    <string name="nav_version_title" formatted="false">Version %1$s</string>
 </resources>
