@@ -7,9 +7,12 @@ import kotlin.math.abs
 import kotlin.math.pow
 import kotlin.math.sqrt
 
-class PathApproximationRepository {
+object PathApproximationHelper {
 
-    fun approximatePath(pathPoints: List<MapPoint>, approximationDistance: Double): List<MapPoint> {
+    fun approximatePathPoints(
+        pathPoints: List<MapPoint>,
+        approximationDistance: Float
+    ): List<MapPoint> {
         val approximatedPath = ArrayList<MapPoint>()
         if (pathPoints.size < 3) {
             return pathPoints
@@ -37,14 +40,14 @@ class PathApproximationRepository {
 
         if (maxDistance >= approximationDistance) {
             approximatedPath.addAll(
-                approximatePath(
+                approximatePathPoints(
                     pathPoints.slice(0 until maxDistancePointIndex + 1),
                     approximationDistance
                 )
             )
 
             approximatedPath.addAll(
-                approximatePath(
+                approximatePathPoints(
                     pathPoints.slice(maxDistancePointIndex until pathPoints.size),
                     approximationDistance
                 )

@@ -13,9 +13,10 @@ import ru.lobotino.walktraveller.model.map.MapCommonPath
 import ru.lobotino.walktraveller.model.map.MapPathInfo
 import ru.lobotino.walktraveller.model.map.MapPathSegment
 import ru.lobotino.walktraveller.model.map.MapRatingPath
+import ru.lobotino.walktraveller.repositories.PathApproximationHelper
 import ru.lobotino.walktraveller.repositories.interfaces.ICachePathsRepository
 import ru.lobotino.walktraveller.repositories.interfaces.ILastCreatedPathIdRepository
-import ru.lobotino.walktraveller.repositories.interfaces.IPathColorGenerator
+import ru.lobotino.walktraveller.repositories.interfaces.IOptimizePathsSettingsRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IPathRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IWritingPathStatesRepository
 import ru.lobotino.walktraveller.usecases.interfaces.IMapPathsInteractor
@@ -26,10 +27,10 @@ class LocalMapPathsInteractor(
     private val databasePathRepository: IPathRepository,
     private val cachePathRepository: ICachePathsRepository,
     private val defaultDispatcher: CoroutineDispatcher = Dispatchers.IO,
-    private val pathColorGenerator: IPathColorGenerator,
     private val writingPathStatesRepository: IWritingPathStatesRepository,
     private val lastCreatedPathIdRepository: ILastCreatedPathIdRepository,
-    private val pathRedactor: IPathRedactor
+    private val pathRedactor: IPathRedactor,
+    private val optimizePathsSettingsRepository: IOptimizePathsSettingsRepository
 ) : IMapPathsInteractor {
 
     companion object {
@@ -233,10 +234,15 @@ class LocalMapPathsInteractor(
 
             if (pathPoints.isEmpty()) return@coroutineScope null
 
+            val optimizedPathPoints = PathApproximationHelper.approximatePathPoints(
+                pathPoints,
+                optimizePathsSettingsRepository.getOptimizePathsApproximationDistance() ?: 1f
+            ) //TODO change approximation logic to mapZoom depends
+
             MapCommonPath(
                 pathId,
-                pathPoints[0],
-                pathPoints
+                optimizedPathPoints[0],
+                optimizedPathPoints
             ).also { commonPath -> cachePathRepository.saveCommonPath(commonPath) }
         }
     }

@@ -78,7 +78,7 @@ import ru.lobotino.walktraveller.repositories.LastSeenPointRepository
 import ru.lobotino.walktraveller.repositories.LocationUpdatesRepository
 import ru.lobotino.walktraveller.repositories.LocationsDistanceRepository
 import ru.lobotino.walktraveller.repositories.NotificationsPermissionsRepository
-import ru.lobotino.walktraveller.repositories.PathColorGenerator
+import ru.lobotino.walktraveller.repositories.OptimizePathsSettingsRepository
 import ru.lobotino.walktraveller.repositories.PathDistancesInMetersRepository
 import ru.lobotino.walktraveller.repositories.PathRatingRepository
 import ru.lobotino.walktraveller.repositories.UserRotationRepository
@@ -435,10 +435,12 @@ class MainMapFragment : Fragment() {
                         mapPathsInteractor = LocalMapPathsInteractor(
                             databasePathRepository = databasePathRepository,
                             cachePathRepository = CachePathsRepository(),
-                            pathColorGenerator = PathColorGenerator(requireContext()),
                             writingPathStatesRepository = writingPathStatesRepository,
                             lastCreatedPathIdRepository = lastCreatedPathIdRepository,
-                            pathRedactor = pathRedactor
+                            pathRedactor = pathRedactor,
+                            optimizePathsSettingsRepository = OptimizePathsSettingsRepository(
+                                sharedPreferences
+                            )
                         ),
                         mapStateInteractor = MapStateInteractor(
                             LastSeenPointRepository(
