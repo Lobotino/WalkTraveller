@@ -1,6 +1,7 @@
 package ru.lobotino.walktraveller.ui
 
 import android.os.Bundle
+import android.view.MenuItem
 import android.widget.TextView
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
@@ -10,10 +11,13 @@ import ru.lobotino.walktraveller.App
 import ru.lobotino.walktraveller.BuildConfig
 import ru.lobotino.walktraveller.R
 import ru.lobotino.walktraveller.repositories.UserInfoRepository
+import ru.lobotino.walktraveller.repositories.interfaces.AppScreen
+import ru.lobotino.walktraveller.repositories.interfaces.IScreenNavigation
 import ru.lobotino.walktraveller.repositories.interfaces.IUserInfoRepository
 
 
-class MainActivity : AppCompatActivity(R.layout.activity_main) {
+class MainActivity : AppCompatActivity(R.layout.activity_main),
+    NavigationView.OnNavigationItemSelectedListener, IScreenNavigation {
 
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var actionBarDrawerToggle: ActionBarDrawerToggle
@@ -36,9 +40,9 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
         )
 
         if (userInfoRepository.isWelcomeTutorialFinished()) {
-            showMapFragment()
+            navigateTo(AppScreen.MAP_SCREEN)
         } else {
-            showFirstWelcomeFragment()
+            navigateTo(AppScreen.WELCOME_SCREEN)
         }
     }
 
@@ -61,21 +65,59 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
                 }
 
         actionBarDrawerToggle.syncState()
+
+        navigationView.setNavigationItemSelectedListener(this)
     }
 
-    fun showMapFragment() {
+    private fun showMapFragment() {
         supportFragmentManager.beginTransaction()
-            .add(R.id.fragment_container, MainMapFragment())
+            .replace(R.id.fragment_container, MainMapFragment())
             .commit()
     }
 
     private fun showFirstWelcomeFragment() {
         supportFragmentManager.beginTransaction()
-            .add(R.id.fragment_container, FirstWelcomeFragment())
+            .replace(R.id.fragment_container, FirstWelcomeFragment())
             .commit()
     }
 
-    fun openNavigationMenu() {
+    private fun showSettingsFragment() {
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragment_container, SettingsFragment())
+            .commit()
+    }
+
+    override fun onNavigationItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.nav_map -> {
+                navigateTo(AppScreen.MAP_SCREEN)
+            }
+
+            R.id.nav_settings -> {
+                navigateTo(AppScreen.SETTINGS)
+            }
+        }
+        drawerLayout.close()
+        return true
+    }
+
+    override fun navigateTo(appScreen: AppScreen) {
+        when (appScreen) {
+            AppScreen.MAP_SCREEN -> showMapFragment()
+            AppScreen.SETTINGS -> showSettingsFragment()
+            AppScreen.WELCOME_SCREEN -> showFirstWelcomeFragment()
+        }
+        updateNavigationMenuSelect(appScreen)
+    }
+
+    private fun updateNavigationMenuSelect(appScreen: AppScreen) {
+        when (appScreen) {
+            AppScreen.WELCOME_SCREEN, AppScreen.MAP_SCREEN -> navigationView.setCheckedItem(R.id.nav_map)
+            AppScreen.SETTINGS -> navigationView.setCheckedItem(R.id.nav_settings)
+        }
+    }
+
+    override fun openNavigationMenu() {
         drawerLayout.open()
     }
 }

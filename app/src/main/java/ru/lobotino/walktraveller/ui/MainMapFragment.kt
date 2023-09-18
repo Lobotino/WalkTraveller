@@ -103,6 +103,7 @@ import ru.lobotino.walktraveller.usecases.MapStateInteractor
 import ru.lobotino.walktraveller.usecases.NotificationsPermissionsInteractor
 import ru.lobotino.walktraveller.usecases.UserLocationInteractor
 import ru.lobotino.walktraveller.usecases.VolumeKeysListenerPermissionsInteractor
+import ru.lobotino.walktraveller.utils.ext.openNavigationMenu
 import ru.lobotino.walktraveller.utils.ext.toColorInt
 import ru.lobotino.walktraveller.utils.ext.toGeoPoint
 import ru.lobotino.walktraveller.utils.ext.toMapPoint
@@ -372,9 +373,7 @@ class MainMapFragment : Fragment() {
             openNavigationButton =
                 view.findViewById<CardView>(R.id.show_navigation_menu_button).apply {
                     setOnClickListener {
-                        if (activity != null) {
-                            (requireActivity() as MainActivity).openNavigationMenu() //fixme
-                        }
+                        openNavigationMenu()
                     }
                 }
             findMyLocationButton =

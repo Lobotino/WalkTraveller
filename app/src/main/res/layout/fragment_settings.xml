@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/primary_green"
+        android:navigationIcon="@drawable/ic_baseline_menu_24"
+        android:title="@string/settings_title"
+        android:titleTextColor="@color/white" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/optimizing_paths_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="10dp"
+            android:text="@string/settings_optimizing_paths_title"
+            android:textColor="@color/black"
+            android:textSize="18sp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/optimizing_more_points"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginStart="12dp"
+                android:gravity="center"
+                android:text="@string/settings_optimize_paths_more_points" />
+
+            <com.google.android.material.slider.Slider
+                android:id="@+id/optimizing_paths_slider"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:stepSize="0.5"
+                android:valueTo="10"
+                android:valueFrom="0"
+                android:value="5"
+                android:layout_marginHorizontal="8dp"
+                android:layout_weight="1" />
+
+            <TextView
+                android:id="@+id/optimizing_less_points"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginEnd="12dp"
+                android:gravity="center"
+                android:text="@string/settings_optimize_paths_less_points" />
+
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>
