@@ -1,4 +1,4 @@
-package ru.lobotino.walktraveller.repositories
+package ru.lobotino.walktraveller.repositories.permissions
 
 import android.Manifest.permission.*
 import android.content.Context

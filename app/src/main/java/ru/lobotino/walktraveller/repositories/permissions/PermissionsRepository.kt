@@ -1,4 +1,4 @@
-package ru.lobotino.walktraveller.repositories
+package ru.lobotino.walktraveller.repositories.permissions
 
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts

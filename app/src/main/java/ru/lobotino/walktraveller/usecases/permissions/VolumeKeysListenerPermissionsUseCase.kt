@@ -1,10 +1,10 @@
-package ru.lobotino.walktraveller.usecases
+package ru.lobotino.walktraveller.usecases.permissions
 
 import ru.lobotino.walktraveller.repositories.interfaces.IPermissionsRepository
-import ru.lobotino.walktraveller.usecases.interfaces.IPermissionsInteractor
+import ru.lobotino.walktraveller.usecases.interfaces.IPermissionsUseCase
 
-class VolumeKeysListenerPermissionsInteractor(private val accessibilityPermissionRepository: IPermissionsRepository) :
-    IPermissionsInteractor {
+class VolumeKeysListenerPermissionsUseCase(private val accessibilityPermissionRepository: IPermissionsRepository) :
+    IPermissionsUseCase {
 
     override fun requestPermissions(
         allGranted: (() -> Unit)?,

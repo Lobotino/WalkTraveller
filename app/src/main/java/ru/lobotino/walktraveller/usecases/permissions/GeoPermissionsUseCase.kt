@@ -1,8 +1,8 @@
-package ru.lobotino.walktraveller.usecases
+package ru.lobotino.walktraveller.usecases.permissions
 
-import ru.lobotino.walktraveller.repositories.GeoPermissionsRepository
+import ru.lobotino.walktraveller.repositories.permissions.GeoPermissionsRepository
 
-class GeoPermissionsInteractor(private val geoPermissionsRepository: GeoPermissionsRepository) {
+class GeoPermissionsUseCase(private val geoPermissionsRepository: GeoPermissionsRepository) {
 
     fun requestPermissions(
         allGranted: (() -> Unit)?,

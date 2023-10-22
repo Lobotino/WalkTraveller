@@ -69,15 +69,15 @@ import ru.lobotino.walktraveller.model.SegmentRating.PERFECT
 import ru.lobotino.walktraveller.model.map.MapCommonPath
 import ru.lobotino.walktraveller.model.map.MapPathSegment
 import ru.lobotino.walktraveller.model.map.MapRatingPath
-import ru.lobotino.walktraveller.repositories.AccessibilityPermissionRepository
+import ru.lobotino.walktraveller.repositories.permissions.AccessibilityPermissionRepository
 import ru.lobotino.walktraveller.repositories.CachePathsRepository
 import ru.lobotino.walktraveller.repositories.DatabasePathRepository
-import ru.lobotino.walktraveller.repositories.GeoPermissionsRepository
+import ru.lobotino.walktraveller.repositories.permissions.GeoPermissionsRepository
 import ru.lobotino.walktraveller.repositories.LastCreatedPathIdRepository
 import ru.lobotino.walktraveller.repositories.LastSeenPointRepository
 import ru.lobotino.walktraveller.repositories.LocationUpdatesRepository
 import ru.lobotino.walktraveller.repositories.LocationsDistanceRepository
-import ru.lobotino.walktraveller.repositories.NotificationsPermissionsRepository
+import ru.lobotino.walktraveller.repositories.permissions.NotificationsPermissionsRepository
 import ru.lobotino.walktraveller.repositories.OptimizePathsSettingsRepository
 import ru.lobotino.walktraveller.repositories.PathDistancesInMetersRepository
 import ru.lobotino.walktraveller.repositories.PathRatingRepository
@@ -96,13 +96,13 @@ import ru.lobotino.walktraveller.ui.model.PathsInfoListState
 import ru.lobotino.walktraveller.ui.model.ShowPathsButtonState
 import ru.lobotino.walktraveller.ui.model.ShowPathsFilterButtonState
 import ru.lobotino.walktraveller.usecases.DistanceInMetersToStringFormatter
-import ru.lobotino.walktraveller.usecases.GeoPermissionsInteractor
+import ru.lobotino.walktraveller.usecases.permissions.GeoPermissionsUseCase
 import ru.lobotino.walktraveller.usecases.LocalMapPathsInteractor
 import ru.lobotino.walktraveller.usecases.LocalPathRedactor
 import ru.lobotino.walktraveller.usecases.MapStateInteractor
-import ru.lobotino.walktraveller.usecases.NotificationsPermissionsInteractor
+import ru.lobotino.walktraveller.usecases.permissions.NotificationsPermissionsUseCase
 import ru.lobotino.walktraveller.usecases.UserLocationInteractor
-import ru.lobotino.walktraveller.usecases.VolumeKeysListenerPermissionsInteractor
+import ru.lobotino.walktraveller.usecases.permissions.VolumeKeysListenerPermissionsUseCase
 import ru.lobotino.walktraveller.utils.ext.openNavigationMenu
 import ru.lobotino.walktraveller.utils.ext.toColorInt
 import ru.lobotino.walktraveller.utils.ext.toGeoPoint
@@ -110,6 +110,8 @@ import ru.lobotino.walktraveller.utils.ext.toMapPoint
 import ru.lobotino.walktraveller.viewmodels.MapViewModel
 import kotlin.properties.Delegates
 import ru.lobotino.walktraveller.repositories.FilePathsSaverRepository
+import ru.lobotino.walktraveller.repositories.permissions.ExternalStoragePermissionsRepository
+import ru.lobotino.walktraveller.usecases.permissions.ExternalStoragePermissionsUseCase
 
 
 class MainMapFragment : Fragment() {
@@ -409,20 +411,27 @@ class MainMapFragment : Fragment() {
 
             viewModel =
                 ViewModelProvider(
-                    this, MapViewModelFactory(
-                        notificationsPermissionsInteractor = NotificationsPermissionsInteractor(
+                    this,
+                    MapViewModelFactory(
+                        notificationsPermissionsInteractor = NotificationsPermissionsUseCase(
                             NotificationsPermissionsRepository(
                                 this@MainMapFragment,
                                 requireContext().applicationContext
                             )
                         ),
-                        volumeKeysListenerPermissionsInteractor = VolumeKeysListenerPermissionsInteractor(
+                        volumeKeysListenerPermissionsInteractor = VolumeKeysListenerPermissionsUseCase(
                             AccessibilityPermissionRepository(
                                 requireContext().applicationContext
                             )
                         ),
-                        geoPermissionsInteractor = GeoPermissionsInteractor(
+                        geoPermissionsUseCase = GeoPermissionsUseCase(
                             GeoPermissionsRepository(
+                                this@MainMapFragment,
+                                requireContext().applicationContext
+                            )
+                        ),
+                        externalStoragePermissionsUseCase = ExternalStoragePermissionsUseCase(
+                            ExternalStoragePermissionsRepository(
                                 this@MainMapFragment,
                                 requireContext().applicationContext
                             )

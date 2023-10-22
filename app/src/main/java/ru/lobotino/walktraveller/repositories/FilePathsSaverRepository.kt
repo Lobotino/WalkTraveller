@@ -1,13 +1,15 @@
 package ru.lobotino.walktraveller.repositories
 
+import android.content.ContentValues
 import android.content.Context
+import android.net.Uri
+import android.os.Build
 import android.os.Environment
-import android.util.Log
+import android.provider.MediaStore
 import java.io.File
-import java.io.FileOutputStream
+import java.io.IOException
 import java.io.OutputStreamWriter
 import java.io.Writer
-import java.lang.Exception
 import java.util.Date
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -18,40 +20,52 @@ import ru.lobotino.walktraveller.utils.ext.toText
 
 class FilePathsSaverRepository(private val applicationContext: Context) : IPathsSaverRepository {
 
-    override suspend fun saveRatingPath(path: MapRatingPath): String? = withContext(Dispatchers.IO) {
-        try {
-            val fileName = generateFileName(path)
-            openFileToWrite(fileName).use { file ->
+    override suspend fun saveRatingPath(path: MapRatingPath): Uri = withContext(Dispatchers.IO) {
+        val fileName = generateFileName(path)
+        val fileUri = createFileToWrite(fileName) ?: throw IOException("Error while trying to open file to write")
+        openFileToWrite(fileUri).use { file ->
+            writePathToFile(path, file)
+        }
+        return@withContext fileUri
+    }
+
+    override suspend fun saveRatingPathList(paths: List<MapRatingPath>): Uri = withContext(Dispatchers.IO) {
+        val fileName = generateFileName(paths)
+        val fileUri = createFileToWrite(fileName) ?: throw IOException("Error while trying to open file to write")
+        openFileToWrite(fileUri).use { file ->
+            for (path in paths) {
                 writePathToFile(path, file)
             }
-            return@withContext fileName
-        } catch (exception: Exception) {
-            Log.w(TAG, exception)
-            return@withContext null
         }
+        return@withContext fileUri
     }
 
-    override suspend fun saveRatingPathList(paths: List<MapRatingPath>): String? = withContext(Dispatchers.IO) {
-        try {
-            val fileName = generateFileName(paths)
-            openFileToWrite(fileName).use { file ->
-                for (path in paths) {
-                    writePathToFile(path, file)
-                }
+    private fun createFileToWrite(fileName: String): Uri? {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val values = ContentValues().apply {
+                put(MediaStore.MediaColumns.DISPLAY_NAME, fileName + FILE_EXTENSION)
+                put(MediaStore.MediaColumns.MIME_TYPE, "text/plain")
+                put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
             }
-            return@withContext fileName
-        } catch (exception: Exception) {
-            Log.w(TAG, exception)
-            return@withContext null
+
+            applicationContext.contentResolver.insert(
+                MediaStore.Files.getContentUri("external"),
+                values
+            )
+        } else {
+            Uri.fromFile(
+                File(
+                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+                    fileName + FILE_EXTENSION
+                )
+            )
         }
     }
 
-    private fun openFileToWrite(name: String): Writer {
-        return OutputStreamWriter(
-            FileOutputStream(
-                File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), name + FILE_EXTENSION)
-            )
-        )
+    private fun openFileToWrite(fileUri: Uri): Writer {
+        val fileToWriteOutputStream = applicationContext.contentResolver.openOutputStream(fileUri)
+            ?: throw IOException("Error whilte trying to open output stream to file: $fileUri")
+        return OutputStreamWriter(fileToWriteOutputStream)
     }
 
     private fun writePathToFile(path: MapRatingPath, file: Writer) {

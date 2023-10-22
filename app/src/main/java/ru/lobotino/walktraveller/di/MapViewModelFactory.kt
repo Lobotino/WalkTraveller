@@ -9,18 +9,19 @@ import ru.lobotino.walktraveller.repositories.interfaces.IPathRatingRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IPathsSaverRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IUserRotationRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IWritingPathStatesRepository
-import ru.lobotino.walktraveller.usecases.GeoPermissionsInteractor
+import ru.lobotino.walktraveller.usecases.permissions.GeoPermissionsUseCase
 import ru.lobotino.walktraveller.usecases.IUserLocationInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IMapPathsInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IMapStateInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IPathRedactor
-import ru.lobotino.walktraveller.usecases.interfaces.IPermissionsInteractor
+import ru.lobotino.walktraveller.usecases.interfaces.IPermissionsUseCase
 import ru.lobotino.walktraveller.viewmodels.MapViewModel
 
 class MapViewModelFactory(
-    private val notificationsPermissionsInteractor: IPermissionsInteractor,
-    private val volumeKeysListenerPermissionsInteractor: IPermissionsInteractor,
-    private val geoPermissionsInteractor: GeoPermissionsInteractor,
+    private val notificationsPermissionsInteractor: IPermissionsUseCase,
+    private val volumeKeysListenerPermissionsInteractor: IPermissionsUseCase,
+    private val externalStoragePermissionsUseCase: IPermissionsUseCase,
+    private val geoPermissionsUseCase: GeoPermissionsUseCase,
     private val userLocationInteractor: IUserLocationInteractor,
     private val mapPathsInteractor: IMapPathsInteractor,
     private val mapStateInteractor: IMapStateInteractor,
@@ -39,7 +40,8 @@ class MapViewModelFactory(
             MapViewModel::class.java -> MapViewModel(
                 notificationsPermissionsInteractor,
                 volumeKeysListenerPermissionsInteractor,
-                geoPermissionsInteractor,
+                geoPermissionsUseCase,
+                externalStoragePermissionsUseCase,
                 userLocationInteractor,
                 mapPathsInteractor,
                 mapStateInteractor,

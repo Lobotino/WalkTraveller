@@ -4,6 +4,7 @@ import android.location.Location
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import java.io.IOException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
@@ -36,18 +37,19 @@ import ru.lobotino.walktraveller.ui.model.PathInfoItemState
 import ru.lobotino.walktraveller.ui.model.PathsInfoListState
 import ru.lobotino.walktraveller.ui.model.ShowPathsButtonState
 import ru.lobotino.walktraveller.ui.model.ShowPathsFilterButtonState
-import ru.lobotino.walktraveller.usecases.GeoPermissionsInteractor
+import ru.lobotino.walktraveller.usecases.permissions.GeoPermissionsUseCase
 import ru.lobotino.walktraveller.usecases.IUserLocationInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IMapPathsInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IMapStateInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IPathRedactor
-import ru.lobotino.walktraveller.usecases.interfaces.IPermissionsInteractor
+import ru.lobotino.walktraveller.usecases.interfaces.IPermissionsUseCase
 import ru.lobotino.walktraveller.utils.ext.toMapPoint
 
 class MapViewModel(
-    private val notificationsPermissionsInteractor: IPermissionsInteractor,
-    private val volumeKeysListenerPermissionsInteractor: IPermissionsInteractor,
-    private val geoPermissionsInteractor: GeoPermissionsInteractor,
+    private val notificationsPermissionsInteractor: IPermissionsUseCase,
+    private val volumeKeysListenerPermissionsInteractor: IPermissionsUseCase,
+    private val geoPermissionsUseCase: GeoPermissionsUseCase,
+    private val externalStoragePermissionsUseCase: IPermissionsUseCase,
     private val userLocationInteractor: IUserLocationInteractor,
     private val mapPathsInteractor: IMapPathsInteractor,
     private val mapStateInteractor: IMapStateInteractor,
@@ -133,7 +135,7 @@ class MapViewModel(
 
         startBackgroundCachingPaths()
 
-        geoPermissionsInteractor.let { geoPermissionsInteractor ->
+        geoPermissionsUseCase.let { geoPermissionsInteractor ->
             if (geoPermissionsInteractor.isGeneralGeoPermissionsGranted()) {
                 regularLocationUpdateStateFlow.tryEmit(true)
                 updateCurrentMapCenterToUserLocation()
@@ -184,7 +186,7 @@ class MapViewModel(
     }
 
     fun onResume() {
-        if (geoPermissionsInteractor.isGeneralGeoPermissionsGranted() == true) {
+        if (geoPermissionsUseCase.isGeneralGeoPermissionsGranted()) {
             regularLocationUpdateStateFlow.tryEmit(true)
         }
 
@@ -505,16 +507,37 @@ class MapViewModel(
             }
 
             SHARE -> {
-                viewModelScope.launch {
-                    val path = mapPathsInteractor.getSavedRatingPath(pathId, false)
-                    if (path != null) {
-                        val resultFileName = pathsSaverRepository.saveRatingPath(path)
-                        if(resultFileName != null) {
-                            Log.d(TAG, "Success saved path file $resultFileName")
-                        } else {
-                            Log.d(TAG, "Fail saved path file")
-                        }
-                    }
+                checkPermissionsAndSharePath(pathId)
+            }
+        }
+    }
+
+    private fun checkPermissionsAndSharePath(pathId: Long) {
+        if (externalStoragePermissionsUseCase.isPermissionsGranted()) {
+            sharePath(pathId)
+        } else {
+            externalStoragePermissionsUseCase.requestPermissions(
+                allGranted = {
+                    sharePath(pathId)
+                },
+                someDenied = { deniedPermissions ->
+                    permissionsDeniedSharedFlow.tryEmit(
+                        deniedPermissions
+                    )
+                }
+            )
+        }
+    }
+
+    private fun sharePath(pathId: Long) {
+        viewModelScope.launch {
+            val path = mapPathsInteractor.getSavedRatingPath(pathId, false)
+            if (path != null) {
+                try {
+                    val resultFileUri = pathsSaverRepository.saveRatingPath(path)
+                    Log.d(TAG, "Success saved path file $resultFileUri")
+                } catch (exception: IOException) {
+                    Log.w(TAG, exception)
                 }
             }
         }
@@ -559,7 +582,7 @@ class MapViewModel(
     }
 
     fun onFindMyLocationButtonClicked() {
-        geoPermissionsInteractor.let { geoPermissionsInteractor ->
+        geoPermissionsUseCase.let { geoPermissionsInteractor ->
             if (geoPermissionsInteractor.isGeneralGeoPermissionsGranted()) {
                 updateCurrentMapCenterToUserLocation()
             } else {
@@ -651,7 +674,7 @@ class MapViewModel(
     }
 
     fun onLocationPermissionDialogConfirmed() {
-        geoPermissionsInteractor?.let { geoPermissionsInteractor ->
+        geoPermissionsUseCase.let { geoPermissionsInteractor ->
             geoPermissionsInteractor.requestPermissions(allGranted = {
                 regularLocationUpdateStateFlow.tryEmit(true)
                 updateCurrentMapCenterToUserLocation()

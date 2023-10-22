@@ -1,4 +1,4 @@
-package ru.lobotino.walktraveller.repositories
+package ru.lobotino.walktraveller.repositories.permissions
 
 import android.Manifest
 import android.content.Context
@@ -16,14 +16,15 @@ class NotificationsPermissionsRepository(fragment: Fragment, private val appCont
     private var someDeniedCallback: ((List<String>) -> Unit)? = null
 
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-    private val notificationsPermissionsRepository = PermissionsRepository(fragment,
-        arrayListOf(
-            Manifest.permission.POST_NOTIFICATIONS
-        ), {
-            allGrantedCallback?.invoke()
-        }, { deniedPermissions ->
-            someDeniedCallback?.invoke(deniedPermissions)
-        })
+    private val notificationsPermissionsRepository =
+        PermissionsRepository(fragment,
+                              arrayListOf(
+                                  Manifest.permission.POST_NOTIFICATIONS
+                              ), {
+                                  allGrantedCallback?.invoke()
+                              }, { deniedPermissions ->
+                                  someDeniedCallback?.invoke(deniedPermissions)
+                              })
 
     override fun requestPermissions(
         allGranted: (() -> Unit)?,

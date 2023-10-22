@@ -1,6 +1,6 @@
 package ru.lobotino.walktraveller.usecases.interfaces
 
-interface IPermissionsInteractor {
+interface IPermissionsUseCase {
 
     fun requestPermissions(
         allGranted: (() -> Unit)? = null,
