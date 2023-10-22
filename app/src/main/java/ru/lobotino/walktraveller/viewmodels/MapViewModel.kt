@@ -19,11 +19,13 @@ import ru.lobotino.walktraveller.model.map.MapPathSegment
 import ru.lobotino.walktraveller.model.map.MapPoint
 import ru.lobotino.walktraveller.model.map.MapRatingPath
 import ru.lobotino.walktraveller.repositories.interfaces.IPathRatingRepository
+import ru.lobotino.walktraveller.repositories.interfaces.IPathsSaverRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IUserRotationRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IWritingPathStatesRepository
 import ru.lobotino.walktraveller.ui.PathsInfoAdapter
 import ru.lobotino.walktraveller.ui.PathsInfoAdapter.PathItemButtonType.DELETE
 import ru.lobotino.walktraveller.ui.PathsInfoAdapter.PathItemButtonType.SHOW
+import ru.lobotino.walktraveller.ui.PathsInfoAdapter.PathItemButtonType.SHARE
 import ru.lobotino.walktraveller.ui.model.BottomMenuState
 import ru.lobotino.walktraveller.ui.model.ConfirmDialogInfo
 import ru.lobotino.walktraveller.ui.model.ConfirmDialogType
@@ -52,7 +54,8 @@ class MapViewModel(
     private val writingPathStatesRepository: IWritingPathStatesRepository,
     private val pathRatingRepository: IPathRatingRepository,
     private val userRotationRepository: IUserRotationRepository,
-    private val pathRedactor: IPathRedactor
+    private val pathRedactor: IPathRedactor,
+    private val pathsSaverRepository: IPathsSaverRepository
 ) : ViewModel() {
 
     companion object {
@@ -501,8 +504,18 @@ class MapViewModel(
                 )
             }
 
-            else -> {
-                //TODO
+            SHARE -> {
+                viewModelScope.launch {
+                    val path = mapPathsInteractor.getSavedRatingPath(pathId, false)
+                    if (path != null) {
+                        val resultFileName = pathsSaverRepository.saveRatingPath(path)
+                        if(resultFileName != null) {
+                            Log.d(TAG, "Success saved path file $resultFileName")
+                        } else {
+                            Log.d(TAG, "Fail saved path file")
+                        }
+                    }
+                }
             }
         }
     }

@@ -99,6 +99,7 @@ class PathsInfoAdapter(
         private val pathButtonHideImage: ImageView
         private val pathButtonShowProgress: CircularProgressIndicator
         private val pathButtonDelete: CardView
+        private val pathButtonShare: CardView
 
         init {
             pathLength = view.findViewById(R.id.path_length)
@@ -109,6 +110,7 @@ class PathsInfoAdapter(
             pathButtonHideImage = view.findViewById(R.id.show_all_paths_hide_image)
             pathButtonShowProgress = view.findViewById(R.id.path_button_show_progress)
             pathButtonDelete = view.findViewById(R.id.path_button_delete)
+            pathButtonShare = view.findViewById(R.id.path_button_share)
         }
 
         fun bind(
@@ -125,6 +127,9 @@ class PathsInfoAdapter(
             }
             pathButtonDelete.setOnClickListener {
                 itemButtonClickedListener.invoke(path.pathInfo.pathId, PathItemButtonType.DELETE)
+            }
+            pathButtonShare.setOnClickListener {
+                itemButtonClickedListener.invoke(path.pathInfo.pathId, PathItemButtonType.SHARE)
             }
             pathButtonShowImage.visibility = when (path.pathInfoItemShowButtonState) {
                 PathInfoItemShowButtonState.DEFAULT -> View.VISIBLE

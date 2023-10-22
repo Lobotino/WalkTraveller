@@ -20,3 +20,7 @@ fun MapPoint.toCoordinatePoint(): CoordinatePoint {
         ln(tan(Math.PI / 4 + Math.toRadians(longitude) / 2)) * EARTH_RADIUS_IN_METERS
     )
 }
+
+fun MapPoint.toText(): String {
+    return "$latitude,$longitude"
+}

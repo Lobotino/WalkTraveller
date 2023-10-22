@@ -109,6 +109,7 @@ import ru.lobotino.walktraveller.utils.ext.toGeoPoint
 import ru.lobotino.walktraveller.utils.ext.toMapPoint
 import ru.lobotino.walktraveller.viewmodels.MapViewModel
 import kotlin.properties.Delegates
+import ru.lobotino.walktraveller.repositories.FilePathsSaverRepository
 
 
 class MainMapFragment : Fragment() {
@@ -457,7 +458,8 @@ class MainMapFragment : Fragment() {
                         ),
                         pathRedactor = pathRedactor,
                         owner = this,
-                        bundle = bundle
+                        bundle = bundle,
+                        pathsSaverRepository = FilePathsSaverRepository(requireContext().applicationContext)
                     )
                 )[MapViewModel::class.java].apply {
 

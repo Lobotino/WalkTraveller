@@ -101,14 +101,8 @@ class LocalMapPathsInteractor(
     private suspend fun mapRatingPath(path: EntityPath?): MapRatingPath? {
         return coroutineScope {
             if (path != null) {
-
-                val pathStartPoint =
-                    withContext(defaultDispatcher) { databasePathRepository.getPointInfo(path.startPointId) }
-                        ?: return@coroutineScope null
-
                 MapRatingPath(
                     path.id,
-                    pathStartPoint.toMapPoint(),
                     ArrayList<MapPathSegment>().apply {
                         for (entityPathSegment in withContext(defaultDispatcher) {
                             databasePathRepository.getAllPathSegments(
@@ -212,7 +206,6 @@ class LocalMapPathsInteractor(
             if (resultPathSegments.isNotEmpty()) {
                 MapRatingPath(
                     pathId,
-                    resultPathSegments[0].startPoint,
                     resultPathSegments
                 ).also { ratingPath ->
                     tryCacheRatingPath(ratingPath)
