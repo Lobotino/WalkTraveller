@@ -39,6 +39,7 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.SimpleItemAnimator
 import com.google.android.gms.location.LocationServices
 import com.google.android.material.progressindicator.CircularProgressIndicator
+import kotlin.properties.Delegates
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -69,20 +70,22 @@ import ru.lobotino.walktraveller.model.SegmentRating.PERFECT
 import ru.lobotino.walktraveller.model.map.MapCommonPath
 import ru.lobotino.walktraveller.model.map.MapPathSegment
 import ru.lobotino.walktraveller.model.map.MapRatingPath
-import ru.lobotino.walktraveller.repositories.permissions.AccessibilityPermissionRepository
 import ru.lobotino.walktraveller.repositories.CachePathsRepository
 import ru.lobotino.walktraveller.repositories.DatabasePathRepository
-import ru.lobotino.walktraveller.repositories.permissions.GeoPermissionsRepository
+import ru.lobotino.walktraveller.repositories.FilePathsSaverRepository
 import ru.lobotino.walktraveller.repositories.LastCreatedPathIdRepository
 import ru.lobotino.walktraveller.repositories.LastSeenPointRepository
 import ru.lobotino.walktraveller.repositories.LocationUpdatesRepository
 import ru.lobotino.walktraveller.repositories.LocationsDistanceRepository
-import ru.lobotino.walktraveller.repositories.permissions.NotificationsPermissionsRepository
 import ru.lobotino.walktraveller.repositories.OptimizePathsSettingsRepository
 import ru.lobotino.walktraveller.repositories.PathDistancesInMetersRepository
 import ru.lobotino.walktraveller.repositories.PathRatingRepository
 import ru.lobotino.walktraveller.repositories.UserRotationRepository
 import ru.lobotino.walktraveller.repositories.WritingPathStatesRepository
+import ru.lobotino.walktraveller.repositories.permissions.AccessibilityPermissionRepository
+import ru.lobotino.walktraveller.repositories.permissions.ExternalStoragePermissionsRepository
+import ru.lobotino.walktraveller.repositories.permissions.GeoPermissionsRepository
+import ru.lobotino.walktraveller.repositories.permissions.NotificationsPermissionsRepository
 import ru.lobotino.walktraveller.services.LocationUpdatesService
 import ru.lobotino.walktraveller.services.LocationUpdatesService.Companion.ACTION_START_LOCATION_UPDATES
 import ru.lobotino.walktraveller.services.LocationUpdatesService.Companion.EXTRA_LOCATION
@@ -96,22 +99,19 @@ import ru.lobotino.walktraveller.ui.model.PathsInfoListState
 import ru.lobotino.walktraveller.ui.model.ShowPathsButtonState
 import ru.lobotino.walktraveller.ui.model.ShowPathsFilterButtonState
 import ru.lobotino.walktraveller.usecases.DistanceInMetersToStringFormatter
-import ru.lobotino.walktraveller.usecases.permissions.GeoPermissionsUseCase
 import ru.lobotino.walktraveller.usecases.LocalMapPathsInteractor
 import ru.lobotino.walktraveller.usecases.LocalPathRedactor
 import ru.lobotino.walktraveller.usecases.MapStateInteractor
-import ru.lobotino.walktraveller.usecases.permissions.NotificationsPermissionsUseCase
 import ru.lobotino.walktraveller.usecases.UserLocationInteractor
+import ru.lobotino.walktraveller.usecases.permissions.ExternalStoragePermissionsUseCase
+import ru.lobotino.walktraveller.usecases.permissions.GeoPermissionsUseCase
+import ru.lobotino.walktraveller.usecases.permissions.NotificationsPermissionsUseCase
 import ru.lobotino.walktraveller.usecases.permissions.VolumeKeysListenerPermissionsUseCase
 import ru.lobotino.walktraveller.utils.ext.openNavigationMenu
 import ru.lobotino.walktraveller.utils.ext.toColorInt
 import ru.lobotino.walktraveller.utils.ext.toGeoPoint
 import ru.lobotino.walktraveller.utils.ext.toMapPoint
 import ru.lobotino.walktraveller.viewmodels.MapViewModel
-import kotlin.properties.Delegates
-import ru.lobotino.walktraveller.repositories.FilePathsSaverRepository
-import ru.lobotino.walktraveller.repositories.permissions.ExternalStoragePermissionsRepository
-import ru.lobotino.walktraveller.usecases.permissions.ExternalStoragePermissionsUseCase
 
 
 class MainMapFragment : Fragment() {
@@ -554,6 +554,15 @@ class MainMapFragment : Fragment() {
                     observeNeedToClearMapNow {
                         clearMap()
                     }
+
+                    observeShareFileChannel.onEach { sharedFileUri ->
+                        val sendIntent = Intent().apply {
+                            action = Intent.ACTION_SEND
+                            type = "application/*"
+                            putExtra(Intent.EXTRA_STREAM, sharedFileUri)
+                        }
+                        startActivity(Intent.createChooser(sendIntent, getString(R.string.share_file_title)))
+                    }.launchIn(lifecycleScope)
 
                     onInitFinish()
                 }

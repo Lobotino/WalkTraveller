@@ -1,16 +1,19 @@
 package ru.lobotino.walktraveller.viewmodels
 
 import android.location.Location
+import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import java.io.IOException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import ru.lobotino.walktraveller.model.SegmentRating
@@ -103,6 +106,8 @@ class MapViewModel(
 
     private var clearMapNowListener: (() -> Unit)? = null
 
+    private val shareFileChannel = Channel<Uri>()
+
     private val mapUiStateFlow =
         MutableStateFlow(
             MapUiState(
@@ -123,6 +128,7 @@ class MapViewModel(
     val observeNewCurrentUserLocation: Flow<MapPoint> = newCurrentUserLocationFlow
     val observeWritingPathNow: Flow<Boolean> = writingPathNowState
     val observeNewConfirmDialog: Flow<ConfirmDialogInfo> = newConfirmDialogFlow
+    val observeShareFileChannel = shareFileChannel.consumeAsFlow()
 
     fun observeNewUserRotation(): Flow<Float> = userRotationRepository.observeUserRotation()
 
@@ -534,9 +540,9 @@ class MapViewModel(
             val path = mapPathsInteractor.getSavedRatingPath(pathId, false)
             if (path != null) {
                 try {
-                    val resultFileUri = pathsSaverRepository.saveRatingPath(path)
-                    Log.d(TAG, "Success saved path file $resultFileUri")
+                    shareFileChannel.trySend(pathsSaverRepository.saveRatingPath(path))
                 } catch (exception: IOException) {
+                    //TODO show toast error
                     Log.w(TAG, exception)
                 }
             }

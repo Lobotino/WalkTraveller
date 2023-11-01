@@ -39,4 +39,5 @@
     <string name="settings_optimizing_paths_title">Optimize saved paths</string>
     <string name="settings_optimize_paths_more_points">More\npoints</string>
     <string name="settings_optimize_paths_less_points">Less\npoints</string>
+    <string name="share_file_title">Share paths file</string>
 </resources>
