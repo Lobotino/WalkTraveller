@@ -2,6 +2,6 @@ package ru.lobotino.walktraveller.ui.model
 
 data class PathInfoItemState(
     val pathId: Long,
-    val showButtonState: PathInfoItemShowButtonState,
-    val isDeleted: Boolean = false
+    val showButtonState: PathInfoItemShowButtonState? = null,
+    val shareButtonState: PathInfoItemShareButtonState? = null
 )

@@ -35,6 +35,7 @@ import ru.lobotino.walktraveller.ui.model.ConfirmDialogInfo
 import ru.lobotino.walktraveller.ui.model.ConfirmDialogType
 import ru.lobotino.walktraveller.ui.model.FindMyLocationButtonState
 import ru.lobotino.walktraveller.ui.model.MapUiState
+import ru.lobotino.walktraveller.ui.model.PathInfoItemShareButtonState
 import ru.lobotino.walktraveller.ui.model.PathInfoItemShowButtonState
 import ru.lobotino.walktraveller.ui.model.PathInfoItemState
 import ru.lobotino.walktraveller.ui.model.PathsInfoListState
@@ -94,7 +95,7 @@ class MapViewModel(
         MutableSharedFlow<List<MapPathInfo>>(1, 0, BufferOverflow.DROP_OLDEST)
     private val newMapCenterFlow =
         MutableSharedFlow<MapPoint>(1, 0, BufferOverflow.DROP_OLDEST)
-    private val newPathInfoListItemStateFlow =
+    private val newPathInfoListItemFlow =
         MutableSharedFlow<PathInfoItemState>(1, 0, BufferOverflow.DROP_OLDEST)
     private val newCurrentUserLocationFlow =
         MutableSharedFlow<MapPoint>(1, 0, BufferOverflow.DROP_OLDEST)
@@ -107,6 +108,7 @@ class MapViewModel(
     private var clearMapNowListener: (() -> Unit)? = null
 
     private val shareFileChannel = Channel<Uri>()
+    private val deletePathInfoItemChannel = Channel<Long>()
 
     private val mapUiStateFlow =
         MutableStateFlow(
@@ -123,12 +125,13 @@ class MapViewModel(
     val observeRegularLocationUpdate: Flow<Boolean> = regularLocationUpdateStateFlow
     val observeNewPathsInfoList: Flow<List<MapPathInfo>> = newPathsInfoListFlow
     val observeNewMapCenter: Flow<MapPoint> = newMapCenterFlow
-    val observeNewPathInfoListItemState: Flow<PathInfoItemState> = newPathInfoListItemStateFlow
+    val observeNewPathInfoListItemState: Flow<PathInfoItemState> = newPathInfoListItemFlow
     val observeHidePath: Flow<Long> = hidePathFlow
     val observeNewCurrentUserLocation: Flow<MapPoint> = newCurrentUserLocationFlow
     val observeWritingPathNow: Flow<Boolean> = writingPathNowState
     val observeNewConfirmDialog: Flow<ConfirmDialogInfo> = newConfirmDialogFlow
     val observeShareFileChannel = shareFileChannel.consumeAsFlow()
+    val observeDeletePathInfoItemChannel = deletePathInfoItemChannel.consumeAsFlow()
 
     fun observeNewUserRotation(): Flow<Float> = userRotationRepository.observeUserRotation()
 
@@ -257,7 +260,7 @@ class MapViewModel(
             mapUiStateFlow.update { uiState ->
                 uiState.copy(showPathsButtonState = ShowPathsButtonState.DEFAULT)
             }
-            newPathInfoListItemStateFlow.tryEmit(
+            newPathInfoListItemFlow.tryEmit(
                 PathInfoItemState(
                     -1,
                     PathInfoItemShowButtonState.DEFAULT
@@ -269,7 +272,7 @@ class MapViewModel(
                 mapUiStateFlow.update { uiState ->
                     uiState.copy(showPathsButtonState = ShowPathsButtonState.DEFAULT)
                 }
-                newPathInfoListItemStateFlow.tryEmit(
+                newPathInfoListItemFlow.tryEmit(
                     PathInfoItemState(
                         -1,
                         PathInfoItemShowButtonState.DEFAULT
@@ -280,7 +283,7 @@ class MapViewModel(
                 mapUiStateFlow.update { uiState ->
                     uiState.copy(showPathsButtonState = ShowPathsButtonState.LOADING)
                 }
-                newPathInfoListItemStateFlow.tryEmit(
+                newPathInfoListItemFlow.tryEmit(
                     PathInfoItemState(
                         -1,
                         PathInfoItemShowButtonState.LOADING
@@ -306,7 +309,7 @@ class MapViewModel(
         downloadAllPathsJob = viewModelScope.launch {
             for (path in mapPathsInteractor.getAllSavedRatingPaths(true)) {
                 showRatingPathOnMap(path)
-                newPathInfoListItemStateFlow.tryEmit(
+                newPathInfoListItemFlow.tryEmit(
                     PathInfoItemState(
                         path.pathId,
                         PathInfoItemShowButtonState.HIDE
@@ -324,7 +327,7 @@ class MapViewModel(
         downloadAllPathsJob = viewModelScope.launch {
             for (path in mapPathsInteractor.getAllSavedPathsAsCommon()) {
                 showCommonPathOnMap(path)
-                newPathInfoListItemStateFlow.tryEmit(
+                newPathInfoListItemFlow.tryEmit(
                     PathInfoItemState(
                         path.pathId,
                         PathInfoItemShowButtonState.HIDE
@@ -473,14 +476,14 @@ class MapViewModel(
             SHOW -> {
                 if (showedPathIdsList.contains(pathId)) {
                     hidePathFromMap(pathId)
-                    newPathInfoListItemStateFlow.tryEmit(
+                    newPathInfoListItemFlow.tryEmit(
                         PathInfoItemState(
                             pathId,
                             PathInfoItemShowButtonState.DEFAULT
                         )
                     )
                 } else {
-                    newPathInfoListItemStateFlow.tryEmit(
+                    newPathInfoListItemFlow.tryEmit(
                         PathInfoItemState(
                             pathId,
                             PathInfoItemShowButtonState.LOADING
@@ -490,7 +493,7 @@ class MapViewModel(
                         val savedRatingPath = mapPathsInteractor.getSavedRatingPath(pathId, false)
                         if (savedRatingPath != null) {
                             showRatingPathOnMap(savedRatingPath)
-                            newPathInfoListItemStateFlow.tryEmit(
+                            newPathInfoListItemFlow.tryEmit(
                                 PathInfoItemState(
                                     pathId,
                                     PathInfoItemShowButtonState.HIDE
@@ -536,6 +539,13 @@ class MapViewModel(
     }
 
     private fun sharePath(pathId: Long) {
+        newPathInfoListItemFlow.tryEmit(
+            PathInfoItemState(
+                pathId,
+                shareButtonState = PathInfoItemShareButtonState.LOADING
+            )
+        )
+
         viewModelScope.launch {
             val path = mapPathsInteractor.getSavedRatingPath(pathId, false)
             if (path != null) {
@@ -544,6 +554,13 @@ class MapViewModel(
                 } catch (exception: IOException) {
                     //TODO show toast error
                     Log.w(TAG, exception)
+                } finally {
+                    newPathInfoListItemFlow.tryEmit(
+                        PathInfoItemState(
+                            pathId,
+                            shareButtonState = PathInfoItemShareButtonState.DEFAULT
+                        )
+                    )
                 }
             }
         }
@@ -656,13 +673,7 @@ class MapViewModel(
             checkIsPathsListNotEmptyNow()
         }
         hidePathFromMap(pathId)
-        newPathInfoListItemStateFlow.tryEmit(
-            PathInfoItemState(
-                pathId,
-                PathInfoItemShowButtonState.DEFAULT,
-                true
-            )
-        )
+        deletePathInfoItemChannel.trySend(pathId)
     }
 
     private fun checkIsPathsListNotEmptyNow() {

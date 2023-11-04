@@ -514,7 +514,7 @@ class MainMapFragment : Fragment() {
                     }.launchIn(lifecycleScope)
 
                     observeNewPathInfoListItemState.onEach { newPathInfoState ->
-                        syncNewPathInfoState(newPathInfoState)
+                        syncPathInfoItemState(newPathInfoState)
                     }.launchIn(lifecycleScope)
 
                     observeHidePath.onEach { pathId ->
@@ -562,6 +562,10 @@ class MainMapFragment : Fragment() {
                             putExtra(Intent.EXTRA_STREAM, sharedFileUri)
                         }
                         startActivity(Intent.createChooser(sendIntent, getString(R.string.share_file_title)))
+                    }.launchIn(lifecycleScope)
+
+                    observeDeletePathInfoItemChannel.onEach { pathId ->
+                        pathsInfoListAdapter.deletePathInfoItem(pathId)
                     }.launchIn(lifecycleScope)
 
                     onInitFinish()
@@ -935,18 +939,11 @@ class MainMapFragment : Fragment() {
         mapView.overlays.add(userLocationOverlay)
     }
 
-    private fun syncNewPathInfoState(newPathInfoState: PathInfoItemState) {
-        if (newPathInfoState.pathId == -1L) {
-            pathsInfoListAdapter.setAllPathsShowState(newPathInfoState.showButtonState)
+    private fun syncPathInfoItemState(pathInfoState: PathInfoItemState) {
+        if (pathInfoState.pathId == -1L) {
+            pathsInfoListAdapter.updateAllItemsState(pathInfoState)
         } else {
-            if (newPathInfoState.isDeleted) {
-                pathsInfoListAdapter.deletePathInfoItem(newPathInfoState.pathId)
-            } else {
-                pathsInfoListAdapter.setPathShowState(
-                    newPathInfoState.pathId,
-                    newPathInfoState.showButtonState
-                )
-            }
+            pathsInfoListAdapter.updateItemState(pathInfoState)
         }
     }
 }

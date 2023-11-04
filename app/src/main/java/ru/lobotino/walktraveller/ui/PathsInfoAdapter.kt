@@ -16,6 +16,8 @@ import ru.lobotino.walktraveller.ui.model.PathInfoItemShowButtonState
 import ru.lobotino.walktraveller.usecases.interfaces.IDistanceToStringFormatter
 import java.text.SimpleDateFormat
 import java.util.*
+import ru.lobotino.walktraveller.ui.model.PathInfoItemShareButtonState
+import ru.lobotino.walktraveller.ui.model.PathInfoItemState
 
 
 class PathsInfoAdapter(
@@ -33,19 +35,32 @@ class PathsInfoAdapter(
         notifyDataSetChanged()
     }
 
-    fun setPathShowState(pathId: Long, pathInfoItemShowButtonState: PathInfoItemShowButtonState) {
+    fun updateItemState(pathInfoItemState: PathInfoItemState) {
         for (index in pathsItems.indices) {
-            if (pathsItems[index].pathInfo.pathId == pathId) {
-                pathsItems[index].pathInfoItemShowButtonState = pathInfoItemShowButtonState
+            val item = pathsItems[index]
+            if (item.pathInfo.pathId == pathInfoItemState.pathId) {
+                if (pathInfoItemState.showButtonState != null) {
+                    item.showButtonState = pathInfoItemState.showButtonState
+                }
+                if (pathInfoItemState.shareButtonState != null) {
+                    item.shareButtonState = pathInfoItemState.shareButtonState
+                }
                 notifyItemChanged(index)
-                break
+                return
             }
         }
     }
 
-    fun setAllPathsShowState(pathInfoItemShowButtonState: PathInfoItemShowButtonState) {
-        for (path in pathsItems) {
-            path.pathInfoItemShowButtonState = pathInfoItemShowButtonState
+    fun updateAllItemsState(pathInfoItemState: PathInfoItemState) {
+        if (pathInfoItemState.showButtonState != null) {
+            for (path in pathsItems) {
+                path.showButtonState = pathInfoItemState.showButtonState
+            }
+        }
+        if (pathInfoItemState.shareButtonState != null) {
+            for (path in pathsItems) {
+                path.shareButtonState = pathInfoItemState.shareButtonState
+            }
         }
         notifyItemRangeChanged(0, pathsItems.size)
     }
@@ -97,7 +112,9 @@ class PathsInfoAdapter(
         private val pathButtonShow: CardView
         private val pathButtonShowImage: ImageView
         private val pathButtonHideImage: ImageView
+        private val pathButtonShareImage: ImageView
         private val pathButtonShowProgress: CircularProgressIndicator
+        private val pathButtonShareProgress: CircularProgressIndicator
         private val pathButtonDelete: CardView
         private val pathButtonShare: CardView
 
@@ -111,6 +128,8 @@ class PathsInfoAdapter(
             pathButtonShowProgress = view.findViewById(R.id.path_button_show_progress)
             pathButtonDelete = view.findViewById(R.id.path_button_delete)
             pathButtonShare = view.findViewById(R.id.path_button_share)
+            pathButtonShareImage = view.findViewById(R.id.path_button_share_image)
+            pathButtonShareProgress = view.findViewById(R.id.path_button_share_progress)
         }
 
         fun bind(
@@ -131,16 +150,24 @@ class PathsInfoAdapter(
             pathButtonShare.setOnClickListener {
                 itemButtonClickedListener.invoke(path.pathInfo.pathId, PathItemButtonType.SHARE)
             }
-            pathButtonShowImage.visibility = when (path.pathInfoItemShowButtonState) {
+            pathButtonShowImage.visibility = when (path.showButtonState) {
                 PathInfoItemShowButtonState.DEFAULT -> View.VISIBLE
                 else -> View.GONE
             }
-            pathButtonHideImage.visibility = when (path.pathInfoItemShowButtonState) {
+            pathButtonHideImage.visibility = when (path.showButtonState) {
                 PathInfoItemShowButtonState.HIDE -> View.VISIBLE
                 else -> View.GONE
             }
-            pathButtonShowProgress.visibility = when (path.pathInfoItemShowButtonState) {
+            pathButtonShowProgress.visibility = when (path.showButtonState) {
                 PathInfoItemShowButtonState.LOADING -> View.VISIBLE
+                else -> View.GONE
+            }
+            pathButtonShareImage.visibility = when (path.shareButtonState) {
+                PathInfoItemShareButtonState.DEFAULT -> View.VISIBLE
+                else -> View.GONE
+            }
+            pathButtonShareProgress.visibility = when (path.shareButtonState) {
+                PathInfoItemShareButtonState.LOADING -> View.VISIBLE
                 else -> View.GONE
             }
         }
