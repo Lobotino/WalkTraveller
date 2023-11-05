@@ -15,6 +15,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import ru.lobotino.walktraveller.model.map.MapRatingPath
 import ru.lobotino.walktraveller.repositories.interfaces.IPathsSaverRepository
+import ru.lobotino.walktraveller.utils.SHARE_FILE_EXTENSION
+import ru.lobotino.walktraveller.utils.SHARE_FILE_NEW_MAP_RATING_PATH_TAG
 import ru.lobotino.walktraveller.utils.ext.toText
 
 
@@ -43,7 +45,7 @@ class FilePathsSaverRepository(private val applicationContext: Context) : IPaths
     private fun createFileToWrite(fileName: String): Uri? {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             val values = ContentValues().apply {
-                put(MediaStore.MediaColumns.DISPLAY_NAME, fileName + FILE_EXTENSION)
+                put(MediaStore.MediaColumns.DISPLAY_NAME, fileName + SHARE_FILE_EXTENSION)
                 put(MediaStore.MediaColumns.MIME_TYPE, "application/*")
                 put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
             }
@@ -56,7 +58,7 @@ class FilePathsSaverRepository(private val applicationContext: Context) : IPaths
             Uri.fromFile(
                 File(
                     Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-                    fileName + FILE_EXTENSION
+                    fileName + SHARE_FILE_EXTENSION
                 )
             )
         }
@@ -69,8 +71,7 @@ class FilePathsSaverRepository(private val applicationContext: Context) : IPaths
     }
 
     private fun writePathToFile(path: MapRatingPath, file: Writer) {
-        file.write("$NEW_MAP_RATING_PATH_TAG\n")
-        file.write("${path.pathSegments.size}\n")
+        file.write("$SHARE_FILE_NEW_MAP_RATING_PATH_TAG\n")
         for (segment in path.pathSegments) {
             file.write("${segment.startPoint.toText()},${segment.finishPoint.toText()};${segment.rating}\n")
         }
@@ -86,7 +87,5 @@ class FilePathsSaverRepository(private val applicationContext: Context) : IPaths
 
     companion object {
         private val TAG = FilePathsSaverRepository::class.java.canonicalName
-        private const val FILE_EXTENSION = ".wt"
-        private const val NEW_MAP_RATING_PATH_TAG = "mrp"
     }
 }

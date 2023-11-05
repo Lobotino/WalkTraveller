@@ -1,5 +1,6 @@
 package ru.lobotino.walktraveller.ui
 
+import android.net.Uri
 import android.os.Bundle
 import android.text.SpannableString
 import android.text.Spanned
@@ -143,7 +144,7 @@ class FirstWelcomeFragment : Fragment() {
                     }.launchIn(lifecycleScope)
 
                     onContinueListener = {
-                        navigateTo(AppScreen.MAP_SCREEN)
+                        navigateTo(AppScreen.MAP_SCREEN, arguments?.getParcelable(EXTRA_DATA_URI))
                     }
                 }
     }
@@ -160,6 +161,18 @@ class FirstWelcomeFragment : Fragment() {
                 continueButton.isEnabled = false
                 continueButton.text =
                     getString(R.string.welcome_continue_button_need_to_agreement_first)
+            }
+        }
+    }
+
+    companion object {
+        private const val EXTRA_DATA_URI = "EXTRA_DATA_URI"
+
+        fun newInstance(extraData: Uri?): FirstWelcomeFragment {
+            return FirstWelcomeFragment().apply {
+                arguments = Bundle().apply {
+                    putParcelable(EXTRA_DATA_URI, extraData)
+                }
             }
         }
     }

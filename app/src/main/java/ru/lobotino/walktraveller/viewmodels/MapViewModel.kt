@@ -23,6 +23,7 @@ import ru.lobotino.walktraveller.model.map.MapPathSegment
 import ru.lobotino.walktraveller.model.map.MapPoint
 import ru.lobotino.walktraveller.model.map.MapRatingPath
 import ru.lobotino.walktraveller.repositories.interfaces.IPathRatingRepository
+import ru.lobotino.walktraveller.repositories.interfaces.IPathsLoaderRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IPathsSaverRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IUserRotationRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IWritingPathStatesRepository
@@ -61,7 +62,8 @@ class MapViewModel(
     private val pathRatingRepository: IPathRatingRepository,
     private val userRotationRepository: IUserRotationRepository,
     private val pathRedactor: IPathRedactor,
-    private val pathsSaverRepository: IPathsSaverRepository
+    private val pathsSaverRepository: IPathsSaverRepository,
+    private val pathsLoaderRepository: IPathsLoaderRepository
 ) : ViewModel() {
 
     companion object {
@@ -194,7 +196,7 @@ class MapViewModel(
         }
     }
 
-    fun onResume() {
+    fun onResume(extraData: Uri?) {
         if (geoPermissionsUseCase.isGeneralGeoPermissionsGranted()) {
             regularLocationUpdateStateFlow.tryEmit(true)
         }
@@ -202,6 +204,10 @@ class MapViewModel(
         if (isInitialized) {
             userRotationRepository.startTrackUserRotation()
             updateNewPointsIfNeeded()
+        }
+
+        if (extraData != null) {
+            loadAndShowSharedPaths(extraData)
         }
     }
 
@@ -704,6 +710,15 @@ class MapViewModel(
                     permissionsDeniedSharedFlow.tryEmit(deniedPermissions)
                 }
             })
+        }
+    }
+
+    private fun loadAndShowSharedPaths(sharedFileUri: Uri) {
+        viewModelScope.launch {
+            val sharedPathsSegments = pathsLoaderRepository.loadAllRatingPathsFromFile(sharedFileUri)
+            Log.d("Test", sharedPathsSegments.toString())
+
+            //TODO show other user path
         }
     }
 }

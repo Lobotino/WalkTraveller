@@ -12,6 +12,7 @@ import android.content.res.ColorStateList
 import android.graphics.Paint
 import android.hardware.SensorManager
 import android.location.Location
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
@@ -80,6 +81,7 @@ import ru.lobotino.walktraveller.repositories.LocationsDistanceRepository
 import ru.lobotino.walktraveller.repositories.OptimizePathsSettingsRepository
 import ru.lobotino.walktraveller.repositories.PathDistancesInMetersRepository
 import ru.lobotino.walktraveller.repositories.PathRatingRepository
+import ru.lobotino.walktraveller.repositories.PathsLoaderRepository
 import ru.lobotino.walktraveller.repositories.UserRotationRepository
 import ru.lobotino.walktraveller.repositories.WritingPathStatesRepository
 import ru.lobotino.walktraveller.repositories.permissions.AccessibilityPermissionRepository
@@ -118,6 +120,15 @@ class MainMapFragment : Fragment() {
 
     companion object {
         private const val DEFAULT_COMFORT_ZOOM = 15.0
+        private const val EXTRA_DATA_URI = "EXTRA_DATA_URI"
+
+        fun newInstance(extraData: Uri? = null): MainMapFragment {
+            return MainMapFragment().apply {
+                arguments = Bundle().apply {
+                    putParcelable(EXTRA_DATA_URI, extraData)
+                }
+            }
+        }
     }
 
     private lateinit var mapView: MapView
@@ -468,7 +479,8 @@ class MainMapFragment : Fragment() {
                         pathRedactor = pathRedactor,
                         owner = this,
                         bundle = bundle,
-                        pathsSaverRepository = FilePathsSaverRepository(requireContext().applicationContext)
+                        pathsSaverRepository = FilePathsSaverRepository(requireContext().applicationContext),
+                        pathsLoaderRepository = PathsLoaderRepository(requireContext().applicationContext)
                     )
                 )[MapViewModel::class.java].apply {
 
@@ -629,7 +641,7 @@ class MainMapFragment : Fragment() {
 
     override fun onResume() {
         mapView.onResume()
-        viewModel.onResume()
+        viewModel.onResume(getExtraData())
         LocalBroadcastManager.getInstance(requireContext()).registerReceiver(
             locationChangeReceiver,
             IntentFilter(LocationUpdatesService.ACTION_BROADCAST)
@@ -639,6 +651,14 @@ class MainMapFragment : Fragment() {
             IntentFilter(VolumeKeysDetectorService.RATING_CHANGES_BROADCAST)
         )
         super.onResume()
+    }
+
+    private fun getExtraData(): Uri? {
+        val extraData: Uri? = arguments?.getParcelable(EXTRA_DATA_URI)
+        if (extraData != null) {
+            arguments?.remove(EXTRA_DATA_URI)
+        }
+        return extraData
     }
 
     override fun onPause() {

@@ -1,7 +1,9 @@
 package ru.lobotino.walktraveller.repositories.interfaces
 
+import android.net.Uri
+
 interface IScreenNavigation {
-    fun navigateTo(appScreen: AppScreen)
+    fun navigateTo(appScreen: AppScreen, extraData: Uri? = null)
     fun openNavigationMenu()
 }
 
