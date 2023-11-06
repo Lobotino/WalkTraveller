@@ -3,12 +3,14 @@
     <string name="location_updated">Location Updated: %1$s</string>
     <string name="permissions_denied">Some permissions are denied. Check application settings.</string>
     <string name="paths_list_title">Paths list</string>
+    <string name="outer_paths_list_title">Add other people\'s paths</string>
     <string name="notification_path_tracking_info">The path track is recorded in the background</string>
     <string name="notification_path_tracking_title">Track recording</string>
     <string name="delete_path_confirm_title">Delete path?</string>
     <string name="delete_path_confirm_description">Are you sure you want to delete path?</string>
     <string name="cancel_button">Cancel</string>
     <string name="delete_button">Delete</string>
+    <string name="add_outer_paths_button">Add to my paths</string>
     <string name="meters_full">Meters</string>
     <string name="kilometers_full">Kilometers</string>
     <string name="kilometers_short">Km</string>

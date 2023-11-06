@@ -4,10 +4,9 @@ import ru.lobotino.walktraveller.model.SegmentRating
 
 data class MapUiState(
     val isPathFinished: Boolean,
-    val showPathsButtonState: ShowPathsButtonState = ShowPathsButtonState.GONE,
-    val showPathsFilterButtonState: ShowPathsFilterButtonState = ShowPathsFilterButtonState.GONE,
+    val myPathsUiState: MyPathsUiState = MyPathsUiState(),
+    val outerPathsUiState: OuterPathsUiState = OuterPathsUiState(),
     val newRating: SegmentRating = SegmentRating.NORMAL,
     val bottomMenuState: BottomMenuState = BottomMenuState.DEFAULT,
-    val pathsInfoListState: PathsInfoListState = PathsInfoListState.DEFAULT,
     val findMyLocationButtonState: FindMyLocationButtonState = FindMyLocationButtonState.DEFAULT,
 )

@@ -39,7 +39,7 @@ import ru.lobotino.walktraveller.ui.model.MapUiState
 import ru.lobotino.walktraveller.ui.model.PathInfoItemShareButtonState
 import ru.lobotino.walktraveller.ui.model.PathInfoItemShowButtonState
 import ru.lobotino.walktraveller.ui.model.PathInfoItemState
-import ru.lobotino.walktraveller.ui.model.PathsInfoListState
+import ru.lobotino.walktraveller.ui.model.MyPathsInfoListState
 import ru.lobotino.walktraveller.ui.model.ShowPathsButtonState
 import ru.lobotino.walktraveller.ui.model.ShowPathsFilterButtonState
 import ru.lobotino.walktraveller.usecases.permissions.GeoPermissionsUseCase
@@ -260,11 +260,11 @@ class MapViewModel(
     }
 
     fun onShowAllPathsButtonClicked() {
-        if (downloadAllPathsJob?.isActive == true || mapUiStateFlow.value.showPathsButtonState == ShowPathsButtonState.LOADING) {
+        if (downloadAllPathsJob?.isActive == true || mapUiStateFlow.value.myPathsUiState.showPathsButtonState == ShowPathsButtonState.LOADING) {
             downloadAllPathsJob?.cancel()
             downloadAllPathsJob = null
             mapUiStateFlow.update { uiState ->
-                uiState.copy(showPathsButtonState = ShowPathsButtonState.DEFAULT)
+                uiState.copy(myPathsUiState = uiState.myPathsUiState.copy(showPathsButtonState = ShowPathsButtonState.DEFAULT))
             }
             newPathInfoListItemFlow.tryEmit(
                 PathInfoItemState(
@@ -273,10 +273,10 @@ class MapViewModel(
                 )
             )
         } else {
-            if (mapUiStateFlow.value.showPathsButtonState == ShowPathsButtonState.HIDE) {
+            if (mapUiStateFlow.value.myPathsUiState.showPathsButtonState == ShowPathsButtonState.HIDE) {
                 clearMap()
                 mapUiStateFlow.update { uiState ->
-                    uiState.copy(showPathsButtonState = ShowPathsButtonState.DEFAULT)
+                    uiState.copy(myPathsUiState = uiState.myPathsUiState.copy(showPathsButtonState = ShowPathsButtonState.DEFAULT))
                 }
                 newPathInfoListItemFlow.tryEmit(
                     PathInfoItemState(
@@ -287,7 +287,7 @@ class MapViewModel(
             } else {
                 clearMap()
                 mapUiStateFlow.update { uiState ->
-                    uiState.copy(showPathsButtonState = ShowPathsButtonState.LOADING)
+                    uiState.copy(myPathsUiState = uiState.myPathsUiState.copy(showPathsButtonState = ShowPathsButtonState.LOADING))
                 }
                 newPathInfoListItemFlow.tryEmit(
                     PathInfoItemState(
@@ -297,12 +297,12 @@ class MapViewModel(
                 )
                 backgroundCachingRatingPathsJob?.cancel()
 
-                when (mapUiStateFlow.value.showPathsFilterButtonState) {
+                when (mapUiStateFlow.value.myPathsUiState.showPathsFilterButtonState) {
                     ShowPathsFilterButtonState.RATED_ONLY -> startDownloadAllRatedPaths()
                     ShowPathsFilterButtonState.ALL_IN_COMMON_COLOR -> startDownloadAllPathsAsCommon()
                     else -> {
                         mapUiStateFlow.update { uiState ->
-                            uiState.copy(showPathsButtonState = ShowPathsButtonState.HIDE)
+                            uiState.copy(myPathsUiState = uiState.myPathsUiState.copy(showPathsButtonState = ShowPathsButtonState.HIDE))
                         }
                     }
                 }
@@ -323,7 +323,7 @@ class MapViewModel(
                 )
             }
             mapUiStateFlow.update { uiState ->
-                uiState.copy(showPathsButtonState = ShowPathsButtonState.HIDE)
+                uiState.copy(myPathsUiState = uiState.myPathsUiState.copy(showPathsButtonState = ShowPathsButtonState.HIDE))
             }
         }
     }
@@ -341,13 +341,13 @@ class MapViewModel(
                 )
             }
             mapUiStateFlow.update { uiState ->
-                uiState.copy(showPathsButtonState = ShowPathsButtonState.HIDE)
+                uiState.copy(myPathsUiState = uiState.myPathsUiState.copy(showPathsButtonState = ShowPathsButtonState.HIDE))
             }
         }
     }
 
     fun onShowPathsFilterButtonClicked() {
-        val newFilterValue = when (mapUiStateFlow.value.showPathsFilterButtonState) {
+        val newFilterValue = when (mapUiStateFlow.value.myPathsUiState.showPathsFilterButtonState) {
             ShowPathsFilterButtonState.RATED_ONLY -> ShowPathsFilterButtonState.ALL_IN_COMMON_COLOR
             ShowPathsFilterButtonState.ALL_IN_COMMON_COLOR -> ShowPathsFilterButtonState.RATED_ONLY
             ShowPathsFilterButtonState.GONE -> ShowPathsFilterButtonState.GONE
@@ -355,24 +355,26 @@ class MapViewModel(
 
         mapUiStateFlow.update { uiState ->
             uiState.copy(
-                showPathsFilterButtonState = newFilterValue
+                myPathsUiState = uiState.myPathsUiState.copy(
+                    showPathsFilterButtonState = newFilterValue
+                )
             )
         }
-        when (mapUiStateFlow.value.showPathsButtonState) {
+        when (mapUiStateFlow.value.myPathsUiState.showPathsButtonState) {
             ShowPathsButtonState.LOADING -> {
                 when (newFilterValue) {
                     ShowPathsFilterButtonState.RATED_ONLY -> startDownloadAllRatedPaths()
                     ShowPathsFilterButtonState.ALL_IN_COMMON_COLOR -> startDownloadAllPathsAsCommon()
                     else -> {
                         mapUiStateFlow.update { uiState ->
-                            uiState.copy(showPathsButtonState = ShowPathsButtonState.HIDE)
+                            uiState.copy(myPathsUiState = uiState.myPathsUiState.copy(showPathsButtonState = ShowPathsButtonState.HIDE))
                         }
                     }
                 }
             }
 
             ShowPathsButtonState.HIDE -> {
-                mapUiStateFlow.update { uiState -> uiState.copy(showPathsButtonState = ShowPathsButtonState.DEFAULT) }
+                mapUiStateFlow.update { uiState -> uiState.copy(myPathsUiState = uiState.myPathsUiState.copy(showPathsButtonState = ShowPathsButtonState.DEFAULT)) }
             }
 
             else -> {}
@@ -431,14 +433,14 @@ class MapViewModel(
 
     fun onShowPathsMenuClicked() {
         mapUiStateFlow.update { uiState ->
-            uiState.copy(bottomMenuState = BottomMenuState.PATHS_MENU)
+            uiState.copy(bottomMenuState = BottomMenuState.MY_PATHS_MENU)
         }
 
         downloadAllPathsJob?.cancel()
         backgroundCachingPathsInfoJob?.cancel()
 
         mapUiStateFlow.update { uiState ->
-            uiState.copy(pathsInfoListState = PathsInfoListState.LOADING)
+            uiState.copy(myPathsUiState = uiState.myPathsUiState.copy(pathsInfoListState = MyPathsInfoListState.LOADING))
         }
         downloadAllPathsInfoJob = viewModelScope.launch {
             val allSavedPathsList = mapPathsInteractor.getAllSavedPathsInfo()
@@ -446,35 +448,41 @@ class MapViewModel(
                 newPathsInfoListFlow.tryEmit(allSavedPathsList)
                 mapUiStateFlow.update { uiState ->
                     uiState.copy(
-                        pathsInfoListState = PathsInfoListState.DEFAULT,
-                        showPathsButtonState = ShowPathsButtonState.DEFAULT,
-                        showPathsFilterButtonState = ShowPathsFilterButtonState.RATED_ONLY
+                        myPathsUiState = uiState.myPathsUiState.copy(
+                            pathsInfoListState = MyPathsInfoListState.DEFAULT,
+                            showPathsButtonState = ShowPathsButtonState.DEFAULT,
+                            showPathsFilterButtonState = ShowPathsFilterButtonState.RATED_ONLY
+                        )
                     )
                 }
             } else {
                 mapUiStateFlow.update { uiState ->
                     uiState.copy(
-                        pathsInfoListState = PathsInfoListState.EMPTY_LIST,
-                        showPathsButtonState = ShowPathsButtonState.GONE,
-                        showPathsFilterButtonState = ShowPathsFilterButtonState.GONE
+                        myPathsUiState = uiState.myPathsUiState.copy(
+                            pathsInfoListState = MyPathsInfoListState.EMPTY_LIST,
+                            showPathsButtonState = ShowPathsButtonState.GONE,
+                            showPathsFilterButtonState = ShowPathsFilterButtonState.GONE
+                        )
                     )
                 }
             }
         }
     }
 
-    fun onHidePathsMenuClicked() {
+    fun onPathsMenuBackButtonClicked() {
         downloadAllPathsJob?.cancel()
         mapUiStateFlow.update { uiState ->
             uiState.copy(
                 bottomMenuState = BottomMenuState.DEFAULT,
-                showPathsButtonState = ShowPathsButtonState.GONE,
-                showPathsFilterButtonState = ShowPathsFilterButtonState.GONE
+                myPathsUiState = uiState.myPathsUiState.copy(
+                    showPathsButtonState = ShowPathsButtonState.GONE,
+                    showPathsFilterButtonState = ShowPathsFilterButtonState.GONE
+                )
             )
         }
     }
 
-    fun onPathInListButtonClicked(
+    fun onPathInMyListButtonClicked(
         pathId: Long,
         clickedButtonType: PathsInfoAdapter.PathItemButtonType
     ) {
@@ -687,9 +695,11 @@ class MapViewModel(
             if (mapPathsInteractor.getAllSavedPathsInfo().isEmpty()) {
                 mapUiStateFlow.update { uiState ->
                     uiState.copy(
-                        pathsInfoListState = PathsInfoListState.EMPTY_LIST,
-                        showPathsButtonState = ShowPathsButtonState.GONE,
-                        showPathsFilterButtonState = ShowPathsFilterButtonState.GONE
+                        myPathsUiState = uiState.myPathsUiState.copy(
+                            pathsInfoListState = MyPathsInfoListState.EMPTY_LIST,
+                            showPathsButtonState = ShowPathsButtonState.GONE,
+                            showPathsFilterButtonState = ShowPathsFilterButtonState.GONE
+                        )
                     )
                 }
             }

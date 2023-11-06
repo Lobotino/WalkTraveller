@@ -1,4 +1,4 @@
-package ru.lobotino.walktraveller.ui
+package ru.lobotino.walktraveller.ui.view
 
 import android.animation.ObjectAnimator
 import android.animation.PropertyValuesHolder

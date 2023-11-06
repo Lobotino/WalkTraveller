@@ -24,8 +24,7 @@ class PathsInfoAdapter(
     private val distanceFormatter: IDistanceToStringFormatter,
     private val mostCommonRatingColors: List<Int>,
     private val itemButtonClickedListener: (Long, PathItemButtonType) -> Unit
-) :
-    RecyclerView.Adapter<PathsInfoAdapter.PathInfoItem>() {
+) : RecyclerView.Adapter<PathsInfoAdapter.PathInfoItem>() {
 
     private var pathsItems: MutableList<PathInfoItemModel> = ArrayList<PathInfoItemModel>()
 
@@ -79,7 +78,7 @@ class PathsInfoAdapter(
         return PathInfoItem(
             LayoutInflater.from(parent.context)
                 .inflate(
-                    R.layout.path_info_item,
+                    R.layout.my_path_info_item,
                     parent,
                     false
                 )

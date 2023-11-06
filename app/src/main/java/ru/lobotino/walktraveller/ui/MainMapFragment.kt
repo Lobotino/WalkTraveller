@@ -36,8 +36,6 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import androidx.recyclerview.widget.RecyclerView
-import androidx.recyclerview.widget.SimpleItemAnimator
 import com.google.android.gms.location.LocationServices
 import com.google.android.material.progressindicator.CircularProgressIndicator
 import kotlin.properties.Delegates
@@ -61,7 +59,6 @@ import ru.lobotino.walktraveller.App
 import ru.lobotino.walktraveller.R
 import ru.lobotino.walktraveller.database.provideDatabase
 import ru.lobotino.walktraveller.di.MapViewModelFactory
-import ru.lobotino.walktraveller.model.MostCommonRating
 import ru.lobotino.walktraveller.model.SegmentRating
 import ru.lobotino.walktraveller.model.SegmentRating.BADLY
 import ru.lobotino.walktraveller.model.SegmentRating.GOOD
@@ -96,11 +93,9 @@ import ru.lobotino.walktraveller.ui.model.BottomMenuState
 import ru.lobotino.walktraveller.ui.model.ConfirmDialogInfo
 import ru.lobotino.walktraveller.ui.model.ConfirmDialogType
 import ru.lobotino.walktraveller.ui.model.MapUiState
-import ru.lobotino.walktraveller.ui.model.PathInfoItemState
-import ru.lobotino.walktraveller.ui.model.PathsInfoListState
-import ru.lobotino.walktraveller.ui.model.ShowPathsButtonState
-import ru.lobotino.walktraveller.ui.model.ShowPathsFilterButtonState
-import ru.lobotino.walktraveller.usecases.DistanceInMetersToStringFormatter
+import ru.lobotino.walktraveller.ui.view.FindMyLocationButton
+import ru.lobotino.walktraveller.ui.view.MyPathsMenuView
+import ru.lobotino.walktraveller.ui.view.OuterPathsMenuView
 import ru.lobotino.walktraveller.usecases.LocalMapPathsInteractor
 import ru.lobotino.walktraveller.usecases.LocalPathRedactor
 import ru.lobotino.walktraveller.usecases.MapStateInteractor
@@ -110,7 +105,6 @@ import ru.lobotino.walktraveller.usecases.permissions.GeoPermissionsUseCase
 import ru.lobotino.walktraveller.usecases.permissions.NotificationsPermissionsUseCase
 import ru.lobotino.walktraveller.usecases.permissions.VolumeKeysListenerPermissionsUseCase
 import ru.lobotino.walktraveller.utils.ext.openNavigationMenu
-import ru.lobotino.walktraveller.utils.ext.toColorInt
 import ru.lobotino.walktraveller.utils.ext.toGeoPoint
 import ru.lobotino.walktraveller.utils.ext.toMapPoint
 import ru.lobotino.walktraveller.viewmodels.MapViewModel
@@ -149,25 +143,15 @@ class MainMapFragment : Fragment() {
     private lateinit var ratingPerfectButtonStar: ImageView
     private lateinit var ratingNoneButtonStar: ImageView
     private lateinit var walkStopAcceptProgress: CircularProgressIndicator
-    private lateinit var showPathsFilterButton: CardView
-    private lateinit var showPathsFilterRatedOnlyStateImage: View
-    private lateinit var showPathsFilterAllInCommonStateImage: View
-    private lateinit var showAllPathsButton: CardView
-    private lateinit var showAllPathsProgress: CircularProgressIndicator
-    private lateinit var showAllPathsDefaultImage: ImageView
-    private lateinit var showAllPathsHideImage: ImageView
     private lateinit var showPathsMenuButton: CardView
-    private lateinit var pathsMenu: ViewGroup
+
+    private lateinit var myPathsMenu: MyPathsMenuView
+    private lateinit var outerPathsMenu: OuterPathsMenuView
     private lateinit var walkButtonsHolder: ViewGroup
-    private lateinit var hidePathsMenuButton: ImageView
-    private lateinit var pathsInfoList: RecyclerView
-    private lateinit var pathsEmptyListError: ViewGroup
-    private lateinit var pathsInfoProgress: CircularProgressIndicator
+
     private lateinit var findMyLocationButton: FindMyLocationButton
 
     private lateinit var userLocationOverlay: UserLocationOverlay
-
-    private lateinit var pathsInfoListAdapter: PathsInfoAdapter
 
     private var ratingWhiteColor by Delegates.notNull<@ColorInt Int>()
     private var ratingPerfectColor by Delegates.notNull<@ColorInt Int>()
@@ -340,50 +324,29 @@ class MainMapFragment : Fragment() {
 
             walkStopButton.setOnClickListener { viewModel.onStopPathButtonClicked() }
 
-            showAllPathsButton = view.findViewById<CardView>(R.id.show_all_paths_button).apply {
-                setOnClickListener { viewModel.onShowAllPathsButtonClicked() }
+            myPathsMenu = view.findViewById<MyPathsMenuView>(R.id.my_paths_menu).apply {
+                setupOnClickListeners(
+                    showAllPathsButtonClickListener = {
+                        viewModel.onShowAllPathsButtonClicked()
+                    },
+                    showPathsFilterButtonClickListener = {
+                        viewModel.onShowPathsFilterButtonClicked()
+                    },
+                    pathsMenuBackButtonClickListener = {
+                        viewModel.onPathsMenuBackButtonClicked()
+                    },
+                    itemButtonClickedListener = { pathId, itemButtonClickedType ->
+                        viewModel.onPathInMyListButtonClicked(pathId, itemButtonClickedType)
+                    })
             }
 
-            showAllPathsProgress = view.findViewById(R.id.show_all_paths_progress)
-            showAllPathsDefaultImage = view.findViewById(R.id.show_all_paths_default_image)
-            showAllPathsHideImage = view.findViewById(R.id.show_all_paths_hide_image)
-
-            showPathsFilterButton =
-                view.findViewById<CardView>(R.id.show_paths_filter_button).apply {
-                    setOnClickListener { viewModel.onShowPathsFilterButtonClicked() }
-                }
-            showPathsFilterAllInCommonStateImage =
-                view.findViewById(R.id.show_paths_filter_button_all_in_common_state)
-            showPathsFilterRatedOnlyStateImage =
-                view.findViewById(R.id.show_paths_filter_button_rated_only_state)
-
-            pathsMenu = view.findViewById(R.id.paths_menu)
+//            outerPathsMenu = view.findViewById(R.id.outer_paths_menu)
             walkButtonsHolder = view.findViewById(R.id.walk_buttons_holder)
-            pathsInfoList = view.findViewById<RecyclerView>(R.id.paths_list).apply {
-                pathsInfoListAdapter =
-                    PathsInfoAdapter(
-                        DistanceInMetersToStringFormatter(
-                            requireContext().getString(R.string.meters_full),
-                            requireContext().getString(R.string.kilometers_full),
-                            requireContext().getString(R.string.kilometers_short)
-                        ),
-                        MostCommonRating.values().map { it.toColorInt(requireContext()) }
-                    ) { pathId, itemButtonClickedType ->
-                        viewModel.onPathInListButtonClicked(pathId, itemButtonClickedType)
-                    }
-                if (itemAnimator is SimpleItemAnimator) {
-                    (itemAnimator as SimpleItemAnimator).supportsChangeAnimations = false
-                }
-                adapter = pathsInfoListAdapter
-            }
-            pathsInfoProgress = view.findViewById(R.id.paths_list_progress)
-            pathsEmptyListError = view.findViewById(R.id.empty_paths_error)
+
             showPathsMenuButton = view.findViewById<CardView>(R.id.show_paths_menu_button).apply {
                 setOnClickListener { viewModel.onShowPathsMenuClicked() }
             }
-            hidePathsMenuButton = view.findViewById<ImageView>(R.id.paths_menu_back_button).apply {
-                setOnClickListener { viewModel.onHidePathsMenuClicked() }
-            }
+
             openNavigationButton =
                 view.findViewById<CardView>(R.id.show_navigation_menu_button).apply {
                     setOnClickListener {
@@ -513,7 +476,7 @@ class MainMapFragment : Fragment() {
                     }.launchIn(lifecycleScope)
 
                     observeNewPathsInfoList.onEach { newPathsInfoList ->
-                        pathsInfoListAdapter.setPathsInfoItems(newPathsInfoList)
+                        myPathsMenu.setPathsInfoItems(newPathsInfoList)
                     }.launchIn(lifecycleScope)
 
                     observeNewMapCenter.onEach { newMapCenter ->
@@ -526,7 +489,7 @@ class MainMapFragment : Fragment() {
                     }.launchIn(lifecycleScope)
 
                     observeNewPathInfoListItemState.onEach { newPathInfoState ->
-                        syncPathInfoItemState(newPathInfoState)
+                        myPathsMenu.syncPathInfoItemState(newPathInfoState)
                     }.launchIn(lifecycleScope)
 
                     observeHidePath.onEach { pathId ->
@@ -577,7 +540,7 @@ class MainMapFragment : Fragment() {
                     }.launchIn(lifecycleScope)
 
                     observeDeletePathInfoItemChannel.onEach { pathId ->
-                        pathsInfoListAdapter.deletePathInfoItem(pathId)
+                        myPathsMenu.deletePathInfoItem(pathId)
                     }.launchIn(lifecycleScope)
 
                     onInitFinish()
@@ -675,68 +638,27 @@ class MainMapFragment : Fragment() {
             setLastPathFinished()
         }
 
-        showAllPathsButton.visibility = when (mapUiState.showPathsButtonState) {
-            ShowPathsButtonState.GONE -> GONE
-            else -> VISIBLE
-        }
-        showAllPathsDefaultImage.visibility = when (mapUiState.showPathsButtonState) {
-            ShowPathsButtonState.DEFAULT -> VISIBLE
-            else -> GONE
-        }
-        showAllPathsHideImage.visibility = when (mapUiState.showPathsButtonState) {
-            ShowPathsButtonState.HIDE -> VISIBLE
-            else -> GONE
-        }
-        showAllPathsProgress.visibility = when (mapUiState.showPathsButtonState) {
-            ShowPathsButtonState.LOADING -> VISIBLE
-            else -> GONE
-        }
-        showPathsFilterButton.visibility = when (mapUiState.showPathsFilterButtonState) {
-            ShowPathsFilterButtonState.GONE -> GONE
-            else -> VISIBLE
-        }
-        showPathsFilterAllInCommonStateImage.visibility =
-            when (mapUiState.showPathsFilterButtonState) {
-                ShowPathsFilterButtonState.ALL_IN_COMMON_COLOR -> VISIBLE
-                else -> GONE
-            }
-        showPathsFilterRatedOnlyStateImage.visibility =
-            when (mapUiState.showPathsFilterButtonState) {
-                ShowPathsFilterButtonState.RATED_ONLY -> VISIBLE
-                else -> GONE
-            }
-
-        when (mapUiState.pathsInfoListState) {
-            PathsInfoListState.DEFAULT -> {
-                pathsInfoList.visibility = VISIBLE
-                pathsInfoProgress.visibility = GONE
-                pathsEmptyListError.visibility = GONE
-            }
-
-            PathsInfoListState.LOADING -> {
-                pathsInfoList.visibility = GONE
-                pathsInfoProgress.visibility = VISIBLE
-                pathsEmptyListError.visibility = GONE
-            }
-
-            PathsInfoListState.EMPTY_LIST -> {
-                pathsInfoList.visibility = GONE
-                pathsInfoProgress.visibility = GONE
-                pathsEmptyListError.visibility = VISIBLE
-            }
-        }
-
         when (mapUiState.bottomMenuState) {
             BottomMenuState.DEFAULT -> {
-                pathsMenu.visibility = GONE
+                myPathsMenu.visibility = GONE
+//                outerPathsMenu.visibility = GONE
                 walkButtonsHolder.visibility = VISIBLE
             }
 
-            BottomMenuState.PATHS_MENU -> {
-                pathsMenu.visibility = VISIBLE
+            BottomMenuState.MY_PATHS_MENU -> {
+                myPathsMenu.visibility = VISIBLE
+//                outerPathsMenu.visibility = GONE
+                walkButtonsHolder.visibility = GONE
+            }
+
+            BottomMenuState.OUTER_PATHS_MENU -> {
+                myPathsMenu.visibility = GONE
+//                outerPathsMenu.visibility = VISIBLE
                 walkButtonsHolder.visibility = GONE
             }
         }
+
+        myPathsMenu.syncState(mapUiState.myPathsUiState)
 
         findMyLocationButton.updateState(mapUiState.findMyLocationButtonState)
 
@@ -957,13 +879,5 @@ class MainMapFragment : Fragment() {
 
     private fun addUserLocationTracker() {
         mapView.overlays.add(userLocationOverlay)
-    }
-
-    private fun syncPathInfoItemState(pathInfoState: PathInfoItemState) {
-        if (pathInfoState.pathId == -1L) {
-            pathsInfoListAdapter.updateAllItemsState(pathInfoState)
-        } else {
-            pathsInfoListAdapter.updateItemState(pathInfoState)
-        }
     }
 }
