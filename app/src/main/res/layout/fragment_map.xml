@@ -170,15 +170,17 @@
                 app:layout_constraintTop_toTopOf="parent"
                 tools:visibility="gone"/>
 
-<!--            <include-->
-<!--                android:id="@+id/outer_paths_menu"-->
-<!--                layout="@layout/outer_paths_menu"-->
-<!--                android:visibility="gone"-->
-<!--                app:layout_constraintBottom_toBottomOf="parent"-->
-<!--                app:layout_constraintEnd_toEndOf="parent"-->
-<!--                app:layout_constraintStart_toStartOf="parent"-->
-<!--                app:layout_constraintTop_toTopOf="parent"-->
-<!--                tools:visibility="gone"/>-->
+            <ru.lobotino.walktraveller.ui.view.OuterPathsMenuView
+                android:id="@+id/outer_paths_menu"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:visibility="gone"/>
+
         </FrameLayout>
     </com.google.android.material.card.MaterialCardView>
 

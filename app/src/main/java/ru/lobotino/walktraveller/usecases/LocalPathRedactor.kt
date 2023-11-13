@@ -28,7 +28,7 @@ class LocalPathRedactor(
     override suspend fun updatePathLength(path: MapCommonPath): Float {
         return coroutineScope {
             val resultLength =
-                pathLengthRepository.calculatePathLength(path.pathPoints)
+                pathLengthRepository.calculatePathLength(path.pathPoints.toTypedArray())
 
             withContext(defaultDispatcher) {
                 databasePathRepository.updatePathLength(path.pathId, resultLength)
@@ -40,7 +40,7 @@ class LocalPathRedactor(
     override suspend fun updatePathMostCommonRating(path: MapRatingPath): MostCommonRating {
         return coroutineScope {
             val resultMostCommonRating =
-                pathLengthRepository.calculateMostCommonPathRating(path.pathSegments)
+                pathLengthRepository.calculateMostCommonPathRating(path.pathSegments.toTypedArray())
 
             withContext(defaultDispatcher) {
                 databasePathRepository.updatePathMostCommonRating(

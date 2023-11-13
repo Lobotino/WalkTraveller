@@ -9,7 +9,7 @@ import ru.lobotino.walktraveller.repositories.interfaces.IPointsDistanceReposito
 class PathDistancesInMetersRepository(private val mapDistanceRepository: IPointsDistanceRepository) :
     IPathDistancesRepository {
 
-    override fun calculatePathLength(allPathPoints: List<MapPoint>): Float {
+    override fun calculatePathLength(allPathPoints: Array<MapPoint>): Float {
         var resultLength = 0f
         if (allPathPoints.isNotEmpty()) {
             var lastPoint = allPathPoints[0]
@@ -24,7 +24,18 @@ class PathDistancesInMetersRepository(private val mapDistanceRepository: IPoints
         return resultLength
     }
 
-    override fun calculateMostCommonPathRating(allPathSegments: List<MapPathSegment>): MostCommonRating {
+    override fun calculatePathLength(allPathSegments: Array<MapPathSegment>): Float {
+        var resultLength = 0f
+        for (segment in allPathSegments) {
+            resultLength += mapDistanceRepository.getDistanceBetweenPointsInMeters(
+                segment.startPoint,
+                segment.finishPoint
+            )
+        }
+        return resultLength
+    }
+
+    override fun calculateMostCommonPathRating(allPathSegments: Array<MapPathSegment>): MostCommonRating {
         val allRatingsSegments = arrayListOf(0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
 
         for (segment in allPathSegments) {

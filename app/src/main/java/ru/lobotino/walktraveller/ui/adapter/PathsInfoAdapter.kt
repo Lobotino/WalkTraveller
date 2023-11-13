@@ -1,4 +1,4 @@
-package ru.lobotino.walktraveller.ui
+package ru.lobotino.walktraveller.ui.adapter
 
 import android.annotation.SuppressLint
 import android.view.LayoutInflater
@@ -18,9 +18,10 @@ import java.text.SimpleDateFormat
 import java.util.*
 import ru.lobotino.walktraveller.ui.model.PathInfoItemShareButtonState
 import ru.lobotino.walktraveller.ui.model.PathInfoItemState
+import ru.lobotino.walktraveller.ui.model.PathItemButtonType
 
 
-class PathsInfoAdapter(
+open class PathsInfoAdapter(
     private val distanceFormatter: IDistanceToStringFormatter,
     private val mostCommonRatingColors: List<Int>,
     private val itemButtonClickedListener: (Long, PathItemButtonType) -> Unit
@@ -98,26 +99,30 @@ class PathsInfoAdapter(
         return pathsItems.size
     }
 
-    class PathInfoItem(view: View) : RecyclerView.ViewHolder(view) {
+    open class PathInfoItem(view: View) : RecyclerView.ViewHolder(view) {
 
         companion object {
             private const val DATE_FORMAT = "dd.MM.yyyy"
             private val dateFormat = SimpleDateFormat(DATE_FORMAT, Locale.ENGLISH)
         }
 
-        private val pathLength: TextView
-        private val pathDate: TextView
-        private val pathMostCommonRatingColor: CardView
-        private val pathButtonShow: CardView
-        private val pathButtonShowImage: ImageView
-        private val pathButtonHideImage: ImageView
-        private val pathButtonShareImage: ImageView
-        private val pathButtonShowProgress: CircularProgressIndicator
-        private val pathButtonShareProgress: CircularProgressIndicator
-        private val pathButtonDelete: CardView
-        private val pathButtonShare: CardView
+        private lateinit var pathLength: TextView
+        private lateinit var pathDate: TextView
+        private lateinit var pathMostCommonRatingColor: CardView
+        private lateinit var pathButtonShow: CardView
+        private lateinit var pathButtonShowImage: ImageView
+        private lateinit var pathButtonHideImage: ImageView
+        private lateinit var pathButtonShareImage: ImageView
+        private lateinit var pathButtonShowProgress: CircularProgressIndicator
+        private lateinit var pathButtonShareProgress: CircularProgressIndicator
+        private lateinit var pathButtonDelete: CardView
+        private lateinit var pathButtonShare: CardView
 
         init {
+            prepareView(view)
+        }
+
+        protected open fun prepareView(view: View) {
             pathLength = view.findViewById(R.id.path_length)
             pathDate = view.findViewById(R.id.path_date)
             pathMostCommonRatingColor = view.findViewById(R.id.path_most_common_rating_color)
@@ -131,7 +136,7 @@ class PathsInfoAdapter(
             pathButtonShareProgress = view.findViewById(R.id.path_button_share_progress)
         }
 
-        fun bind(
+        open fun bind(
             path: PathInfoItemModel,
             itemButtonClickedListener: (Long, PathItemButtonType) -> Unit,
             distanceFormatter: IDistanceToStringFormatter,
@@ -171,12 +176,8 @@ class PathsInfoAdapter(
             }
         }
 
-        private fun formatTimestampDate(timestamp: Long): String {
+        protected fun formatTimestampDate(timestamp: Long): String {
             return dateFormat.format(Date(timestamp))
         }
-    }
-
-    enum class PathItemButtonType {
-        SHOW, SHARE, DELETE
     }
 }

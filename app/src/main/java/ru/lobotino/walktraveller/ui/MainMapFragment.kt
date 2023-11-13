@@ -93,12 +93,14 @@ import ru.lobotino.walktraveller.ui.model.BottomMenuState
 import ru.lobotino.walktraveller.ui.model.ConfirmDialogInfo
 import ru.lobotino.walktraveller.ui.model.ConfirmDialogType
 import ru.lobotino.walktraveller.ui.model.MapUiState
+import ru.lobotino.walktraveller.ui.model.PathsMenuType
 import ru.lobotino.walktraveller.ui.view.FindMyLocationButton
 import ru.lobotino.walktraveller.ui.view.MyPathsMenuView
 import ru.lobotino.walktraveller.ui.view.OuterPathsMenuView
 import ru.lobotino.walktraveller.usecases.LocalMapPathsInteractor
 import ru.lobotino.walktraveller.usecases.LocalPathRedactor
 import ru.lobotino.walktraveller.usecases.MapStateInteractor
+import ru.lobotino.walktraveller.usecases.OuterPathsInteractor
 import ru.lobotino.walktraveller.usecases.UserLocationInteractor
 import ru.lobotino.walktraveller.usecases.permissions.ExternalStoragePermissionsUseCase
 import ru.lobotino.walktraveller.usecases.permissions.GeoPermissionsUseCase
@@ -327,7 +329,7 @@ class MainMapFragment : Fragment() {
             myPathsMenu = view.findViewById<MyPathsMenuView>(R.id.my_paths_menu).apply {
                 setupOnClickListeners(
                     showAllPathsButtonClickListener = {
-                        viewModel.onShowAllPathsButtonClicked()
+                        viewModel.onShowAllPathsButtonClicked(PathsMenuType.MY_PATHS)
                     },
                     showPathsFilterButtonClickListener = {
                         viewModel.onShowPathsFilterButtonClicked()
@@ -336,15 +338,30 @@ class MainMapFragment : Fragment() {
                         viewModel.onPathsMenuBackButtonClicked()
                     },
                     itemButtonClickedListener = { pathId, itemButtonClickedType ->
-                        viewModel.onPathInMyListButtonClicked(pathId, itemButtonClickedType)
+                        viewModel.onPathInListButtonClicked(pathId, itemButtonClickedType, PathsMenuType.MY_PATHS)
                     })
             }
 
-//            outerPathsMenu = view.findViewById(R.id.outer_paths_menu)
+            outerPathsMenu = view.findViewById<OuterPathsMenuView>(R.id.outer_paths_menu).apply {
+                setupOnClickListeners(
+                    showAllPathsButtonClickListener = {
+                        viewModel.onShowAllPathsButtonClicked(PathsMenuType.OUTER_PATHS)
+                    },
+                    pathsMenuBackButtonClickListener = {
+                        viewModel.onPathsMenuBackButtonClicked()
+                    },
+                    confirmButtonClickListener = {
+                        viewModel.onOuterPathsConfirmButtonClicked()
+                    },
+                    itemButtonClickedListener = { pathId, itemButtonClickedType ->
+                        viewModel.onPathInListButtonClicked(pathId, itemButtonClickedType, PathsMenuType.OUTER_PATHS)
+                    })
+            }
+
             walkButtonsHolder = view.findViewById(R.id.walk_buttons_holder)
 
             showPathsMenuButton = view.findViewById<CardView>(R.id.show_paths_menu_button).apply {
-                setOnClickListener { viewModel.onShowPathsMenuClicked() }
+                setOnClickListener { viewModel.onShowMyPathsMenuClicked() }
             }
 
             openNavigationButton =
@@ -378,9 +395,11 @@ class MainMapFragment : Fragment() {
                 lastCreatedPathIdRepository
             )
 
+            val pathDistancesInMetersRepository = PathDistancesInMetersRepository(LocationsDistanceRepository())
+
             val pathRedactor = LocalPathRedactor(
                 databasePathRepository,
-                PathDistancesInMetersRepository(LocationsDistanceRepository())
+                pathDistancesInMetersRepository
             )
 
             viewModel =
@@ -443,7 +462,10 @@ class MainMapFragment : Fragment() {
                         owner = this,
                         bundle = bundle,
                         pathsSaverRepository = FilePathsSaverRepository(requireContext().applicationContext),
-                        pathsLoaderRepository = PathsLoaderRepository(requireContext().applicationContext)
+                        outerPathsInteractor = OuterPathsInteractor(
+                            PathsLoaderRepository(requireContext().applicationContext),
+                            pathDistancesInMetersRepository
+                        )
                     )
                 )[MapViewModel::class.java].apply {
 
@@ -475,8 +497,11 @@ class MainMapFragment : Fragment() {
                         }
                     }.launchIn(lifecycleScope)
 
-                    observeNewPathsInfoList.onEach { newPathsInfoList ->
-                        myPathsMenu.setPathsInfoItems(newPathsInfoList)
+                    observeNewPathsInfoList.onEach { newPathsInfoListEvent ->
+                        when (newPathsInfoListEvent.pathsMenuType) {
+                            PathsMenuType.MY_PATHS -> myPathsMenu.setPathsInfoItems(newPathsInfoListEvent.newPathInfoList)
+                            PathsMenuType.OUTER_PATHS -> outerPathsMenu.setPathsInfoItems(newPathsInfoListEvent.newPathInfoList)
+                        }
                     }.launchIn(lifecycleScope)
 
                     observeNewMapCenter.onEach { newMapCenter ->
@@ -488,8 +513,11 @@ class MainMapFragment : Fragment() {
                         }
                     }.launchIn(lifecycleScope)
 
-                    observeNewPathInfoListItemState.onEach { newPathInfoState ->
-                        myPathsMenu.syncPathInfoItemState(newPathInfoState)
+                    observeNewPathInfoListItemState.onEach { newPathInfoStateEvent ->
+                        when (newPathInfoStateEvent.pathsMenuType) {
+                            PathsMenuType.MY_PATHS -> myPathsMenu.syncPathInfoItemState(newPathInfoStateEvent.pathInfoItemState)
+                            PathsMenuType.OUTER_PATHS -> outerPathsMenu.syncPathInfoItemState(newPathInfoStateEvent.pathInfoItemState)
+                        }
                     }.launchIn(lifecycleScope)
 
                     observeHidePath.onEach { pathId ->
@@ -539,8 +567,11 @@ class MainMapFragment : Fragment() {
                         startActivity(Intent.createChooser(sendIntent, getString(R.string.share_file_title)))
                     }.launchIn(lifecycleScope)
 
-                    observeDeletePathInfoItemChannel.onEach { pathId ->
-                        myPathsMenu.deletePathInfoItem(pathId)
+                    observeDeletePathInfoItemChannel.onEach { deletePathInfoItemEvent ->
+                        when (deletePathInfoItemEvent.pathsMenuType) {
+                            PathsMenuType.MY_PATHS -> myPathsMenu.deletePathInfoItem(deletePathInfoItemEvent.pathId)
+                            PathsMenuType.OUTER_PATHS -> outerPathsMenu.deletePathInfoItem(deletePathInfoItemEvent.pathId)
+                        }
                     }.launchIn(lifecycleScope)
 
                     onInitFinish()
@@ -554,7 +585,7 @@ class MainMapFragment : Fragment() {
                 ConfirmDialogType.DELETE_PATH -> {
                     DeleteConfirmDialog(
                         context = context,
-                        onConfirm = { viewModel.onConfirmPathDelete(confirmDialogInfo.additionalInfo as Long) }).show()
+                        onConfirm = { viewModel.onConfirmMyPathDelete(confirmDialogInfo.additionalInfo as Long) }).show()
                 }
 
                 ConfirmDialogType.GEO_LOCATION_PERMISSION_REQUIRED -> {
@@ -641,24 +672,25 @@ class MainMapFragment : Fragment() {
         when (mapUiState.bottomMenuState) {
             BottomMenuState.DEFAULT -> {
                 myPathsMenu.visibility = GONE
-//                outerPathsMenu.visibility = GONE
+                outerPathsMenu.visibility = GONE
                 walkButtonsHolder.visibility = VISIBLE
             }
 
             BottomMenuState.MY_PATHS_MENU -> {
                 myPathsMenu.visibility = VISIBLE
-//                outerPathsMenu.visibility = GONE
+                outerPathsMenu.visibility = GONE
                 walkButtonsHolder.visibility = GONE
             }
 
             BottomMenuState.OUTER_PATHS_MENU -> {
                 myPathsMenu.visibility = GONE
-//                outerPathsMenu.visibility = VISIBLE
+                outerPathsMenu.visibility = VISIBLE
                 walkButtonsHolder.visibility = GONE
             }
         }
 
         myPathsMenu.syncState(mapUiState.myPathsUiState)
+        outerPathsMenu.syncState(mapUiState.outerPathsUiState)
 
         findMyLocationButton.updateState(mapUiState.findMyLocationButtonState)
 

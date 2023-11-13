@@ -5,7 +5,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:animateLayoutChanges="true">
+    android:animateLayoutChanges="true"
+    android:background="@color/white">
 
     <androidx.cardview.widget.CardView
         android:id="@+id/title_card_view"
@@ -133,12 +134,11 @@
     <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/confirm_button"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_height="50dp"
         android:layout_marginStart="4dp"
-        android:layout_marginTop="8dp"
         android:layout_marginEnd="4dp"
         android:background="@drawable/confirm_button_background"
-        android:backgroundTint="@color/bottom_button_color"
+        android:backgroundTint="@color/add_to_my_paths_button_color"
         android:text="@string/add_outer_paths_button"
         android:textAllCaps="false"
         android:textColor="@color/white"
@@ -146,5 +146,16 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         />
+
+    <include
+        android:id="@+id/empty_paths_error"
+        layout="@layout/empty_outer_paths_list_error"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/title_card_view"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -6,8 +6,10 @@ import ru.lobotino.walktraveller.model.map.MapPoint
 
 interface IPathDistancesRepository {
 
-    fun calculatePathLength(allPathPoints: List<MapPoint>): Float
+    fun calculatePathLength(allPathPoints: Array<MapPoint>): Float
 
-    fun calculateMostCommonPathRating(allPathSegments: List<MapPathSegment>): MostCommonRating
+    fun calculatePathLength(allPathSegments: Array<MapPathSegment>): Float
+
+    fun calculateMostCommonPathRating(allPathSegments: Array<MapPathSegment>): MostCommonRating
 
 }

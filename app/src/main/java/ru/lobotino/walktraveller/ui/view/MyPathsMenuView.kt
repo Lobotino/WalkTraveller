@@ -14,10 +14,11 @@ import com.google.android.material.progressindicator.CircularProgressIndicator
 import ru.lobotino.walktraveller.R
 import ru.lobotino.walktraveller.model.MostCommonRating
 import ru.lobotino.walktraveller.model.map.MapPathInfo
-import ru.lobotino.walktraveller.ui.PathsInfoAdapter
+import ru.lobotino.walktraveller.ui.adapter.PathsInfoAdapter
 import ru.lobotino.walktraveller.ui.model.MyPathsInfoListState
 import ru.lobotino.walktraveller.ui.model.MyPathsUiState
 import ru.lobotino.walktraveller.ui.model.PathInfoItemState
+import ru.lobotino.walktraveller.ui.model.PathItemButtonType
 import ru.lobotino.walktraveller.ui.model.ShowPathsButtonState
 import ru.lobotino.walktraveller.ui.model.ShowPathsFilterButtonState
 import ru.lobotino.walktraveller.usecases.DistanceInMetersToStringFormatter
@@ -40,7 +41,7 @@ class MyPathsMenuView : ConstraintLayout {
     private lateinit var pathsEmptyListError: ViewGroup
     private lateinit var pathListProgress: CircularProgressIndicator
 
-    private lateinit var itemButtonClickedListener: (Long, PathsInfoAdapter.PathItemButtonType) -> Unit
+    private lateinit var itemButtonClickedListener: (Long, PathItemButtonType) -> Unit
 
     private lateinit var pathsInfoListAdapter: PathsInfoAdapter
 
@@ -101,7 +102,7 @@ class MyPathsMenuView : ConstraintLayout {
         showAllPathsButtonClickListener: OnClickListener,
         showPathsFilterButtonClickListener: OnClickListener,
         pathsMenuBackButtonClickListener: OnClickListener,
-        itemButtonClickedListener: (Long, PathsInfoAdapter.PathItemButtonType) -> Unit
+        itemButtonClickedListener: (Long, PathItemButtonType) -> Unit
     ) {
         showAllPathsButton.setOnClickListener(showAllPathsButtonClickListener)
         showPathsFilterButton.setOnClickListener(showPathsFilterButtonClickListener)
