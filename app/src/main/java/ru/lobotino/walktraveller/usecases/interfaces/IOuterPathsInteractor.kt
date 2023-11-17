@@ -6,6 +6,8 @@ import ru.lobotino.walktraveller.model.map.MapRatingPath
 
 interface IOuterPathsInteractor {
 
+    suspend fun saveCachedPaths()
+
     suspend fun getAllPaths(pathsUri: Uri): List<MapPathInfo>
 
     fun getCachedOuterPaths(): List<MapRatingPath>

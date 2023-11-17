@@ -2,23 +2,48 @@ package ru.lobotino.walktraveller.usecases
 
 import android.net.Uri
 import java.util.Date
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withContext
 import ru.lobotino.walktraveller.model.map.MapPathInfo
 import ru.lobotino.walktraveller.model.map.MapPathSegment
 import ru.lobotino.walktraveller.model.map.MapRatingPath
 import ru.lobotino.walktraveller.repositories.interfaces.IPathDistancesRepository
+import ru.lobotino.walktraveller.repositories.interfaces.IPathRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IPathsLoaderRepository
 import ru.lobotino.walktraveller.usecases.interfaces.IOuterPathsInteractor
 
 class OuterPathsInteractor(
     private val pathsLoaderRepository: IPathsLoaderRepository,
-    private val pathDistancesRepository: IPathDistancesRepository
+    private val pathDistancesRepository: IPathDistancesRepository,
+    private val pathRepository: IPathRepository
 ) : IOuterPathsInteractor {
 
     private val cachedOuterPaths = ArrayList<OuterMapPathInfo>()
 
+    override suspend fun saveCachedPaths() = coroutineScope {
+        cachedOuterPaths.let { cachedOuterPaths ->
+            for (path in cachedOuterPaths) {
+                val savedPathId = withContext(Dispatchers.IO) { pathRepository.createNewPath(path.pathSegments) }
+                if (savedPathId != null) {
+                    val updatePathLengthAsync = async(Dispatchers.IO) {
+                        pathRepository.updatePathLength(savedPathId, path.pathInfo.length)
+                    }
+                    val updatePathMostCommonRating = async(Dispatchers.IO) {
+                        pathRepository.updatePathMostCommonRating(savedPathId, path.pathInfo.mostCommonRating)
+                    }
+                    updatePathLengthAsync.await()
+                    updatePathMostCommonRating.await()
+                }
+            }
+        }
+        cachedOuterPaths.clear()
+    }
+
     override suspend fun getAllPaths(pathsUri: Uri): List<MapPathInfo> {
         val todayDate = Date().time //fixme save timestamp on share
-        val paths = pathsLoaderRepository.loadAllRatingPathsFromFile(pathsUri)
+        val paths = withContext(Dispatchers.IO) { pathsLoaderRepository.loadAllRatingPathsFromFile(pathsUri) }
 
         synchronized(cachedOuterPaths) {
             cachedOuterPaths.clear()

@@ -931,6 +931,15 @@ class MapViewModel(
     }
 
     fun onOuterPathsConfirmButtonClicked() {
-        //TODO
+        viewModelScope.launch {
+            outerPathsInteractor.saveCachedPaths()
+        }
+
+        mapUiStateFlow.update { mapUiState ->
+            mapUiState.copy(
+                bottomMenuState = BottomMenuState.DEFAULT,
+                outerPathsUiState = OuterPathsUiState()
+            )
+        }
     }
 }

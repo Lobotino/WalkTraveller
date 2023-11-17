@@ -13,6 +13,7 @@ import ru.lobotino.walktraveller.repositories.interfaces.ILastCreatedPathIdRepos
 import ru.lobotino.walktraveller.repositories.interfaces.IPathRepository
 import java.sql.Timestamp
 import java.util.Date
+import ru.lobotino.walktraveller.model.map.MapPathSegment
 
 class DatabasePathRepository(
     database: AppDatabase,
@@ -40,15 +41,42 @@ class DatabasePathRepository(
                         mostCommonRating = MostCommonRating.UNKNOWN.ordinal
                     )
                 )
-            )
-                .let { insertedPathsIds ->
-                    val insertedPathId = insertedPathsIds[0]
-                    lastCreatedPathIdRepository.setLastCreatedPathId(insertedPathId)
-                    insertNewPathPointRelation(insertedPathId, insertedPointId)
-                    Log.i(TAG, "createNewPath $insertedPathId with startPoint $startPoint")
-                    return insertedPathId
-                }
+            ).let { insertedPathsIds ->
+                val insertedPathId = insertedPathsIds[0]
+                lastCreatedPathIdRepository.setLastCreatedPathId(insertedPathId)
+                insertNewPathPointRelation(insertedPathId, insertedPointId)
+                Log.i(TAG, "createNewPath $insertedPathId with startPoint $startPoint")
+                return insertedPathId
+            }
         }
+    }
+
+    override suspend fun createNewPath(pathsSegments: List<MapPathSegment>): Long? {
+        if (pathsSegments.isEmpty()) return null
+
+        val pathId = insertNewPoint(pathsSegments[0].startPoint).let { insertedPointId ->
+            pathsDao.insertPaths(
+                listOf(
+                    EntityPath(
+                        startPointId = insertedPointId,
+                        length = 0f,
+                        mostCommonRating = MostCommonRating.UNKNOWN.ordinal
+                    )
+                )
+            ).let { insertedPathsIds ->
+                val insertedPathId = insertedPathsIds[0]
+                Log.i(TAG, "createNewPath $insertedPathId with startPoint ${pathsSegments[0].startPoint}")
+                insertedPathId
+            }
+        }
+
+        addNewPathPoint(pathId, pathsSegments[0].finishPoint, pathsSegments[0].rating)
+
+        for (segment in pathsSegments) {
+            addNewPathPoint(pathId, segment.finishPoint, segment.rating)
+        }
+
+        return pathId
     }
 
     override suspend fun addNewPathPoint(

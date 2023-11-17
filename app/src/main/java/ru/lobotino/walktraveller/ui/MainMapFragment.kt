@@ -464,7 +464,8 @@ class MainMapFragment : Fragment() {
                         pathsSaverRepository = FilePathsSaverRepository(requireContext().applicationContext),
                         outerPathsInteractor = OuterPathsInteractor(
                             PathsLoaderRepository(requireContext().applicationContext),
-                            pathDistancesInMetersRepository
+                            pathDistancesInMetersRepository,
+                            databasePathRepository
                         )
                     )
                 )[MapViewModel::class.java].apply {
