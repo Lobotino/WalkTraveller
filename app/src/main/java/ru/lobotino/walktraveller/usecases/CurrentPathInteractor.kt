@@ -4,7 +4,6 @@ import java.sql.Timestamp
 import java.util.Date
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import ru.lobotino.walktraveller.model.map.MapPoint
 import ru.lobotino.walktraveller.repositories.interfaces.IPathRatingRepository
@@ -20,22 +19,20 @@ class CurrentPathInteractor(
     private var currentPathId: Long? = null
 
     override suspend fun addNewPathPoint(point: MapPoint) {
-        return coroutineScope {
-            if (currentPathId != null) {
-                withContext(defaultDispatcher) {
-                    databasePathRepository.addNewPathPoint(
-                        currentPathId!!,
-                        point,
-                        pathRatingRepository.getCurrentRating(),
-                        Timestamp(Date().time).time
-                    )
-                }
-            } else {
-                currentPathId = withContext(defaultDispatcher) {
-                    databasePathRepository.createNewPath(
-                        point
-                    )
-                }
+        if (currentPathId != null) {
+            withContext(defaultDispatcher) {
+                databasePathRepository.addNewPathPoint(
+                    currentPathId!!,
+                    point,
+                    pathRatingRepository.getCurrentRating(),
+                    Timestamp(Date().time).time
+                )
+            }
+        } else {
+            currentPathId = withContext(defaultDispatcher) {
+                databasePathRepository.createNewPath(
+                    point
+                )
             }
         }
     }

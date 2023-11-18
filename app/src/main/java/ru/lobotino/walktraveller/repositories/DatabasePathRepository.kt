@@ -43,7 +43,7 @@ class DatabasePathRepository(
                 val insertedPathId = insertedPathsIds[0]
                 lastCreatedPathIdRepository.setLastCreatedPathId(insertedPathId)
                 insertNewPathPointRelation(insertedPathId, insertedPointId)
-                Log.i(TAG, "createNewPath $insertedPathId with startPoint $startPoint")
+                Log.i(TAG, "createNewPath by start point pathId:$insertedPathId startPoint:$startPoint")
                 return insertedPathId
             }
         }
@@ -69,7 +69,7 @@ class DatabasePathRepository(
             ).let { insertedPathsIds ->
                 val insertedPathId = insertedPathsIds[0]
                 insertNewPathPointRelation(insertedPathId, insertedPointId)
-                Log.i(TAG, "createNewPath $insertedPathId with startPoint ${pathsSegments[0].startPoint}")
+                Log.i(TAG, "createNewPath by segments pathId:$insertedPathId startPoint:${pathsSegments[0].startPoint}")
                 insertedPathId
             }
         }
