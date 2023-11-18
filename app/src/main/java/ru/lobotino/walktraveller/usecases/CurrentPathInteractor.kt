@@ -1,5 +1,7 @@
 package ru.lobotino.walktraveller.usecases
 
+import java.sql.Timestamp
+import java.util.Date
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
@@ -24,7 +26,8 @@ class CurrentPathInteractor(
                     databasePathRepository.addNewPathPoint(
                         currentPathId!!,
                         point,
-                        pathRatingRepository.getCurrentRating()
+                        pathRatingRepository.getCurrentRating(),
+                        Timestamp(Date().time).time
                     )
                 }
             } else {

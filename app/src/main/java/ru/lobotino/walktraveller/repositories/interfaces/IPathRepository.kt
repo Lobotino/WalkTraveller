@@ -12,12 +12,18 @@ interface IPathRepository {
 
     suspend fun createNewPath(startPoint: MapPoint): Long
 
-    suspend fun createNewPath(pathsSegments: List<MapPathSegment>): Long?
+    suspend fun createNewPath(
+        pathsSegments: List<MapPathSegment>,
+        pathLength: Float? = null,
+        mostCommonRating: MostCommonRating? = null,
+        timestamp: Long
+    ): Long?
 
     suspend fun addNewPathPoint(
         pathId: Long,
         point: MapPoint,
-        segmentRating: SegmentRating = SegmentRating.NORMAL
+        segmentRating: SegmentRating = SegmentRating.NORMAL,
+        timestamp: Long
     ): Long
 
     suspend fun getAllPathsInfo(): List<EntityPath>

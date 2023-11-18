@@ -28,6 +28,9 @@ import ru.lobotino.walktraveller.repositories.LastCreatedPathIdRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IPathRepository
 import ru.lobotino.walktraveller.utils.ext.toMapPoint
 import java.io.IOException
+import ru.lobotino.walktraveller.database.model.EntityPathPointRelation
+import ru.lobotino.walktraveller.database.model.EntityPathSegment
+import ru.lobotino.walktraveller.model.map.MapPathSegment
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
@@ -43,12 +46,16 @@ class DatabasePathRepositoryTests {
 
     private lateinit var firstPoint: EntityPoint
     private lateinit var secondPoint: EntityPoint
+    private lateinit var thirdPoint: EntityPoint
 
     private lateinit var firstPath: EntityPath
     private lateinit var secondPath: EntityPath
 
+    private lateinit var firstPathSegment: EntityPathSegment
+    private lateinit var secondPathSegment: EntityPathSegment
+
     @Before
-    fun createDb() {
+    fun prepare() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         db = Room.inMemoryDatabaseBuilder(
             context, AppDatabase::class.java
@@ -67,8 +74,11 @@ class DatabasePathRepositoryTests {
         pathSegmentRelationsDao = db.getPathSegmentRelationsDao()
         firstPoint = EntityPoint(1, 1.0, 1.0)
         secondPoint = EntityPoint(2, 2.0, 2.0)
+        thirdPoint = EntityPoint(3, 3.0, 3.0)
         firstPath = EntityPath(1, 1, 0.0f, MostCommonRating.UNKNOWN.ordinal)
         secondPath = EntityPath(2, 2, 0.0f, MostCommonRating.UNKNOWN.ordinal)
+        firstPathSegment = EntityPathSegment(firstPoint.id, secondPoint.id, SegmentRating.NORMAL.ordinal, 0)
+        secondPathSegment = EntityPathSegment(secondPoint.id, thirdPoint.id, SegmentRating.NORMAL.ordinal, 0)
     }
 
     @After
@@ -101,7 +111,7 @@ class DatabasePathRepositoryTests {
     @Throws(Exception::class)
     fun createPathWithTwoPoints() = runTest {
         databasePathRepository.createNewPath(firstPoint.toMapPoint()).let { resultPathId ->
-            databasePathRepository.addNewPathPoint(resultPathId, secondPoint.toMapPoint())
+            databasePathRepository.addNewPathPoint(resultPathId, secondPoint.toMapPoint(), timestamp = 0)
 
             assertThat(
                 listOf(firstPoint, secondPoint),
@@ -121,9 +131,9 @@ class DatabasePathRepositoryTests {
 
     @Test
     @Throws(Exception::class)
-    fun createAndDeletePath() = runTest {
+    fun createAndDeletePathByStartPoint() = runTest {
         databasePathRepository.createNewPath(firstPoint.toMapPoint()).let { resultPathId ->
-            databasePathRepository.addNewPathPoint(resultPathId, secondPoint.toMapPoint())
+            databasePathRepository.addNewPathPoint(resultPathId, secondPoint.toMapPoint(), timestamp = 0)
 
             assertThat(
                 listOf(firstPoint, secondPoint),
@@ -149,6 +159,62 @@ class DatabasePathRepositoryTests {
 
     @Test
     @Throws(Exception::class)
+    fun createAndDeletePathBySegments() = runTest {
+        val pathId = databasePathRepository.createNewPath(
+            listOf(
+                MapPathSegment(firstPoint.toMapPoint(), secondPoint.toMapPoint(), SegmentRating.values()[firstPathSegment.rating]),
+                MapPathSegment(secondPoint.toMapPoint(), thirdPoint.toMapPoint(), SegmentRating.values()[secondPathSegment.rating])
+            ),
+            1f,
+            MostCommonRating.NORMAL,
+            0
+        )
+        assertNotNull(pathId)
+
+        pathId?.let { resultPathId ->
+            assertThat(
+                databasePathRepository.getAllPathPoints(resultPathId),
+                equalTo(listOf(firstPoint, secondPoint, thirdPoint)),
+            )
+
+            assertThat(
+                pathsDao.getPathById(resultPathId),
+                equalTo(
+                    EntityPath(
+                        resultPathId,
+                        firstPoint.id,
+                        1f,
+                        SegmentRating.NORMAL.ordinal
+                    )
+                )
+            )
+
+            assertThat(
+                pathPointsRelationsDao.getAllPathPointRelations(),
+                equalTo(
+                    listOf(
+                        EntityPathPointRelation(resultPathId, firstPoint.id),
+                        EntityPathPointRelation(resultPathId, secondPoint.id),
+                        EntityPathPointRelation(resultPathId, thirdPoint.id),
+                    )
+                )
+            )
+
+            assertThat(
+                pathSegmentRelationsDao.getAllPathSegments(),
+                equalTo(listOf(firstPathSegment, secondPathSegment))
+            )
+
+            databasePathRepository.deletePath(resultPathId)
+        }
+        assertThat(pointsDao.getAllPoints(), equalTo(emptyList()))
+        assertThat(pathsDao.getAllPaths(), equalTo(emptyList()))
+        assertThat(pathPointsRelationsDao.getAllPathPointRelations(), equalTo(emptyList()))
+        assertThat(pathSegmentRelationsDao.getAllPathSegments(), equalTo(emptyList()))
+    }
+
+    @Test
+    @Throws(Exception::class)
     fun getAllPathsInfo() = runTest {
         databasePathRepository.createNewPath(firstPoint.toMapPoint())
         databasePathRepository.createNewPath(secondPoint.toMapPoint())
@@ -162,7 +228,8 @@ class DatabasePathRepositoryTests {
             databasePathRepository.addNewPathPoint(
                 resultPathId,
                 secondPoint.toMapPoint(),
-                SegmentRating.NORMAL
+                SegmentRating.NORMAL,
+                timestamp = 0
             )
 
             val actualAllPathSegments = databasePathRepository.getAllPathSegments(resultPathId)
@@ -192,7 +259,8 @@ class DatabasePathRepositoryTests {
             databasePathRepository.addNewPathPoint(
                 resultPathId,
                 secondPoint.toMapPoint(),
-                SegmentRating.NORMAL
+                SegmentRating.NORMAL,
+                timestamp = 0
             )
 
             val actualStartPathSegment = databasePathRepository.getPathStartSegment(resultPathId)
@@ -227,7 +295,8 @@ class DatabasePathRepositoryTests {
             databasePathRepository.addNewPathPoint(
                 resultPathId,
                 secondPoint.toMapPoint(),
-                SegmentRating.NORMAL
+                SegmentRating.NORMAL,
+                timestamp = 0
             )
 
             val actualLastPathSegments = databasePathRepository.getLastPathSegments()
@@ -257,7 +326,8 @@ class DatabasePathRepositoryTests {
             databasePathRepository.addNewPathPoint(
                 resultPathId,
                 secondPoint.toMapPoint(),
-                SegmentRating.NORMAL
+                SegmentRating.NORMAL,
+                timestamp = 0
             )
 
             assertThat(firstPoint, equalTo(databasePathRepository.getPointInfo(firstPoint.id)))

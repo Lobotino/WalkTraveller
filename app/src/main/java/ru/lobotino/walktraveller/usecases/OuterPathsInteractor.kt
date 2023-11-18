@@ -25,16 +25,13 @@ class OuterPathsInteractor(
     override suspend fun saveCachedPaths() = coroutineScope {
         cachedOuterPaths.let { cachedOuterPaths ->
             for (path in cachedOuterPaths) {
-                val savedPathId = withContext(Dispatchers.IO) { pathRepository.createNewPath(path.pathSegments) }
-                if (savedPathId != null) {
-                    val updatePathLengthAsync = async(Dispatchers.IO) {
-                        pathRepository.updatePathLength(savedPathId, path.pathInfo.length)
-                    }
-                    val updatePathMostCommonRating = async(Dispatchers.IO) {
-                        pathRepository.updatePathMostCommonRating(savedPathId, path.pathInfo.mostCommonRating)
-                    }
-                    updatePathLengthAsync.await()
-                    updatePathMostCommonRating.await()
+                withContext(Dispatchers.IO) {
+                    pathRepository.createNewPath(
+                        path.pathSegments,
+                        path.pathInfo.length,
+                        path.pathInfo.mostCommonRating,
+                        path.pathInfo.timestamp
+                    )
                 }
             }
         }

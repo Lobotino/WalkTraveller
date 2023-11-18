@@ -11,8 +11,6 @@ import ru.lobotino.walktraveller.model.SegmentRating
 import ru.lobotino.walktraveller.model.map.MapPoint
 import ru.lobotino.walktraveller.repositories.interfaces.ILastCreatedPathIdRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IPathRepository
-import java.sql.Timestamp
-import java.util.Date
 import ru.lobotino.walktraveller.model.map.MapPathSegment
 
 class DatabasePathRepository(
@@ -51,7 +49,12 @@ class DatabasePathRepository(
         }
     }
 
-    override suspend fun createNewPath(pathsSegments: List<MapPathSegment>): Long? {
+    override suspend fun createNewPath(
+        pathsSegments: List<MapPathSegment>,
+        pathLength: Float?,
+        mostCommonRating: MostCommonRating?,
+        timestamp: Long
+    ): Long? {
         if (pathsSegments.isEmpty()) return null
 
         val pathId = insertNewPoint(pathsSegments[0].startPoint).let { insertedPointId ->
@@ -65,29 +68,36 @@ class DatabasePathRepository(
                 )
             ).let { insertedPathsIds ->
                 val insertedPathId = insertedPathsIds[0]
+                insertNewPathPointRelation(insertedPathId, insertedPointId)
                 Log.i(TAG, "createNewPath $insertedPathId with startPoint ${pathsSegments[0].startPoint}")
                 insertedPathId
             }
         }
 
-        addNewPathPoint(pathId, pathsSegments[0].finishPoint, pathsSegments[0].rating)
-
         for (segment in pathsSegments) {
-            addNewPathPoint(pathId, segment.finishPoint, segment.rating)
+            addNewPathPoint(pathId, segment.finishPoint, segment.rating, timestamp)
         }
 
+        if (pathLength != null) {
+            updatePathLength(pathId, pathLength)
+        }
+
+        if (mostCommonRating != null) {
+            updatePathMostCommonRating(pathId, mostCommonRating)
+        }
         return pathId
     }
 
     override suspend fun addNewPathPoint(
         pathId: Long,
         point: MapPoint,
-        segmentRating: SegmentRating
+        segmentRating: SegmentRating,
+        timestamp: Long
     ): Long {
         insertNewPoint(point).let { insertedPointId ->
             Log.i(TAG, "addNewPathPoint $insertedPointId to pathId $pathId")
             insertNewPathPointRelation(pathId, insertedPointId)
-            insertNewPathSegment(pathId, insertedPointId, segmentRating)
+            insertNewPathSegment(pathId, insertedPointId, segmentRating, timestamp)
             return insertedPointId
         }
     }
@@ -117,7 +127,8 @@ class DatabasePathRepository(
     private suspend fun insertNewPathSegment(
         pathId: Long,
         newPointId: Long,
-        segmentRating: SegmentRating
+        segmentRating: SegmentRating,
+        timestamp: Long
     ) {
         val pathFinishPoint = getPathFinishPoint(pathId)
         if (pathFinishPoint != null) {
@@ -127,7 +138,7 @@ class DatabasePathRepository(
                         startPointId = pathFinishPoint.id,
                         finishPointId = newPointId,
                         rating = segmentRating.ordinal,
-                        timestamp = Timestamp(Date().time).time
+                        timestamp = timestamp
                     )
                 )
             )
