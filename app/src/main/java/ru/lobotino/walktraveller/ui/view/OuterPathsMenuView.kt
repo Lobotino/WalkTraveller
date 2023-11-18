@@ -74,7 +74,7 @@ class OuterPathsMenuView : ConstraintLayout {
         pathsInfoList = view.findViewById<RecyclerView>(R.id.paths_list).apply {
             adapter = OuterPathsInfoAdapter(
                 DistanceInMetersToStringFormatter(
-                    context.getString(R.string.meters_full),
+                    context.getString(R.string.meters_short),
                     context.getString(R.string.kilometers_full),
                     context.getString(R.string.kilometers_short)
                 ),

@@ -43,8 +43,8 @@ class PathsDatabaseTests {
         pathsDao = db.getPathsDao()
         firstPoint = EntityPoint(1, 1.0, 1.0)
         secondPoint = EntityPoint(2, 2.0, 2.0)
-        firstPath = EntityPath(1, 1, 1f, MostCommonRating.UNKNOWN.ordinal)
-        secondPath = EntityPath(2, 2, 2f, MostCommonRating.UNKNOWN.ordinal)
+        firstPath = EntityPath(1, 1, 1f, MostCommonRating.UNKNOWN.ordinal, false)
+        secondPath = EntityPath(2, 2, 2f, MostCommonRating.UNKNOWN.ordinal, false)
     }
 
     @After

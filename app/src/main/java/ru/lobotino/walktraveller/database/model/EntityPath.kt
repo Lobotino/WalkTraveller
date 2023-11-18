@@ -12,5 +12,6 @@ data class EntityPath(
     @ColumnInfo(
         name = "most_common_rating",
         defaultValue = "5"
-    ) val mostCommonRating: Int //Default value 5 because it's ordinal of UNKNOWN state in MostCommonRating model
+    ) val mostCommonRating: Int, //Default value 5 because it's ordinal of UNKNOWN state in MostCommonRating model
+    @ColumnInfo(name = "is_outer_path") val isOuterPath: Boolean
 )

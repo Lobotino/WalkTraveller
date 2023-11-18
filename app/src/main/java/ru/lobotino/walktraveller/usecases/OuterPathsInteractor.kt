@@ -30,7 +30,8 @@ class OuterPathsInteractor(
                         path.pathSegments,
                         path.pathInfo.length,
                         path.pathInfo.mostCommonRating,
-                        path.pathInfo.timestamp
+                        path.pathInfo.timestamp,
+                        true
                     )
                 }
             }
@@ -53,7 +54,8 @@ class OuterPathsInteractor(
                             index.toLong(),
                             todayDate,
                             pathDistancesRepository.calculateMostCommonPathRating(pathSegments.toTypedArray()),
-                            pathDistancesRepository.calculatePathLength(pathSegments.toTypedArray())
+                            pathDistancesRepository.calculatePathLength(pathSegments.toTypedArray()),
+                            true
                         ), pathSegments
                     )
                 )

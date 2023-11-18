@@ -8,7 +8,7 @@ import ru.lobotino.walktraveller.usecases.interfaces.IDistanceToStringFormatter
 class DistanceFormatterTests {
 
     companion object {
-        private const val metersFull = "Meters"
+        private const val metersFull = "m"
         private const val kilometersFull = "Kilometers"
         private const val kilometersShort = "Km"
     }

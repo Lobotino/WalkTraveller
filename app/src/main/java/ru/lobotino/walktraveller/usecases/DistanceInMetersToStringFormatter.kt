@@ -3,7 +3,7 @@ package ru.lobotino.walktraveller.usecases
 import ru.lobotino.walktraveller.usecases.interfaces.IDistanceToStringFormatter
 
 class DistanceInMetersToStringFormatter(
-    private val metersFull: String,
+    private val metersShort: String,
     private val kilometersFull: String,
     private val kilometersShort: String
 ) : IDistanceToStringFormatter {
@@ -23,7 +23,7 @@ class DistanceInMetersToStringFormatter(
                 "$kilometers.$meters $kilometersShort"
             }
         } else {
-            "${distance.toInt()} $metersFull"
+            "${distance.toInt()} $metersShort"
         }
     }
 }

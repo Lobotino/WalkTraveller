@@ -28,7 +28,8 @@ class DatabasePathRepository(
     private val pathSegmentsDao = database.getPathSegmentRelationsDao()
 
     override suspend fun createNewPath(
-        startPoint: MapPoint
+        startPoint: MapPoint,
+        isOuterPath: Boolean
     ): Long {
         insertNewPoint(startPoint).let { insertedPointId ->
             pathsDao.insertPaths(
@@ -36,7 +37,8 @@ class DatabasePathRepository(
                     EntityPath(
                         startPointId = insertedPointId,
                         length = 0f,
-                        mostCommonRating = MostCommonRating.UNKNOWN.ordinal
+                        mostCommonRating = MostCommonRating.UNKNOWN.ordinal,
+                        isOuterPath = isOuterPath
                     )
                 )
             ).let { insertedPathsIds ->
@@ -53,11 +55,12 @@ class DatabasePathRepository(
         pathsSegments: List<MapPathSegment>,
         pathLength: Float?,
         mostCommonRating: MostCommonRating?,
-        timestamp: Long
+        timestamp: Long,
+        isOuterPath: Boolean
     ): Long? {
         if (pathsSegments.isEmpty()) return null
 
-        val pathId = createNewPath(pathsSegments[0].startPoint)
+        val pathId = createNewPath(pathsSegments[0].startPoint, isOuterPath)
 
         for (segment in pathsSegments) {
             addNewPathPoint(pathId, segment.finishPoint, segment.rating, timestamp)

@@ -18,16 +18,35 @@
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
-            <androidx.cardview.widget.CardView
-                android:id="@+id/path_most_common_rating_color"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:layout_gravity="center_vertical"
-                android:layout_marginStart="6dp"
-                android:layout_marginTop="12dp"
-                android:layout_marginBottom="12dp"
-                app:cardBackgroundColor="@color/rating_unknown"
-                app:cardCornerRadius="6dp"/>
+            <FrameLayout
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent">
+
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/path_most_common_rating_color"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginStart="6dp"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginEnd="6dp"
+                    android:layout_marginBottom="12dp"
+                    app:cardBackgroundColor="@color/rating_unknown"
+                    app:cardCornerRadius="6dp"/>
+
+                <ImageView
+                    android:id="@+id/outer_paths_image"
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_gravity="top|end"
+                    android:layout_marginTop="8dp"
+                    android:elevation="20dp"
+                    android:src="@drawable/ic_baseline_share_24"
+                    android:visibility="gone"
+                    tools:ignore="ContentDescription"
+                    tools:visibility="visible"/>
+
+            </FrameLayout>
 
             <TextView
                 android:id="@+id/path_length"
@@ -35,12 +54,14 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
                 android:layout_marginStart="12dp"
+                android:layout_marginTop="12dp"
                 android:layout_marginEnd="4dp"
+                android:layout_marginBottom="12dp"
                 android:ellipsize="end"
                 android:maxLines="1"
                 android:textColor="@color/black"
                 android:textSize="18sp"
-                tools:text="980 Meters"/>
+                tools:text="980 m"/>
 
         </LinearLayout>
 

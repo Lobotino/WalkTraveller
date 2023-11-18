@@ -6,5 +6,6 @@ data class MapPathInfo(
     val pathId: Long,
     val timestamp: Long,
     val mostCommonRating: MostCommonRating,
-    val length: Float
+    val length: Float,
+    val isOuterPath: Boolean
 )

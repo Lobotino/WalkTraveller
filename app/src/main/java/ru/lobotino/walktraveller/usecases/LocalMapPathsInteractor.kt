@@ -176,7 +176,8 @@ class LocalMapPathsInteractor(
                             path.id,
                             pathStartSegment.timestamp,
                             pathMostCommonRating,
-                            pathLength
+                            pathLength,
+                            path.isOuterPath
                         ).also { pathInfo -> cachePathRepository.savePathInfo(pathInfo) }
                     )
                 }

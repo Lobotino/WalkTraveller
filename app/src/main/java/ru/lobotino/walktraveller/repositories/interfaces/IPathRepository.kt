@@ -10,13 +10,17 @@ import ru.lobotino.walktraveller.model.map.MapPoint
 
 interface IPathRepository {
 
-    suspend fun createNewPath(startPoint: MapPoint): Long
+    suspend fun createNewPath(
+        startPoint: MapPoint,
+        isOuterPath: Boolean
+    ): Long
 
     suspend fun createNewPath(
         pathsSegments: List<MapPathSegment>,
         pathLength: Float? = null,
         mostCommonRating: MostCommonRating? = null,
-        timestamp: Long
+        timestamp: Long,
+        isOuterPath: Boolean
     ): Long?
 
     suspend fun addNewPathPoint(

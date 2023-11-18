@@ -31,7 +31,8 @@ class CurrentPathInteractor(
         } else {
             currentPathId = withContext(defaultDispatcher) {
                 databasePathRepository.createNewPath(
-                    point
+                    point,
+                    false
                 )
             }
         }

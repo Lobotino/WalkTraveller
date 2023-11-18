@@ -11,7 +11,7 @@
     <string name="cancel_button">Cancel</string>
     <string name="delete_button">Delete</string>
     <string name="add_outer_paths_button">Add to my paths</string>
-    <string name="meters_full">Meters</string>
+    <string name="meters_short">m</string>
     <string name="kilometers_full">Kilometers</string>
     <string name="kilometers_short">Km</string>
     <string name="empty_outer_paths_list_title">No paths in list</string>

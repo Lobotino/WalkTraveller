@@ -117,6 +117,7 @@ open class PathsInfoAdapter(
         private lateinit var pathButtonShareProgress: CircularProgressIndicator
         private lateinit var pathButtonDelete: CardView
         private lateinit var pathButtonShare: CardView
+        private lateinit var outerPathImage: ImageView
 
         init {
             prepareView(view)
@@ -134,6 +135,7 @@ open class PathsInfoAdapter(
             pathButtonShare = view.findViewById(R.id.path_button_share)
             pathButtonShareImage = view.findViewById(R.id.path_button_share_image)
             pathButtonShareProgress = view.findViewById(R.id.path_button_share_progress)
+            outerPathImage = view.findViewById(R.id.outer_paths_image)
         }
 
         open fun bind(
@@ -173,6 +175,11 @@ open class PathsInfoAdapter(
             pathButtonShareProgress.visibility = when (path.shareButtonState) {
                 PathInfoItemShareButtonState.LOADING -> View.VISIBLE
                 else -> View.GONE
+            }
+            outerPathImage.visibility = if (path.pathInfo.isOuterPath) {
+                View.VISIBLE
+            } else {
+                View.GONE
             }
         }
 

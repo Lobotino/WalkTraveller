@@ -75,8 +75,8 @@ class DatabasePathRepositoryTests {
         firstPoint = EntityPoint(1, 1.0, 1.0)
         secondPoint = EntityPoint(2, 2.0, 2.0)
         thirdPoint = EntityPoint(3, 3.0, 3.0)
-        firstPath = EntityPath(1, 1, 0.0f, MostCommonRating.UNKNOWN.ordinal)
-        secondPath = EntityPath(2, 2, 0.0f, MostCommonRating.UNKNOWN.ordinal)
+        firstPath = EntityPath(1, 1, 0.0f, MostCommonRating.UNKNOWN.ordinal, false)
+        secondPath = EntityPath(2, 2, 0.0f, MostCommonRating.UNKNOWN.ordinal, false)
         firstPathSegment = EntityPathSegment(firstPoint.id, secondPoint.id, SegmentRating.NORMAL.ordinal, 0)
         secondPathSegment = EntityPathSegment(secondPoint.id, thirdPoint.id, SegmentRating.NORMAL.ordinal, 0)
     }
@@ -90,7 +90,7 @@ class DatabasePathRepositoryTests {
     @Test
     @Throws(Exception::class)
     fun createPathWithOnePoint() = runTest {
-        databasePathRepository.createNewPath(firstPoint.toMapPoint()).let { resultPathId ->
+        databasePathRepository.createNewPath(firstPoint.toMapPoint(), false).let { resultPathId ->
             assertThat(
                 databasePathRepository.getAllPathPoints(resultPathId),
                 equalTo(listOf(firstPoint))
@@ -102,7 +102,8 @@ class DatabasePathRepositoryTests {
                         resultPathId,
                         firstPoint.id,
                         firstPath.length,
-                        firstPath.mostCommonRating
+                        firstPath.mostCommonRating,
+                        false
                     )
                 )
             )
@@ -113,7 +114,7 @@ class DatabasePathRepositoryTests {
     @Test
     @Throws(Exception::class)
     fun createPathWithTwoPoints() = runTest {
-        databasePathRepository.createNewPath(firstPoint.toMapPoint()).let { resultPathId ->
+        databasePathRepository.createNewPath(firstPoint.toMapPoint(), false).let { resultPathId ->
             databasePathRepository.addNewPathPoint(resultPathId, secondPoint.toMapPoint(), timestamp = 0)
 
             assertThat(
@@ -127,7 +128,8 @@ class DatabasePathRepositoryTests {
                         resultPathId,
                         firstPoint.id,
                         firstPath.length,
-                        firstPath.mostCommonRating
+                        firstPath.mostCommonRating,
+                        false
                     )
                 )
             )
@@ -137,7 +139,7 @@ class DatabasePathRepositoryTests {
     @Test
     @Throws(Exception::class)
     fun createAndDeletePathByStartPoint() = runTest {
-        databasePathRepository.createNewPath(firstPoint.toMapPoint()).let { resultPathId ->
+        databasePathRepository.createNewPath(firstPoint.toMapPoint(), false).let { resultPathId ->
             databasePathRepository.addNewPathPoint(resultPathId, secondPoint.toMapPoint(), timestamp = 0)
 
             assertThat(
@@ -151,7 +153,8 @@ class DatabasePathRepositoryTests {
                         resultPathId,
                         firstPoint.id,
                         firstPath.length,
-                        firstPath.mostCommonRating
+                        firstPath.mostCommonRating,
+                        false
                     )
                 )
             )
@@ -174,7 +177,8 @@ class DatabasePathRepositoryTests {
             ),
             1f,
             MostCommonRating.NORMAL,
-            0
+            0,
+            false
         )
         assertNotNull(pathId)
 
@@ -191,7 +195,8 @@ class DatabasePathRepositoryTests {
                         resultPathId,
                         firstPoint.id,
                         1f,
-                        SegmentRating.NORMAL.ordinal
+                        SegmentRating.NORMAL.ordinal,
+                        false
                     )
                 )
             )
@@ -223,15 +228,15 @@ class DatabasePathRepositoryTests {
     @Test
     @Throws(Exception::class)
     fun getAllPathsInfo() = runTest {
-        databasePathRepository.createNewPath(firstPoint.toMapPoint())
-        databasePathRepository.createNewPath(secondPoint.toMapPoint())
+        databasePathRepository.createNewPath(firstPoint.toMapPoint(), false)
+        databasePathRepository.createNewPath(secondPoint.toMapPoint(), false)
         assertThat(databasePathRepository.getAllPathsInfo(), equalTo(listOf(firstPath, secondPath)))
     }
 
     @Test
     @Throws(Exception::class)
     fun getAllPathSegments() = runTest {
-        databasePathRepository.createNewPath(firstPoint.toMapPoint()).let { resultPathId ->
+        databasePathRepository.createNewPath(firstPoint.toMapPoint(), false).let { resultPathId ->
             databasePathRepository.addNewPathPoint(
                 resultPathId,
                 secondPoint.toMapPoint(),
@@ -262,7 +267,7 @@ class DatabasePathRepositoryTests {
     @Test
     @Throws(Exception::class)
     fun getPathStartSegment() = runTest {
-        databasePathRepository.createNewPath(firstPoint.toMapPoint()).let { resultPathId ->
+        databasePathRepository.createNewPath(firstPoint.toMapPoint(), false).let { resultPathId ->
             databasePathRepository.addNewPathPoint(
                 resultPathId,
                 secondPoint.toMapPoint(),
@@ -291,14 +296,14 @@ class DatabasePathRepositoryTests {
     @Test
     @Throws(Exception::class)
     fun getLastPathInfo() = runTest {
-        databasePathRepository.createNewPath(firstPoint.toMapPoint())
+        databasePathRepository.createNewPath(firstPoint.toMapPoint(), false)
         assertThat(databasePathRepository.getLastPathInfo(), equalTo(firstPath))
     }
 
     @Test
     @Throws(Exception::class)
     fun getLastPathSegments() = runTest {
-        databasePathRepository.createNewPath(firstPoint.toMapPoint()).let { resultPathId ->
+        databasePathRepository.createNewPath(firstPoint.toMapPoint(), false).let { resultPathId ->
             databasePathRepository.addNewPathPoint(
                 resultPathId,
                 secondPoint.toMapPoint(),
@@ -329,7 +334,7 @@ class DatabasePathRepositoryTests {
     @Test
     @Throws(Exception::class)
     fun getPointInfo() = runTest {
-        databasePathRepository.createNewPath(firstPoint.toMapPoint()).let { resultPathId ->
+        databasePathRepository.createNewPath(firstPoint.toMapPoint(), false).let { resultPathId ->
             databasePathRepository.addNewPathPoint(
                 resultPathId,
                 secondPoint.toMapPoint(),
