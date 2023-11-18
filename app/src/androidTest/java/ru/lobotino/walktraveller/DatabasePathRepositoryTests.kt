@@ -92,17 +92,19 @@ class DatabasePathRepositoryTests {
     fun createPathWithOnePoint() = runTest {
         databasePathRepository.createNewPath(firstPoint.toMapPoint()).let { resultPathId ->
             assertThat(
-                listOf(firstPoint),
-                equalTo(databasePathRepository.getAllPathPoints(resultPathId))
+                databasePathRepository.getAllPathPoints(resultPathId),
+                equalTo(listOf(firstPoint))
             )
             assertThat(
-                EntityPath(
-                    resultPathId,
-                    firstPoint.id,
-                    firstPath.length,
-                    firstPath.mostCommonRating
-                ),
-                equalTo(pathsDao.getPathById(resultPathId))
+                pathsDao.getPathById(resultPathId),
+                equalTo(
+                    EntityPath(
+                        resultPathId,
+                        firstPoint.id,
+                        firstPath.length,
+                        firstPath.mostCommonRating
+                    )
+                )
             )
         }
     }
@@ -114,17 +116,19 @@ class DatabasePathRepositoryTests {
             databasePathRepository.addNewPathPoint(resultPathId, secondPoint.toMapPoint(), timestamp = 0)
 
             assertThat(
-                listOf(firstPoint, secondPoint),
-                equalTo(pointsDao.getAllPoints())
+                pointsDao.getAllPoints(),
+                equalTo(listOf(firstPoint, secondPoint))
             )
             assertThat(
-                EntityPath(
-                    resultPathId,
-                    firstPoint.id,
-                    firstPath.length,
-                    firstPath.mostCommonRating
-                ),
-                equalTo(pathsDao.getPathById(resultPathId))
+                pathsDao.getPathById(resultPathId),
+                equalTo(
+                    EntityPath(
+                        resultPathId,
+                        firstPoint.id,
+                        firstPath.length,
+                        firstPath.mostCommonRating
+                    )
+                )
             )
         }
     }
@@ -136,25 +140,27 @@ class DatabasePathRepositoryTests {
             databasePathRepository.addNewPathPoint(resultPathId, secondPoint.toMapPoint(), timestamp = 0)
 
             assertThat(
-                listOf(firstPoint, secondPoint),
-                equalTo(databasePathRepository.getAllPathPoints(resultPathId))
+                databasePathRepository.getAllPathPoints(resultPathId),
+                equalTo(listOf(firstPoint, secondPoint))
             )
             assertThat(
-                EntityPath(
-                    resultPathId,
-                    firstPoint.id,
-                    firstPath.length,
-                    firstPath.mostCommonRating
-                ),
-                equalTo(pathsDao.getPathById(resultPathId))
+                pathsDao.getPathById(resultPathId),
+                equalTo(
+                    EntityPath(
+                        resultPathId,
+                        firstPoint.id,
+                        firstPath.length,
+                        firstPath.mostCommonRating
+                    )
+                )
             )
 
             databasePathRepository.deletePath(resultPathId)
         }
-        assertThat(emptyList(), equalTo(pointsDao.getAllPoints()))
-        assertThat(emptyList(), equalTo(pathsDao.getAllPaths()))
-        assertThat(emptyList(), equalTo(pathPointsRelationsDao.getAllPathPointRelations()))
-        assertThat(emptyList(), equalTo(pathSegmentRelationsDao.getAllPathSegments()))
+        assertThat(pointsDao.getAllPoints(), equalTo(emptyList()))
+        assertThat(pathsDao.getAllPaths(), equalTo(emptyList()))
+        assertThat(pathPointsRelationsDao.getAllPathPointRelations(), equalTo(emptyList()))
+        assertThat(pathSegmentRelationsDao.getAllPathSegments(), equalTo(emptyList()))
     }
 
     @Test
@@ -218,7 +224,7 @@ class DatabasePathRepositoryTests {
     fun getAllPathsInfo() = runTest {
         databasePathRepository.createNewPath(firstPoint.toMapPoint())
         databasePathRepository.createNewPath(secondPoint.toMapPoint())
-        assertThat(listOf(firstPath, secondPath), equalTo(databasePathRepository.getAllPathsInfo()))
+        assertThat(databasePathRepository.getAllPathsInfo(), equalTo(listOf(firstPath, secondPath)))
     }
 
     @Test
@@ -330,8 +336,8 @@ class DatabasePathRepositoryTests {
                 timestamp = 0
             )
 
-            assertThat(firstPoint, equalTo(databasePathRepository.getPointInfo(firstPoint.id)))
-            assertThat(secondPoint, equalTo(databasePathRepository.getPointInfo(secondPoint.id)))
+            assertThat(databasePathRepository.getPointInfo(firstPoint.id), equalTo(firstPoint))
+            assertThat(databasePathRepository.getPointInfo(secondPoint.id), equalTo(secondPoint))
         }
     }
 }
