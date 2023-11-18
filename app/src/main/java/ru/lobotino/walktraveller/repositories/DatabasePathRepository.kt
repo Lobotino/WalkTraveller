@@ -43,7 +43,7 @@ class DatabasePathRepository(
                 val insertedPathId = insertedPathsIds[0]
                 lastCreatedPathIdRepository.setLastCreatedPathId(insertedPathId)
                 insertNewPathPointRelation(insertedPathId, insertedPointId)
-                Log.i(TAG, "createNewPath by start point pathId:$insertedPathId startPoint:$startPoint")
+                Log.i(TAG, "createNewPath pathId:$insertedPathId startPoint:$startPoint")
                 return insertedPathId
             }
         }
@@ -57,22 +57,7 @@ class DatabasePathRepository(
     ): Long? {
         if (pathsSegments.isEmpty()) return null
 
-        val pathId = insertNewPoint(pathsSegments[0].startPoint).let { insertedPointId ->
-            pathsDao.insertPaths(
-                listOf(
-                    EntityPath(
-                        startPointId = insertedPointId,
-                        length = 0f,
-                        mostCommonRating = MostCommonRating.UNKNOWN.ordinal
-                    )
-                )
-            ).let { insertedPathsIds ->
-                val insertedPathId = insertedPathsIds[0]
-                insertNewPathPointRelation(insertedPathId, insertedPointId)
-                Log.i(TAG, "createNewPath by segments pathId:$insertedPathId startPoint:${pathsSegments[0].startPoint}")
-                insertedPathId
-            }
-        }
+        val pathId = createNewPath(pathsSegments[0].startPoint)
 
         for (segment in pathsSegments) {
             addNewPathPoint(pathId, segment.finishPoint, segment.rating, timestamp)
