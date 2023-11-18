@@ -106,6 +106,7 @@ class DatabasePathRepositoryTests {
                     )
                 )
             )
+            assertThat(pathPointsRelationsDao.getAllPathPointRelations(), equalTo(listOf(EntityPathPointRelation(resultPathId, firstPoint.id))))
         }
     }
 
