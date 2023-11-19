@@ -1,13 +1,19 @@
 package ru.lobotino.walktraveller.ui.view
 
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
+import android.animation.ValueAnimator
 import android.content.Context
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.widget.ImageView
+import android.widget.TextView
 import androidx.cardview.widget.CardView
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.interpolator.view.animation.FastOutSlowInInterpolator
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.SimpleItemAnimator
 import com.google.android.material.progressindicator.CircularProgressIndicator
@@ -22,7 +28,9 @@ import ru.lobotino.walktraveller.ui.model.PathItemButtonType
 import ru.lobotino.walktraveller.ui.model.ShowPathsButtonState
 import ru.lobotino.walktraveller.ui.model.ShowPathsFilterButtonState
 import ru.lobotino.walktraveller.usecases.DistanceInMetersToStringFormatter
+import ru.lobotino.walktraveller.utils.Utils
 import ru.lobotino.walktraveller.utils.ext.toColorInt
+
 
 class MyPathsMenuView : ConstraintLayout {
 
@@ -41,11 +49,19 @@ class MyPathsMenuView : ConstraintLayout {
     private lateinit var pathsEmptyListError: ViewGroup
     private lateinit var pathListProgress: CircularProgressIndicator
 
+    private lateinit var menuTitle: TextView
+    private lateinit var titleButtonsHolder: ViewGroup
+    private lateinit var selectAllPathsButton: CardView
+    private lateinit var shareSelectedPathsButton: CardView
+    private lateinit var deleteSelectedPathsButton: CardView
+
     private lateinit var itemButtonClickedListener: (Long, PathItemButtonType) -> Unit
     private lateinit var itemShortTapListener: (Long) -> Unit
     private lateinit var itemLongTapListener: (Long) -> Unit
 
     private lateinit var pathsInfoListAdapter: PathsInfoAdapter
+
+    private var nowInSelectModeState = false
 
     constructor(context: Context) : super(context) {
         initView(context)
@@ -81,6 +97,12 @@ class MyPathsMenuView : ConstraintLayout {
         pathsEmptyListError = view.findViewById(R.id.empty_paths_error)
         pathsMenuBackButton = view.findViewById(R.id.paths_menu_back_button)
         pathListProgress = view.findViewById(R.id.paths_list_progress)
+
+        menuTitle = view.findViewById(R.id.paths_list_title)
+        titleButtonsHolder = view.findViewById(R.id.title_buttons_holder)
+        selectAllPathsButton = view.findViewById(R.id.select_all_paths_button)
+        shareSelectedPathsButton = view.findViewById(R.id.share_selected_paths_button)
+        deleteSelectedPathsButton = view.findViewById(R.id.delete_selected_paths_button)
 
         pathsInfoList = view.findViewById<RecyclerView>(R.id.paths_list).apply {
             adapter = PathsInfoAdapter(
@@ -155,23 +177,84 @@ class MyPathsMenuView : ConstraintLayout {
 
         when (myPathsUiState.pathsInfoListState) {
             MyPathsInfoListState.DEFAULT -> {
+                titleButtonsHolder.visibility = VISIBLE
                 pathsInfoList.visibility = VISIBLE
                 pathListProgress.visibility = GONE
                 pathsEmptyListError.visibility = GONE
             }
 
             MyPathsInfoListState.LOADING -> {
+                titleButtonsHolder.visibility = GONE
                 pathsInfoList.visibility = GONE
                 pathListProgress.visibility = VISIBLE
                 pathsEmptyListError.visibility = GONE
             }
 
             MyPathsInfoListState.EMPTY_LIST -> {
+                titleButtonsHolder.visibility = GONE
                 pathsInfoList.visibility = GONE
                 pathListProgress.visibility = GONE
                 pathsEmptyListError.visibility = VISIBLE
             }
         }
+
+        syncSelectMode(myPathsUiState.inSelectMode)
+    }
+
+    private fun syncSelectMode(inSelectMode: Boolean) {
+        if (inSelectMode) {
+            if (!nowInSelectModeState) {
+                nowInSelectModeState = true
+                switchViewVisibilityWithAnimation(menuTitle, false)
+                switchViewVisibilityWithAnimation(selectAllPathsButton, true)
+                switchSelectedPathsButtonsVisible(true)
+            }
+        } else {
+            if (nowInSelectModeState) {
+                nowInSelectModeState = false
+                switchViewVisibilityWithAnimation(menuTitle, true)
+                switchViewVisibilityWithAnimation(selectAllPathsButton, false)
+                switchSelectedPathsButtonsVisible(false)
+            }
+        }
+    }
+
+    private fun switchViewVisibilityWithAnimation(view: View, isVisible: Boolean) {
+        view.animate()
+            .alpha(if (isVisible) 1f else 0f)
+            .setDuration(if (isVisible) 250 else 150).apply {
+                setListener(
+                    if (isVisible) {
+                        object : AnimatorListenerAdapter() {
+                            override fun onAnimationStart(animation: Animator) {
+                                view.visibility = View.VISIBLE
+                            }
+                        }
+                    } else {
+                        object : AnimatorListenerAdapter() {
+                            override fun onAnimationEnd(animation: Animator) {
+                                view.visibility = View.GONE
+                            }
+                        }
+                    })
+            }
+    }
+
+    private fun switchSelectedPathsButtonsVisible(isVisible: Boolean) {
+        val newMargin = if (isVisible) {
+            0
+        } else {
+            Utils.convertDpToPixel(context, -89f).toInt()
+        }
+        val params = titleButtonsHolder.layoutParams as FrameLayout.LayoutParams
+        val animator = ValueAnimator.ofInt(params.rightMargin, newMargin)
+        animator.addUpdateListener { valueAnimator ->
+            params.rightMargin = (valueAnimator.animatedValue as Int)
+            titleButtonsHolder.requestLayout()
+        }
+        animator.interpolator = FastOutSlowInInterpolator()
+        animator.setDuration(400)
+        animator.start()
     }
 
     fun setPathsInfoItems(newPathsInfoList: List<MapPathInfo>) {

@@ -43,4 +43,5 @@
     <string name="settings_optimize_paths_more_points">More\npoints</string>
     <string name="settings_optimize_paths_less_points">Less\npoints</string>
     <string name="share_file_title">Share paths file</string>
+    <string name="select_all_paths_button_text">Select all</string>
 </resources>

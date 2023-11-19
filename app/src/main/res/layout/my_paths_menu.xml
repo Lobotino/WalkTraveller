@@ -18,49 +18,103 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
+        <TextView
+            android:id="@+id/paths_list_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_margin="8dp"
+            android:text="@string/paths_list_title"
+            android:textColor="@color/black"
+            android:textSize="20sp"
+            app:layout_constraintBottom_toBottomOf="@id/paths_menu_back_button"
+            app:layout_constraintStart_toEndOf="@id/paths_menu_back_button"
+            app:layout_constraintTop_toTopOf="@id/paths_menu_back_button"/>
+
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
-            <ImageView
-                android:id="@+id/paths_menu_back_button"
-                android:layout_width="40dp"
-                android:layout_height="44dp"
-                android:layout_gravity="start|center_vertical"
-                android:padding="8dp"
-                android:src="@drawable/ic_baseline_arrow_back_24"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                tools:ignore="ContentDescription"/>
-
-            <TextView
-                android:id="@+id/paths_list_title"
+            <LinearLayout
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:layout_margin="8dp"
-                android:text="@string/paths_list_title"
-                android:textColor="@color/black"
-                android:textSize="20sp"
-                app:layout_constraintBottom_toBottomOf="@id/paths_menu_back_button"
-                app:layout_constraintStart_toEndOf="@id/paths_menu_back_button"
-                app:layout_constraintTop_toTopOf="@id/paths_menu_back_button"/>
+                android:layout_height="wrap_content">
+
+                <ImageView
+                    android:id="@+id/paths_menu_back_button"
+                    android:layout_width="40dp"
+                    android:layout_height="44dp"
+                    android:layout_gravity="start"
+                    android:padding="8dp"
+                    android:src="@drawable/ic_baseline_arrow_back_24"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    tools:ignore="ContentDescription"/>
+
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/select_all_paths_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="34dp"
+                    android:layout_gravity="end|center_vertical"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginEnd="10dp"
+                    android:layout_marginBottom="4dp"
+                    android:visibility="gone"
+                    app:cardBackgroundColor="@color/white_button_color"
+                    app:cardCornerRadius="15dp">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_vertical"
+                        android:orientation="horizontal"
+                        tools:ignore="UseCompoundDrawables">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_marginStart="8dp"
+                            android:layout_marginEnd="4dp"
+                            android:text="@string/select_all_paths_button_text"
+                            android:textColor="@color/black"
+                            android:textSize="16sp"
+                            />
+
+                        <ImageView
+                            android:id="@+id/select_all_paths_image"
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            android:layout_gravity="center"
+                            android:layout_marginEnd="8dp"
+                            android:src="@drawable/ic_select"
+                            android:visibility="visible"
+                            tools:ignore="ContentDescription"/>
+
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
+            </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/title_buttons_holder"
+                android:layout_marginEnd="-89dp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical|end"
+                android:visibility="gone"
+                tools:visibility="visible"
                 >
 
                 <androidx.cardview.widget.CardView
                     android:id="@+id/show_all_paths_button"
                     android:layout_width="34dp"
                     android:layout_height="34dp"
+                    android:layout_gravity="end|center_vertical"
                     android:layout_marginStart="4dp"
                     android:layout_marginTop="4dp"
                     android:layout_marginEnd="10dp"
                     android:layout_marginBottom="4dp"
-                    android:visibility="gone"
                     app:cardBackgroundColor="@color/white_button_color"
                     app:cardCornerRadius="15dp"
                     tools:visibility="visible">
@@ -105,10 +159,8 @@
                     android:layout_marginTop="4dp"
                     android:layout_marginEnd="4dp"
                     android:layout_marginBottom="4dp"
-                    android:visibility="gone"
                     app:cardBackgroundColor="@color/white_button_color"
-                    app:cardCornerRadius="15dp"
-                    tools:visibility="visible">
+                    app:cardCornerRadius="15dp">
 
                     <GridLayout
                         android:id="@+id/show_paths_filter_button_rated_only_state"
@@ -165,6 +217,59 @@
                         android:visibility="gone"
                         app:cardBackgroundColor="@color/rating_none"
                         app:cardCornerRadius="6dp"/>
+
+                </androidx.cardview.widget.CardView>
+
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/share_selected_paths_button"
+                    android:layout_width="34dp"
+                    android:layout_height="34dp"
+                    android:layout_gravity="center_vertical|end"
+                    android:layout_marginStart="6dp"
+                    android:layout_marginEnd="10dp"
+                    app:cardBackgroundColor="@color/white_button_color"
+                    app:cardCornerRadius="15dp">
+
+                    <ImageView
+                        android:id="@+id/path_button_share_image"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_gravity="center"
+                        android:layout_margin="2dp"
+                        android:src="@drawable/ic_baseline_share_24"
+                        tools:ignore="ContentDescription"/>
+
+                    <com.google.android.material.progressindicator.CircularProgressIndicator
+                        android:id="@+id/path_button_share_progress"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:indeterminate="true"
+                        android:visibility="gone"
+                        app:indicatorColor="@color/black"
+                        app:indicatorSize="22dp"
+                        app:trackThickness="3dp"/>
+
+                </androidx.cardview.widget.CardView>
+
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/delete_selected_paths_button"
+                    android:layout_width="34dp"
+                    android:layout_height="34dp"
+                    android:layout_gravity="center_vertical|end"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginEnd="4dp"
+                    android:layout_marginBottom="4dp"
+                    app:cardBackgroundColor="@color/white_button_color"
+                    app:cardCornerRadius="15dp">
+
+                    <ImageView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_gravity="center"
+                        android:layout_margin="4dp"
+                        android:src="@drawable/ic_baseline_delete_24"
+                        tools:ignore="ContentDescription"/>
 
                 </androidx.cardview.widget.CardView>
             </LinearLayout>
