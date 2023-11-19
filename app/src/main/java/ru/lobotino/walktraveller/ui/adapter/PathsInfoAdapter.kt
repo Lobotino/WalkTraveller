@@ -1,12 +1,15 @@
 package ru.lobotino.walktraveller.ui.adapter
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.annotation.ColorInt
 import androidx.cardview.widget.CardView
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.progressindicator.CircularProgressIndicator
 import ru.lobotino.walktraveller.R
@@ -16,6 +19,7 @@ import ru.lobotino.walktraveller.ui.model.PathInfoItemShowButtonState
 import ru.lobotino.walktraveller.usecases.interfaces.IDistanceToStringFormatter
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.properties.Delegates
 import ru.lobotino.walktraveller.ui.model.PathInfoItemShareButtonState
 import ru.lobotino.walktraveller.ui.model.PathInfoItemState
 import ru.lobotino.walktraveller.ui.model.PathItemButtonType
@@ -24,10 +28,21 @@ import ru.lobotino.walktraveller.ui.model.PathItemButtonType
 open class PathsInfoAdapter(
     private val distanceFormatter: IDistanceToStringFormatter,
     private val mostCommonRatingColors: List<Int>,
-    private val itemButtonClickedListener: (Long, PathItemButtonType) -> Unit
+    private val itemButtonClickedListener: (Long, PathItemButtonType) -> Unit,
+    private val itemShortTapListener: (Long) -> Unit,
+    private val itemLongTapListener: (Long) -> Unit,
+    context: Context
 ) : RecyclerView.Adapter<PathsInfoAdapter.PathInfoItem>() {
 
     private var pathsItems: MutableList<PathInfoItemModel> = ArrayList<PathInfoItemModel>()
+
+    protected var defaultItemBackgroundColor by Delegates.notNull<@ColorInt Int>()
+    protected var selectedItemBackgroundColor by Delegates.notNull<@ColorInt Int>()
+
+    init {
+        defaultItemBackgroundColor = ContextCompat.getColor(context, R.color.white)
+        selectedItemBackgroundColor = ContextCompat.getColor(context, R.color.primary_green_light)
+    }
 
     @SuppressLint("NotifyDataSetChanged")
     fun setPathsInfoItems(pathInfoItems: List<MapPathInfo>) {
@@ -45,6 +60,9 @@ open class PathsInfoAdapter(
                 if (pathInfoItemState.shareButtonState != null) {
                     item.shareButtonState = pathInfoItemState.shareButtonState
                 }
+                if (pathInfoItemState.isSelected != null) {
+                    item.isSelected = pathInfoItemState.isSelected
+                }
                 notifyItemChanged(index)
                 return
             }
@@ -60,6 +78,11 @@ open class PathsInfoAdapter(
         if (pathInfoItemState.shareButtonState != null) {
             for (path in pathsItems) {
                 path.shareButtonState = pathInfoItemState.shareButtonState
+            }
+        }
+        if (pathInfoItemState.isSelected != null) {
+            for (path in pathsItems) {
+                path.isSelected = pathInfoItemState.isSelected
             }
         }
         notifyItemRangeChanged(0, pathsItems.size)
@@ -82,7 +105,9 @@ open class PathsInfoAdapter(
                     R.layout.my_path_info_item,
                     parent,
                     false
-                )
+                ),
+            defaultItemBackgroundColor,
+            selectedItemBackgroundColor
         )
     }
 
@@ -90,6 +115,8 @@ open class PathsInfoAdapter(
         holder.bind(
             pathsItems[position],
             itemButtonClickedListener,
+            itemShortTapListener,
+            itemLongTapListener,
             distanceFormatter,
             mostCommonRatingColors
         )
@@ -99,13 +126,18 @@ open class PathsInfoAdapter(
         return pathsItems.size
     }
 
-    open class PathInfoItem(view: View) : RecyclerView.ViewHolder(view) {
+    open class PathInfoItem(
+        view: View,
+        @ColorInt private val defaultItemBackgroundColor: Int,
+        @ColorInt private val selectedItemBackgroundColor: Int
+    ) : RecyclerView.ViewHolder(view) {
 
         companion object {
             private const val DATE_FORMAT = "dd.MM.yyyy"
             private val dateFormat = SimpleDateFormat(DATE_FORMAT, Locale.ENGLISH)
         }
 
+        private lateinit var itemBackground: CardView
         private lateinit var pathLength: TextView
         private lateinit var pathDate: TextView
         private lateinit var pathMostCommonRatingColor: CardView
@@ -124,6 +156,7 @@ open class PathsInfoAdapter(
         }
 
         protected open fun prepareView(view: View) {
+            itemBackground = view.findViewById(R.id.item_background)
             pathLength = view.findViewById(R.id.path_length)
             pathDate = view.findViewById(R.id.path_date)
             pathMostCommonRatingColor = view.findViewById(R.id.path_most_common_rating_color)
@@ -141,6 +174,8 @@ open class PathsInfoAdapter(
         open fun bind(
             path: PathInfoItemModel,
             itemButtonClickedListener: (Long, PathItemButtonType) -> Unit,
+            itemShortTapListener: (Long) -> Unit,
+            itemLongTapListener: (Long) -> Unit,
             distanceFormatter: IDistanceToStringFormatter,
             mostCommonRatingColors: List<Int>
         ) {
@@ -180,6 +215,20 @@ open class PathsInfoAdapter(
                 View.VISIBLE
             } else {
                 View.GONE
+            }
+            itemBackground.setBackgroundColor(
+                if (path.isSelected) {
+                    selectedItemBackgroundColor
+                } else {
+                    defaultItemBackgroundColor
+                }
+            )
+            itemBackground.setOnLongClickListener {
+                itemLongTapListener(path.pathInfo.pathId)
+                return@setOnLongClickListener true
+            }
+            itemBackground.setOnClickListener {
+                itemShortTapListener(path.pathInfo.pathId)
             }
         }
 

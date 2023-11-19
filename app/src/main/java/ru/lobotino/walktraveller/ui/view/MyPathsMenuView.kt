@@ -42,6 +42,8 @@ class MyPathsMenuView : ConstraintLayout {
     private lateinit var pathListProgress: CircularProgressIndicator
 
     private lateinit var itemButtonClickedListener: (Long, PathItemButtonType) -> Unit
+    private lateinit var itemShortTapListener: (Long) -> Unit
+    private lateinit var itemLongTapListener: (Long) -> Unit
 
     private lateinit var pathsInfoListAdapter: PathsInfoAdapter
 
@@ -82,15 +84,20 @@ class MyPathsMenuView : ConstraintLayout {
 
         pathsInfoList = view.findViewById<RecyclerView>(R.id.paths_list).apply {
             adapter = PathsInfoAdapter(
-                DistanceInMetersToStringFormatter(
+                distanceFormatter = DistanceInMetersToStringFormatter(
                     context.getString(R.string.meters_short),
                     context.getString(R.string.kilometers_full),
                     context.getString(R.string.kilometers_short)
                 ),
-                MostCommonRating.values().map { it.toColorInt(context) }
-            ) { pathId, itemButtonClickedType ->
-                itemButtonClickedListener(pathId, itemButtonClickedType)
-            }.also { pathsInfoListAdapter = it }
+                mostCommonRatingColors = MostCommonRating.values().map { it.toColorInt(context) },
+                itemButtonClickedListener = { pathId, itemButtonClickedType ->
+                    itemButtonClickedListener(pathId, itemButtonClickedType)
+                }, itemShortTapListener = { pathId ->
+                    itemShortTapListener(pathId)
+                }, itemLongTapListener = { pathId ->
+                    itemLongTapListener(pathId)
+                }, context = getContext()
+            ).also { pathsInfoListAdapter = it }
 
             if (itemAnimator is SimpleItemAnimator) {
                 (itemAnimator as SimpleItemAnimator).supportsChangeAnimations = false
@@ -102,12 +109,16 @@ class MyPathsMenuView : ConstraintLayout {
         showAllPathsButtonClickListener: OnClickListener,
         showPathsFilterButtonClickListener: OnClickListener,
         pathsMenuBackButtonClickListener: OnClickListener,
-        itemButtonClickedListener: (Long, PathItemButtonType) -> Unit
+        itemButtonClickedListener: (Long, PathItemButtonType) -> Unit,
+        itemShortTapListener: (Long) -> Unit,
+        itemLongTapListener: (Long) -> Unit,
     ) {
         showAllPathsButton.setOnClickListener(showAllPathsButtonClickListener)
         showPathsFilterButton.setOnClickListener(showPathsFilterButtonClickListener)
         pathsMenuBackButton.setOnClickListener(pathsMenuBackButtonClickListener)
         this.itemButtonClickedListener = itemButtonClickedListener
+        this.itemShortTapListener = itemShortTapListener
+        this.itemLongTapListener = itemLongTapListener
     }
 
     fun syncState(myPathsUiState: MyPathsUiState) {

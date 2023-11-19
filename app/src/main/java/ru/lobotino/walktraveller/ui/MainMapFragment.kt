@@ -339,6 +339,12 @@ class MainMapFragment : Fragment() {
                     },
                     itemButtonClickedListener = { pathId, itemButtonClickedType ->
                         viewModel.onPathInListButtonClicked(pathId, itemButtonClickedType, PathsMenuType.MY_PATHS)
+                    },
+                    itemShortTapListener = { pathId ->
+                        viewModel.onPathInListShortTap(pathId, PathsMenuType.MY_PATHS)
+                    },
+                    itemLongTapListener = { pathId ->
+                        viewModel.onPathInListLongTap(pathId, PathsMenuType.MY_PATHS)
                     })
             }
 
@@ -355,6 +361,12 @@ class MainMapFragment : Fragment() {
                     },
                     itemButtonClickedListener = { pathId, itemButtonClickedType ->
                         viewModel.onPathInListButtonClicked(pathId, itemButtonClickedType, PathsMenuType.OUTER_PATHS)
+                    },
+                    itemShortTapListener = { pathId ->
+                        viewModel.onPathInListShortTap(pathId, PathsMenuType.OUTER_PATHS)
+                    },
+                    itemLongTapListener = { pathId ->
+                        viewModel.onPathInListLongTap(pathId, PathsMenuType.OUTER_PATHS)
                     })
             }
 

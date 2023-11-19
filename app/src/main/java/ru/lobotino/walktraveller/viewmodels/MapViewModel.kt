@@ -84,6 +84,7 @@ class MapViewModel(
     private var lastPaintedPoint: MapPoint? = null
 
     private var showedPathIdsList: MutableList<Long> = ArrayList()
+    private var selectedPathIdsInMenuList: MutableList<Long> = ArrayList()
 
     private val permissionsDeniedSharedFlow =
         MutableSharedFlow<List<String>>(1, 0, BufferOverflow.DROP_OLDEST)
@@ -521,8 +522,10 @@ class MapViewModel(
     }
 
     fun onShowMyPathsMenuClicked() {
+        selectedPathIdsInMenuList.clear()
+
         mapUiStateFlow.update { uiState ->
-            uiState.copy(bottomMenuState = BottomMenuState.MY_PATHS_MENU)
+            uiState.copy(bottomMenuState = BottomMenuState.MY_PATHS_MENU, myPathsUiState = uiState.myPathsUiState.copy(inSelectMode = false))
         }
 
         downloadAllPathsJob?.cancel()
@@ -560,6 +563,8 @@ class MapViewModel(
 
     fun onPathsMenuBackButtonClicked() {
         downloadAllPathsJob?.cancel()
+        selectedPathIdsInMenuList.clear()
+
         mapUiStateFlow.update { uiState ->
             uiState.copy(
                 bottomMenuState = BottomMenuState.DEFAULT,
@@ -685,6 +690,68 @@ class MapViewModel(
             }
 
             else -> {}
+        }
+    }
+
+    fun onPathInListShortTap(
+        pathId: Long,
+        pathsMenuType: PathsMenuType
+    ) {
+        if ((pathsMenuType == PathsMenuType.MY_PATHS && !mapUiStateFlow.value.myPathsUiState.inSelectMode) ||
+            (pathsMenuType == PathsMenuType.OUTER_PATHS && !mapUiStateFlow.value.outerPathsUiState.inSelectMode)
+        ) {
+            return //ignore short tap without select mode
+        }
+
+        toggleMenuItemSelect(pathId, pathsMenuType)
+    }
+
+    fun onPathInListLongTap(
+        pathId: Long,
+        pathsMenuType: PathsMenuType
+    ) {
+        toggleMenuItemSelect(pathId, pathsMenuType)
+    }
+
+    private fun toggleMenuItemSelect(pathId: Long, pathsMenuType: PathsMenuType) {
+        val isItemSelected = if (selectedPathIdsInMenuList.contains(pathId)) {
+            selectedPathIdsInMenuList.remove(pathId)
+            false
+        } else {
+            selectedPathIdsInMenuList.add(pathId)
+            true
+        }
+
+        syncMenuSelectMode(pathsMenuType)
+
+        newPathInfoListItemStateFlow.tryEmit(
+            NewPathInfoItemState(
+                pathsMenuType,
+                PathInfoItemState(
+                    pathId,
+                    isSelected = isItemSelected
+                )
+            )
+        )
+    }
+
+    private fun syncMenuSelectMode(pathsMenuType: PathsMenuType) {
+        when (pathsMenuType) {
+            PathsMenuType.MY_PATHS -> mapUiStateFlow.update { uiState ->
+                uiState.copy(
+                    myPathsUiState = uiState.myPathsUiState.copy(
+                        inSelectMode = selectedPathIdsInMenuList.isNotEmpty()
+                    )
+                )
+            }
+
+            PathsMenuType.OUTER_PATHS -> mapUiStateFlow.update { uiState ->
+                uiState.copy(
+                    outerPathsUiState = uiState.outerPathsUiState.copy(
+                        inSelectMode = selectedPathIdsInMenuList.isNotEmpty()
+                    )
+                )
+            }
         }
     }
 
@@ -900,10 +967,12 @@ class MapViewModel(
     }
 
     private fun loadAndShowSharedPaths(sharedFileUri: Uri) {
+        selectedPathIdsInMenuList.clear()
+
         mapUiStateFlow.update { mapUiState ->
             mapUiState.copy(
                 bottomMenuState = BottomMenuState.OUTER_PATHS_MENU,
-                outerPathsUiState = OuterPathsUiState(outerPathsInfoListState = OuterPathsInfoListState.LOADING)
+                outerPathsUiState = OuterPathsUiState(outerPathsInfoListState = OuterPathsInfoListState.LOADING, inSelectMode = false)
             )
         }
 
@@ -931,6 +1000,8 @@ class MapViewModel(
     }
 
     fun onOuterPathsConfirmButtonClicked() {
+        selectedPathIdsInMenuList.clear()
+
         viewModelScope.launch {
             outerPathsInteractor.saveCachedPaths()
         }

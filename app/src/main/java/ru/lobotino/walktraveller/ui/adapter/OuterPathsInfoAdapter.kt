@@ -1,10 +1,12 @@
 package ru.lobotino.walktraveller.ui.adapter
 
+import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.annotation.ColorInt
 import androidx.cardview.widget.CardView
 import com.google.android.material.progressindicator.CircularProgressIndicator
 import ru.lobotino.walktraveller.R
@@ -16,8 +18,11 @@ import ru.lobotino.walktraveller.usecases.interfaces.IDistanceToStringFormatter
 class OuterPathsInfoAdapter(
     distanceFormatter: IDistanceToStringFormatter,
     mostCommonRatingColors: List<Int>,
-    itemButtonClickedListener: (Long, PathItemButtonType) -> Unit
-) : PathsInfoAdapter(distanceFormatter, mostCommonRatingColors, itemButtonClickedListener) {
+    itemButtonClickedListener: (Long, PathItemButtonType) -> Unit,
+    itemShortTapListener: (Long) -> Unit,
+    itemLongTapListener: (Long) -> Unit,
+    context: Context
+) : PathsInfoAdapter(distanceFormatter, mostCommonRatingColors, itemButtonClickedListener, itemShortTapListener, itemLongTapListener, context) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PathInfoItem {
         return OuterPathInfoItem(
@@ -26,11 +31,19 @@ class OuterPathsInfoAdapter(
                     R.layout.outer_path_info_item,
                     parent,
                     false
-                )
+                ),
+            defaultItemBackgroundColor,
+            selectedItemBackgroundColor
         )
     }
 
-    class OuterPathInfoItem(view: View) : PathInfoItem(view) {
+    class OuterPathInfoItem(
+        view: View,
+        @ColorInt private val defaultItemBackgroundColor: Int,
+        @ColorInt private val selectedItemBackgroundColor: Int
+    ) : PathInfoItem(view, defaultItemBackgroundColor, selectedItemBackgroundColor) {
+
+        private lateinit var itemBackground: CardView
         private lateinit var pathLength: TextView
         private lateinit var pathDate: TextView
         private lateinit var pathMostCommonRatingColor: CardView
@@ -41,6 +54,7 @@ class OuterPathsInfoAdapter(
         private lateinit var pathButtonDelete: CardView
 
         override fun prepareView(view: View) {
+            itemBackground = view.findViewById(R.id.item_background)
             pathLength = view.findViewById(R.id.path_length)
             pathDate = view.findViewById(R.id.path_date)
             pathMostCommonRatingColor = view.findViewById(R.id.path_most_common_rating_color)
@@ -54,6 +68,8 @@ class OuterPathsInfoAdapter(
         override fun bind(
             path: PathInfoItemModel,
             itemButtonClickedListener: (Long, PathItemButtonType) -> Unit,
+            itemShortTapListener: (Long) -> Unit,
+            itemLongTapListener: (Long) -> Unit,
             distanceFormatter: IDistanceToStringFormatter,
             mostCommonRatingColors: List<Int>
         ) {
@@ -77,6 +93,20 @@ class OuterPathsInfoAdapter(
             pathButtonShowProgress.visibility = when (path.showButtonState) {
                 PathInfoItemShowButtonState.LOADING -> View.VISIBLE
                 else -> View.GONE
+            }
+            itemBackground.setBackgroundColor(
+                if (path.isSelected) {
+                    selectedItemBackgroundColor
+                } else {
+                    defaultItemBackgroundColor
+                }
+            )
+            itemBackground.setOnLongClickListener {
+                itemLongTapListener(path.pathInfo.pathId)
+                return@setOnLongClickListener true
+            }
+            itemBackground.setOnClickListener {
+                itemShortTapListener(path.pathInfo.pathId)
             }
         }
     }
