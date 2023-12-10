@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import ru.lobotino.walktraveller.model.map.MapRatingPath
 import ru.lobotino.walktraveller.repositories.interfaces.IPathsSaverRepository
 import ru.lobotino.walktraveller.ui.model.BottomMenuState
 import ru.lobotino.walktraveller.ui.model.ConfirmDialogInfo
@@ -634,14 +635,56 @@ class PathsMenuViewModel(
     }
 
     fun onSelectAllPathsButtonClicked(pathsMenuType: PathsMenuType) {
-        //TODO
+
     }
 
-    fun onShareSelectedPathsButtonClicked() {
-        //TODO
+    fun onShareSelectedPathsButtonClicked(pathsMenuType: PathsMenuType) {
+        newPathInfoListItemStateFlow.tryEmit(
+            NewPathInfoItemState(
+                pathsMenuType,
+                PathInfoItemState(
+                    -1,
+                    shareButtonState = PathInfoItemShareButtonState.LOADING
+                )
+            )
+        )
+
+        viewModelScope.launch {
+            val selectedPathIdsInMenuList = selectedPathIdsInMenuList
+            val selectedPaths = ArrayList<MapRatingPath>()
+            for (pathId in selectedPathIdsInMenuList) {
+                val path = mapPathsInteractor.getSavedRatingPath(pathId, false)
+                if (path != null) {
+                    selectedPaths.add(path)
+                }
+            }
+
+            if (selectedPaths.isNotEmpty()) {
+                try {
+                    shareFileChannel.trySend(pathsSaverRepository.saveRatingPathList(selectedPaths))
+                } catch (exception: IOException) {
+                    //TODO show toast error
+                    Log.w(TAG, exception)
+                }
+            } else {
+                //TODO show toast error
+            }
+
+            for (pathId in selectedPathIdsInMenuList) {
+                newPathInfoListItemStateFlow.tryEmit(
+                    NewPathInfoItemState(
+                        pathsMenuType,
+                        PathInfoItemState(
+                            pathId,
+                            shareButtonState = PathInfoItemShareButtonState.DEFAULT
+                        )
+                    )
+                )
+            }
+        }
     }
 
-    fun onDeleteSelectedPathsButtonClicked() {
+    fun onDeleteSelectedPathsButtonClicked(pathsMenuType: PathsMenuType) {
         //TODO
     }
 
