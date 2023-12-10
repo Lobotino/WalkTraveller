@@ -25,6 +25,7 @@ import ru.lobotino.walktraveller.ui.model.MyPathsInfoListState
 import ru.lobotino.walktraveller.ui.model.MyPathsUiState
 import ru.lobotino.walktraveller.ui.model.PathInfoItemState
 import ru.lobotino.walktraveller.ui.model.PathItemButtonType
+import ru.lobotino.walktraveller.ui.model.PathsMenuButton
 import ru.lobotino.walktraveller.ui.model.ShowPathsButtonState
 import ru.lobotino.walktraveller.ui.model.ShowPathsFilterButtonState
 import ru.lobotino.walktraveller.usecases.DistanceInMetersToStringFormatter
@@ -55,6 +56,7 @@ class MyPathsMenuView : ConstraintLayout {
     private lateinit var shareSelectedPathsButton: CardView
     private lateinit var deleteSelectedPathsButton: CardView
 
+    private lateinit var onMenuTitleButtonClick: (PathsMenuButton) -> Unit
     private lateinit var itemButtonClickedListener: (Long, PathItemButtonType) -> Unit
     private lateinit var itemShortTapListener: (Long) -> Unit
     private lateinit var itemLongTapListener: (Long) -> Unit
@@ -82,27 +84,51 @@ class MyPathsMenuView : ConstraintLayout {
     private fun initView(context: Context) {
         val view = LayoutInflater.from(context).inflate(R.layout.my_paths_menu, this)
 
-        showAllPathsButton = view.findViewById(R.id.show_all_paths_button)
         showAllPathsProgress = view.findViewById(R.id.show_all_paths_progress)
         showAllPathsDefaultImage = view.findViewById(R.id.show_all_paths_default_image)
         showAllPathsHideImage = view.findViewById(R.id.show_all_paths_hide_image)
 
-        showPathsFilterButton =
-            view.findViewById(R.id.show_paths_filter_button)
         showPathsFilterAllInCommonStateImage =
             view.findViewById(R.id.show_paths_filter_button_all_in_common_state)
         showPathsFilterRatedOnlyStateImage =
             view.findViewById(R.id.show_paths_filter_button_rated_only_state)
 
         pathsEmptyListError = view.findViewById(R.id.empty_paths_error)
-        pathsMenuBackButton = view.findViewById(R.id.paths_menu_back_button)
         pathListProgress = view.findViewById(R.id.paths_list_progress)
 
         menuTitle = view.findViewById(R.id.paths_list_title)
         titleButtonsHolder = view.findViewById(R.id.title_buttons_holder)
-        selectAllPathsButton = view.findViewById(R.id.select_all_paths_button)
-        shareSelectedPathsButton = view.findViewById(R.id.share_selected_paths_button)
-        deleteSelectedPathsButton = view.findViewById(R.id.delete_selected_paths_button)
+
+        showAllPathsButton = view.findViewById<CardView>(R.id.show_all_paths_button).apply {
+            setOnClickListener {
+                onMenuTitleButtonClick(PathsMenuButton.SHOW_PATHS)
+            }
+        }
+        showPathsFilterButton = view.findViewById<CardView>(R.id.show_paths_filter_button).apply {
+            setOnClickListener {
+                onMenuTitleButtonClick(PathsMenuButton.FILTER_PATHS_COLOR)
+            }
+        }
+        pathsMenuBackButton = view.findViewById<ImageView>(R.id.paths_menu_back_button).apply {
+            setOnClickListener {
+                onMenuTitleButtonClick(PathsMenuButton.BACK)
+            }
+        }
+        selectAllPathsButton = view.findViewById<CardView>(R.id.select_all_paths_button).apply {
+            setOnClickListener {
+                onMenuTitleButtonClick(PathsMenuButton.SELECT_ALL)
+            }
+        }
+        shareSelectedPathsButton = view.findViewById<CardView>(R.id.share_selected_paths_button).apply {
+            setOnClickListener {
+                onMenuTitleButtonClick(PathsMenuButton.SHARE_SELECTED_PATHS)
+            }
+        }
+        deleteSelectedPathsButton = view.findViewById<CardView>(R.id.delete_selected_paths_button).apply {
+            setOnClickListener {
+                onMenuTitleButtonClick(PathsMenuButton.DELETE_SELECTED_PATHS)
+            }
+        }
 
         pathsInfoList = view.findViewById<RecyclerView>(R.id.paths_list).apply {
             adapter = PathsInfoAdapter(
@@ -128,16 +154,12 @@ class MyPathsMenuView : ConstraintLayout {
     }
 
     fun setupOnClickListeners(
-        showAllPathsButtonClickListener: OnClickListener,
-        showPathsFilterButtonClickListener: OnClickListener,
-        pathsMenuBackButtonClickListener: OnClickListener,
+        menuTitleButtonClickListener: (PathsMenuButton) -> Unit,
         itemButtonClickedListener: (Long, PathItemButtonType) -> Unit,
         itemShortTapListener: (Long) -> Unit,
         itemLongTapListener: (Long) -> Unit,
     ) {
-        showAllPathsButton.setOnClickListener(showAllPathsButtonClickListener)
-        showPathsFilterButton.setOnClickListener(showPathsFilterButtonClickListener)
-        pathsMenuBackButton.setOnClickListener(pathsMenuBackButtonClickListener)
+        this.onMenuTitleButtonClick = menuTitleButtonClickListener
         this.itemButtonClickedListener = itemButtonClickedListener
         this.itemShortTapListener = itemShortTapListener
         this.itemLongTapListener = itemLongTapListener

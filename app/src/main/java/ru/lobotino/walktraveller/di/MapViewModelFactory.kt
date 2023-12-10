@@ -6,22 +6,18 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.savedstate.SavedStateRegistryOwner
 import ru.lobotino.walktraveller.repositories.interfaces.IPathRatingRepository
-import ru.lobotino.walktraveller.repositories.interfaces.IPathsSaverRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IUserRotationRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IWritingPathStatesRepository
-import ru.lobotino.walktraveller.usecases.permissions.GeoPermissionsUseCase
 import ru.lobotino.walktraveller.usecases.IUserLocationInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IMapPathsInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IMapStateInteractor
-import ru.lobotino.walktraveller.usecases.interfaces.IOuterPathsInteractor
-import ru.lobotino.walktraveller.usecases.interfaces.IPathRedactor
 import ru.lobotino.walktraveller.usecases.interfaces.IPermissionsUseCase
+import ru.lobotino.walktraveller.usecases.permissions.GeoPermissionsUseCase
 import ru.lobotino.walktraveller.viewmodels.MapViewModel
 
 class MapViewModelFactory(
     private val notificationsPermissionsInteractor: IPermissionsUseCase,
     private val volumeKeysListenerPermissionsInteractor: IPermissionsUseCase,
-    private val externalStoragePermissionsUseCase: IPermissionsUseCase,
     private val geoPermissionsUseCase: GeoPermissionsUseCase,
     private val userLocationInteractor: IUserLocationInteractor,
     private val mapPathsInteractor: IMapPathsInteractor,
@@ -29,9 +25,6 @@ class MapViewModelFactory(
     private val writingPathStatesRepository: IWritingPathStatesRepository,
     private val pathRatingRepository: IPathRatingRepository,
     private val userRotationRepository: IUserRotationRepository,
-    private val pathRedactor: IPathRedactor,
-    private val pathsSaverRepository: IPathsSaverRepository,
-    private val outerPathsInteractor: IOuterPathsInteractor,
     owner: SavedStateRegistryOwner,
     bundle: Bundle?
 ) : AbstractSavedStateViewModelFactory(owner, bundle) {
@@ -43,16 +36,12 @@ class MapViewModelFactory(
                 notificationsPermissionsInteractor,
                 volumeKeysListenerPermissionsInteractor,
                 geoPermissionsUseCase,
-                externalStoragePermissionsUseCase,
                 userLocationInteractor,
                 mapPathsInteractor,
                 mapStateInteractor,
                 writingPathStatesRepository,
                 pathRatingRepository,
-                userRotationRepository,
-                pathRedactor,
-                pathsSaverRepository,
-                outerPathsInteractor
+                userRotationRepository
             ) as T
 
             else -> throw IllegalArgumentException("Unknown ViewModel class")

@@ -151,6 +151,8 @@ open class PathsInfoAdapter(
         private lateinit var pathButtonShare: CardView
         private lateinit var outerPathImage: ImageView
 
+        protected var currentShowButtonState = PathInfoItemShowButtonState.DEFAULT
+
         init {
             prepareView(view)
         }
@@ -179,17 +181,18 @@ open class PathsInfoAdapter(
             distanceFormatter: IDistanceToStringFormatter,
             mostCommonRatingColors: List<Int>
         ) {
+            currentShowButtonState = path.showButtonState
             pathMostCommonRatingColor.setCardBackgroundColor(mostCommonRatingColors[path.pathInfo.mostCommonRating.ordinal])
             pathDate.text = formatTimestampDate(path.pathInfo.timestamp)
             pathLength.text = distanceFormatter.formatDistance(path.pathInfo.length)
             pathButtonShow.setOnClickListener {
-                itemButtonClickedListener.invoke(path.pathInfo.pathId, PathItemButtonType.SHOW)
+                itemButtonClickedListener.invoke(path.pathInfo.pathId, PathItemButtonType.Show(currentShowButtonState))
             }
             pathButtonDelete.setOnClickListener {
-                itemButtonClickedListener.invoke(path.pathInfo.pathId, PathItemButtonType.DELETE)
+                itemButtonClickedListener.invoke(path.pathInfo.pathId, PathItemButtonType.Delete)
             }
             pathButtonShare.setOnClickListener {
-                itemButtonClickedListener.invoke(path.pathInfo.pathId, PathItemButtonType.SHARE)
+                itemButtonClickedListener.invoke(path.pathInfo.pathId, PathItemButtonType.Share)
             }
             pathButtonShowImage.visibility = when (path.showButtonState) {
                 PathInfoItemShowButtonState.DEFAULT -> View.VISIBLE

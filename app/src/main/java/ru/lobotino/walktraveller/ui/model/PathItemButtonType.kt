@@ -1,5 +1,7 @@
 package ru.lobotino.walktraveller.ui.model
 
-enum class PathItemButtonType {
-    SHOW, SHARE, DELETE
+sealed class PathItemButtonType {
+    class Show(val currentState: PathInfoItemShowButtonState) : PathItemButtonType()
+    object Share : PathItemButtonType()
+    object Delete : PathItemButtonType()
 }

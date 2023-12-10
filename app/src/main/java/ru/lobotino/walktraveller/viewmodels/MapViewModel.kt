@@ -1,11 +1,9 @@
 package ru.lobotino.walktraveller.viewmodels
 
 import android.location.Location
-import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import java.io.IOException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
@@ -22,69 +20,45 @@ import ru.lobotino.walktraveller.model.map.MapPathSegment
 import ru.lobotino.walktraveller.model.map.MapPoint
 import ru.lobotino.walktraveller.model.map.MapRatingPath
 import ru.lobotino.walktraveller.repositories.interfaces.IPathRatingRepository
-import ru.lobotino.walktraveller.repositories.interfaces.IPathsSaverRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IUserRotationRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IWritingPathStatesRepository
 import ru.lobotino.walktraveller.ui.model.BottomMenuState
 import ru.lobotino.walktraveller.ui.model.ConfirmDialogInfo
 import ru.lobotino.walktraveller.ui.model.ConfirmDialogType
-import ru.lobotino.walktraveller.ui.model.DeletePathInfoItemEvent
 import ru.lobotino.walktraveller.ui.model.FindMyLocationButtonState
 import ru.lobotino.walktraveller.ui.model.MapUiState
-import ru.lobotino.walktraveller.ui.model.PathInfoItemShareButtonState
-import ru.lobotino.walktraveller.ui.model.PathInfoItemShowButtonState
-import ru.lobotino.walktraveller.ui.model.PathInfoItemState
-import ru.lobotino.walktraveller.ui.model.MyPathsInfoListState
-import ru.lobotino.walktraveller.ui.model.NewPathInfoItemState
-import ru.lobotino.walktraveller.ui.model.NewPathInfoListEvent
-import ru.lobotino.walktraveller.ui.model.OuterPathsInfoListState
-import ru.lobotino.walktraveller.ui.model.OuterPathsUiState
-import ru.lobotino.walktraveller.ui.model.PathItemButtonType
-import ru.lobotino.walktraveller.ui.model.PathsMenuType
-import ru.lobotino.walktraveller.ui.model.ShowPathsButtonState
-import ru.lobotino.walktraveller.ui.model.ShowPathsFilterButtonState
-import ru.lobotino.walktraveller.usecases.permissions.GeoPermissionsUseCase
 import ru.lobotino.walktraveller.usecases.IUserLocationInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IMapPathsInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IMapStateInteractor
-import ru.lobotino.walktraveller.usecases.interfaces.IOuterPathsInteractor
-import ru.lobotino.walktraveller.usecases.interfaces.IPathRedactor
 import ru.lobotino.walktraveller.usecases.interfaces.IPermissionsUseCase
+import ru.lobotino.walktraveller.usecases.permissions.GeoPermissionsUseCase
 import ru.lobotino.walktraveller.utils.ext.toMapPoint
 
 class MapViewModel(
     private val notificationsPermissionsInteractor: IPermissionsUseCase,
     private val volumeKeysListenerPermissionsInteractor: IPermissionsUseCase,
     private val geoPermissionsUseCase: GeoPermissionsUseCase,
-    private val externalStoragePermissionsUseCase: IPermissionsUseCase,
     private val userLocationInteractor: IUserLocationInteractor,
     private val mapPathsInteractor: IMapPathsInteractor,
     private val mapStateInteractor: IMapStateInteractor,
     private val writingPathStatesRepository: IWritingPathStatesRepository,
     private val pathRatingRepository: IPathRatingRepository,
-    private val userRotationRepository: IUserRotationRepository,
-    private val pathRedactor: IPathRedactor,
-    private val pathsSaverRepository: IPathsSaverRepository,
-    private val outerPathsInteractor: IOuterPathsInteractor
+    private val userRotationRepository: IUserRotationRepository
 ) : ViewModel() {
 
     companion object {
         private val TAG = MapViewModel::class.java.canonicalName
     }
 
-    private var isInitialized = false
-    private var updatingYetUnpaintedPaths = false
+    private val mapUiStateFlow =
+        MutableStateFlow(
+            MapUiState(
+                isPathFinished = false
+            )
+        )
 
-    private var updateCurrentSavedPath: Job? = null
-    private var downloadAllPathsJob: Job? = null
-    private var downloadAllPathsInfoJob: Job? = null
-    private var backgroundCachingRatingPathsJob: Job? = null
-    private var backgroundCachingCommonPathsJob: Job? = null
-    private var backgroundCachingPathsInfoJob: Job? = null
-    private var lastPaintedPoint: MapPoint? = null
-
-    private var showedPathIdsList: MutableList<Long> = ArrayList()
-    private var selectedPathIdsInMenuList: MutableList<Long> = ArrayList()
+    private val writingPathNowState = MutableStateFlow(false)
+    private val regularLocationUpdateStateFlow = MutableStateFlow(false)
 
     private val permissionsDeniedSharedFlow =
         MutableSharedFlow<List<String>>(1, 0, BufferOverflow.DROP_OLDEST)
@@ -96,31 +70,12 @@ class MapViewModel(
         MutableSharedFlow<MapCommonPath>(1, 0, BufferOverflow.DROP_OLDEST)
     private val newRatingPathFlow =
         MutableSharedFlow<MapRatingPath>(1, 0, BufferOverflow.DROP_OLDEST)
-    private val newPathsInfoListFlow =
-        MutableSharedFlow<NewPathInfoListEvent>(1, 0, BufferOverflow.DROP_OLDEST)
     private val newMapCenterFlow =
         MutableSharedFlow<MapPoint>(1, 0, BufferOverflow.DROP_OLDEST)
-    private val newPathInfoListItemStateFlow =
-        MutableSharedFlow<NewPathInfoItemState>(1, 0, BufferOverflow.DROP_OLDEST)
     private val newCurrentUserLocationFlow =
         MutableSharedFlow<MapPoint>(1, 0, BufferOverflow.DROP_OLDEST)
-    private val newConfirmDialogFlow =
-        MutableSharedFlow<ConfirmDialogInfo>(1, 0, BufferOverflow.DROP_OLDEST)
 
-    private val writingPathNowState = MutableStateFlow(false)
-    private val regularLocationUpdateStateFlow = MutableStateFlow(false)
-
-    private var clearMapNowListener: (() -> Unit)? = null
-
-    private val shareFileChannel = Channel<Uri>()
-    private val deletePathInfoItemChannel = Channel<DeletePathInfoItemEvent>()
-
-    private val mapUiStateFlow =
-        MutableStateFlow(
-            MapUiState(
-                isPathFinished = false
-            )
-        )
+    private val newConfirmDialogChannel = Channel<ConfirmDialogInfo>()
 
     val observePermissionsDeniedResult: Flow<List<String>> = permissionsDeniedSharedFlow
     val observeNewPathSegment: Flow<MapPathSegment> = newPathSegmentFlow
@@ -128,15 +83,21 @@ class MapViewModel(
     val observeNewRatingPath: Flow<MapRatingPath> = newRatingPathFlow
     val observeMapUiState: Flow<MapUiState> = mapUiStateFlow
     val observeRegularLocationUpdate: Flow<Boolean> = regularLocationUpdateStateFlow
-    val observeNewPathsInfoList: Flow<NewPathInfoListEvent> = newPathsInfoListFlow
     val observeNewMapCenter: Flow<MapPoint> = newMapCenterFlow
-    val observeNewPathInfoListItemState: Flow<NewPathInfoItemState> = newPathInfoListItemStateFlow
     val observeHidePath: Flow<Long> = hidePathFlow
     val observeNewCurrentUserLocation: Flow<MapPoint> = newCurrentUserLocationFlow
     val observeWritingPathNow: Flow<Boolean> = writingPathNowState
-    val observeNewConfirmDialog: Flow<ConfirmDialogInfo> = newConfirmDialogFlow
-    val observeShareFileChannel = shareFileChannel.consumeAsFlow()
-    val observeDeletePathInfoItemChannel = deletePathInfoItemChannel.consumeAsFlow()
+    val observeNewConfirmDialog: Flow<ConfirmDialogInfo> = newConfirmDialogChannel.consumeAsFlow()
+
+    private var isInitialized = false
+    private var updatingYetUnpaintedPaths = false
+    private var updateCurrentSavedPath: Job? = null
+    private var backgroundCachingRatingPathsJob: Job? = null
+    private var backgroundCachingCommonPathsJob: Job? = null
+    private var backgroundCachingPathsInfoJob: Job? = null
+    private var lastPaintedPoint: MapPoint? = null
+    private var showedPathIdsList: MutableList<Long> = ArrayList()
+    private var clearMapNowListener: (() -> Unit)? = null
 
     fun observeNewUserRotation(): Flow<Float> = userRotationRepository.observeUserRotation()
 
@@ -154,7 +115,7 @@ class MapViewModel(
                 regularLocationUpdateStateFlow.tryEmit(true)
                 updateCurrentMapCenterToUserLocation()
             } else {
-                newConfirmDialogFlow.tryEmit(
+                newConfirmDialogChannel.trySend(
                     ConfirmDialogInfo(
                         ConfirmDialogType.GEO_LOCATION_PERMISSION_REQUIRED,
                         null
@@ -199,7 +160,7 @@ class MapViewModel(
         }
     }
 
-    fun onResume(extraData: Uri?) {
+    fun onResume() {
         if (geoPermissionsUseCase.isGeneralGeoPermissionsGranted()) {
             regularLocationUpdateStateFlow.tryEmit(true)
         }
@@ -207,10 +168,6 @@ class MapViewModel(
         if (isInitialized) {
             userRotationRepository.startTrackUserRotation()
             updateNewPointsIfNeeded()
-        }
-
-        if (extraData != null) {
-            loadAndShowSharedPaths(extraData)
         }
     }
 
@@ -262,214 +219,6 @@ class MapViewModel(
         lastPaintedPoint = null
     }
 
-    fun onShowAllPathsButtonClicked(pathsMenuType: PathsMenuType) {
-        when (pathsMenuType) {
-            PathsMenuType.MY_PATHS -> onShowAllPathsButtonClickedMyPathsMenu()
-            PathsMenuType.OUTER_PATHS -> onShowAllPathsButtonClickedOuterPathsMenu()
-        }
-    }
-
-    private fun onShowAllPathsButtonClickedMyPathsMenu() {
-        if (downloadAllPathsJob?.isActive == true || mapUiStateFlow.value.myPathsUiState.showPathsButtonState == ShowPathsButtonState.LOADING) {
-            downloadAllPathsJob?.cancel()
-            downloadAllPathsJob = null
-            mapUiStateFlow.update { uiState ->
-                uiState.copy(myPathsUiState = uiState.myPathsUiState.copy(showPathsButtonState = ShowPathsButtonState.DEFAULT))
-            }
-            newPathInfoListItemStateFlow.tryEmit(
-                NewPathInfoItemState(
-                    PathsMenuType.MY_PATHS,
-                    PathInfoItemState(
-                        -1,
-                        PathInfoItemShowButtonState.DEFAULT
-                    )
-                )
-            )
-        } else {
-            if (mapUiStateFlow.value.myPathsUiState.showPathsButtonState == ShowPathsButtonState.HIDE) {
-                clearMap()
-                mapUiStateFlow.update { uiState ->
-                    uiState.copy(myPathsUiState = uiState.myPathsUiState.copy(showPathsButtonState = ShowPathsButtonState.DEFAULT))
-                }
-                newPathInfoListItemStateFlow.tryEmit(
-                    NewPathInfoItemState(
-                        PathsMenuType.MY_PATHS,
-                        PathInfoItemState(
-                            -1,
-                            PathInfoItemShowButtonState.DEFAULT
-                        )
-                    )
-                )
-            } else {
-                clearMap()
-                mapUiStateFlow.update { uiState ->
-                    uiState.copy(myPathsUiState = uiState.myPathsUiState.copy(showPathsButtonState = ShowPathsButtonState.LOADING))
-                }
-                newPathInfoListItemStateFlow.tryEmit(
-                    NewPathInfoItemState(
-                        PathsMenuType.MY_PATHS,
-                        PathInfoItemState(
-                            -1,
-                            PathInfoItemShowButtonState.LOADING
-                        )
-                    )
-                )
-                backgroundCachingRatingPathsJob?.cancel()
-
-                when (mapUiStateFlow.value.myPathsUiState.showPathsFilterButtonState) {
-                    ShowPathsFilterButtonState.RATED_ONLY -> startDownloadAllRatedPaths()
-                    ShowPathsFilterButtonState.ALL_IN_COMMON_COLOR -> startDownloadAllPathsAsCommon()
-                    else -> {
-                        mapUiStateFlow.update { uiState ->
-                            uiState.copy(myPathsUiState = uiState.myPathsUiState.copy(showPathsButtonState = ShowPathsButtonState.HIDE))
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private fun onShowAllPathsButtonClickedOuterPathsMenu() {
-        when (mapUiStateFlow.value.outerPathsUiState.showPathsButtonState) {
-            ShowPathsButtonState.LOADING -> {
-                mapUiStateFlow.update { uiState ->
-                    uiState.copy(outerPathsUiState = uiState.outerPathsUiState.copy(showPathsButtonState = ShowPathsButtonState.DEFAULT))
-                }
-                newPathInfoListItemStateFlow.tryEmit(
-                    NewPathInfoItemState(
-                        PathsMenuType.OUTER_PATHS,
-                        PathInfoItemState(
-                            -1,
-                            PathInfoItemShowButtonState.DEFAULT
-                        )
-                    )
-                )
-            }
-
-            ShowPathsButtonState.DEFAULT -> {
-                clearMap()
-                mapUiStateFlow.update { uiState ->
-                    uiState.copy(outerPathsUiState = uiState.outerPathsUiState.copy(showPathsButtonState = ShowPathsButtonState.HIDE))
-                }
-                newPathInfoListItemStateFlow.tryEmit(
-                    NewPathInfoItemState(
-                        PathsMenuType.OUTER_PATHS,
-                        PathInfoItemState(
-                            -1,
-                            PathInfoItemShowButtonState.LOADING
-                        )
-                    )
-                )
-                for (outerPath in outerPathsInteractor.getCachedOuterPaths()) {
-                    showRatingPathOnMap(outerPath)
-                    newPathInfoListItemStateFlow.tryEmit(
-                        NewPathInfoItemState(
-                            PathsMenuType.OUTER_PATHS,
-                            PathInfoItemState(
-                                outerPath.pathId,
-                                PathInfoItemShowButtonState.HIDE
-                            )
-                        )
-                    )
-                }
-            }
-
-            ShowPathsButtonState.HIDE -> {
-                clearMap()
-                mapUiStateFlow.update { uiState ->
-                    uiState.copy(outerPathsUiState = uiState.outerPathsUiState.copy(showPathsButtonState = ShowPathsButtonState.DEFAULT))
-                }
-                newPathInfoListItemStateFlow.tryEmit(
-                    NewPathInfoItemState(
-                        PathsMenuType.OUTER_PATHS,
-                        PathInfoItemState(
-                            -1,
-                            PathInfoItemShowButtonState.DEFAULT
-                        )
-                    )
-                )
-            }
-
-            else -> {}
-        }
-    }
-
-    private fun startDownloadAllRatedPaths() {
-        downloadAllPathsJob?.cancel()
-        downloadAllPathsJob = viewModelScope.launch {
-            for (path in mapPathsInteractor.getAllSavedRatingPaths(true)) {
-                showRatingPathOnMap(path)
-                newPathInfoListItemStateFlow.tryEmit(
-                    NewPathInfoItemState(
-                        PathsMenuType.MY_PATHS,
-                        PathInfoItemState(
-                            path.pathId,
-                            PathInfoItemShowButtonState.HIDE
-                        )
-                    )
-                )
-            }
-            mapUiStateFlow.update { uiState ->
-                uiState.copy(myPathsUiState = uiState.myPathsUiState.copy(showPathsButtonState = ShowPathsButtonState.HIDE))
-            }
-        }
-    }
-
-    private fun startDownloadAllPathsAsCommon() {
-        downloadAllPathsJob?.cancel()
-        downloadAllPathsJob = viewModelScope.launch {
-            for (path in mapPathsInteractor.getAllSavedPathsAsCommon()) {
-                showCommonPathOnMap(path)
-                newPathInfoListItemStateFlow.tryEmit(
-                    NewPathInfoItemState(
-                        PathsMenuType.MY_PATHS,
-                        PathInfoItemState(
-                            path.pathId,
-                            PathInfoItemShowButtonState.HIDE
-                        )
-                    )
-                )
-            }
-            mapUiStateFlow.update { uiState ->
-                uiState.copy(myPathsUiState = uiState.myPathsUiState.copy(showPathsButtonState = ShowPathsButtonState.HIDE))
-            }
-        }
-    }
-
-    fun onShowPathsFilterButtonClicked() {
-        val newFilterValue = when (mapUiStateFlow.value.myPathsUiState.showPathsFilterButtonState) {
-            ShowPathsFilterButtonState.RATED_ONLY -> ShowPathsFilterButtonState.ALL_IN_COMMON_COLOR
-            ShowPathsFilterButtonState.ALL_IN_COMMON_COLOR -> ShowPathsFilterButtonState.RATED_ONLY
-            ShowPathsFilterButtonState.GONE -> ShowPathsFilterButtonState.GONE
-        }
-
-        mapUiStateFlow.update { uiState ->
-            uiState.copy(
-                myPathsUiState = uiState.myPathsUiState.copy(
-                    showPathsFilterButtonState = newFilterValue
-                )
-            )
-        }
-        when (mapUiStateFlow.value.myPathsUiState.showPathsButtonState) {
-            ShowPathsButtonState.LOADING -> {
-                when (newFilterValue) {
-                    ShowPathsFilterButtonState.RATED_ONLY -> startDownloadAllRatedPaths()
-                    ShowPathsFilterButtonState.ALL_IN_COMMON_COLOR -> startDownloadAllPathsAsCommon()
-                    else -> {
-                        mapUiStateFlow.update { uiState ->
-                            uiState.copy(myPathsUiState = uiState.myPathsUiState.copy(showPathsButtonState = ShowPathsButtonState.HIDE))
-                        }
-                    }
-                }
-            }
-
-            ShowPathsButtonState.HIDE -> {
-                mapUiStateFlow.update { uiState -> uiState.copy(myPathsUiState = uiState.myPathsUiState.copy(showPathsButtonState = ShowPathsButtonState.DEFAULT)) }
-            }
-
-            else -> {}
-        }
-    }
 
     fun onRatingButtonClicked(ratingGiven: SegmentRating) {
         pathRatingRepository.setCurrentRating(ratingGiven)
@@ -521,313 +270,28 @@ class MapViewModel(
         }
     }
 
-    fun onShowMyPathsMenuClicked() {
-        selectedPathIdsInMenuList.clear()
-
-        mapUiStateFlow.update { uiState ->
-            uiState.copy(bottomMenuState = BottomMenuState.MY_PATHS_MENU, myPathsUiState = uiState.myPathsUiState.copy(inSelectMode = false))
-        }
-
-        downloadAllPathsJob?.cancel()
-        backgroundCachingPathsInfoJob?.cancel()
-
-        mapUiStateFlow.update { uiState ->
-            uiState.copy(myPathsUiState = uiState.myPathsUiState.copy(pathsInfoListState = MyPathsInfoListState.LOADING))
-        }
-        downloadAllPathsInfoJob = viewModelScope.launch {
-            val allSavedPathsList = mapPathsInteractor.getAllSavedPathsInfo()
-            if (allSavedPathsList.isNotEmpty()) {
-                newPathsInfoListFlow.tryEmit(NewPathInfoListEvent(PathsMenuType.MY_PATHS, allSavedPathsList))
-                mapUiStateFlow.update { uiState ->
-                    uiState.copy(
-                        myPathsUiState = uiState.myPathsUiState.copy(
-                            pathsInfoListState = MyPathsInfoListState.DEFAULT,
-                            showPathsButtonState = ShowPathsButtonState.DEFAULT,
-                            showPathsFilterButtonState = ShowPathsFilterButtonState.RATED_ONLY
-                        )
-                    )
-                }
-            } else {
-                mapUiStateFlow.update { uiState ->
-                    uiState.copy(
-                        myPathsUiState = uiState.myPathsUiState.copy(
-                            pathsInfoListState = MyPathsInfoListState.EMPTY_LIST,
-                            showPathsButtonState = ShowPathsButtonState.GONE,
-                            showPathsFilterButtonState = ShowPathsFilterButtonState.GONE
-                        )
-                    )
-                }
-            }
-        }
-    }
-
-    fun onPathsMenuBackButtonClicked() {
-        downloadAllPathsJob?.cancel()
-        selectedPathIdsInMenuList.clear()
-
-        mapUiStateFlow.update { uiState ->
-            uiState.copy(
-                bottomMenuState = BottomMenuState.DEFAULT,
-                myPathsUiState = uiState.myPathsUiState.copy(
-                    showPathsButtonState = ShowPathsButtonState.GONE,
-                    showPathsFilterButtonState = ShowPathsFilterButtonState.GONE
-                )
-            )
-        }
-    }
-
-    fun onPathInListButtonClicked(
-        pathId: Long,
-        clickedButtonType: PathItemButtonType,
-        pathsMenuType: PathsMenuType
-    ) {
-        when (pathsMenuType) {
-            PathsMenuType.MY_PATHS -> onPathInMyListButtonClicked(pathId, clickedButtonType)
-            PathsMenuType.OUTER_PATHS -> onPathInOuterListButtonClicked(pathId, clickedButtonType)
-        }
-    }
-
-    private fun onPathInMyListButtonClicked(
-        pathId: Long,
-        clickedButtonType: PathItemButtonType
-    ) {
-        when (clickedButtonType) {
-            PathItemButtonType.SHOW -> {
-                if (showedPathIdsList.contains(pathId)) {
-                    hidePathFromMap(pathId)
-                    newPathInfoListItemStateFlow.tryEmit(
-                        NewPathInfoItemState(
-                            PathsMenuType.MY_PATHS,
-                            PathInfoItemState(
-                                pathId,
-                                PathInfoItemShowButtonState.DEFAULT
-                            )
-                        )
-                    )
-                } else {
-                    newPathInfoListItemStateFlow.tryEmit(
-                        NewPathInfoItemState(
-                            PathsMenuType.MY_PATHS,
-                            PathInfoItemState(
-                                pathId,
-                                PathInfoItemShowButtonState.LOADING
-                            )
-                        )
-                    )
-                    viewModelScope.launch {
-                        val savedRatingPath = mapPathsInteractor.getSavedRatingPath(pathId, false)
-                        if (savedRatingPath != null) {
-                            showRatingPathOnMap(savedRatingPath)
-                            newPathInfoListItemStateFlow.tryEmit(
-                                NewPathInfoItemState(
-                                    PathsMenuType.MY_PATHS,
-                                    PathInfoItemState(
-                                        pathId,
-                                        PathInfoItemShowButtonState.HIDE
-                                    )
-                                )
-                            )
-                        } else {
-                            //TODO handle bd error
-                        }
-                    }
-                }
-            }
-
-            PathItemButtonType.DELETE -> {
-                newConfirmDialogFlow.tryEmit(
-                    ConfirmDialogInfo(
-                        ConfirmDialogType.DELETE_PATH,
-                        pathId
-                    )
-                )
-            }
-
-            PathItemButtonType.SHARE -> {
-                checkPermissionsAndSharePath(pathId)
-            }
-        }
-    }
-
-    private fun onPathInOuterListButtonClicked(
-        tempPathId: Long,
-        clickedButtonType: PathItemButtonType
-    ) {
-        when (clickedButtonType) {
-            PathItemButtonType.SHOW -> {
-                if (showedPathIdsList.contains(tempPathId)) {
-                    hidePathFromMap(tempPathId)
-                    newPathInfoListItemStateFlow.tryEmit(
-                        NewPathInfoItemState(
-                            PathsMenuType.OUTER_PATHS,
-                            PathInfoItemState(
-                                tempPathId,
-                                PathInfoItemShowButtonState.DEFAULT
-                            )
-                        )
-                    )
-                } else {
-                    val cachedPath = outerPathsInteractor.getCachedOuterPath(tempPathId.toInt())
-                    if (cachedPath != null) {
-                        newPathInfoListItemStateFlow.tryEmit(
-                            NewPathInfoItemState(
-                                PathsMenuType.OUTER_PATHS,
-                                PathInfoItemState(
-                                    tempPathId,
-                                    PathInfoItemShowButtonState.HIDE
-                                )
-                            )
-                        )
-                        showRatingPathOnMap(cachedPath)
-                    } else {
-                        deleteOuterPathFromList(tempPathId)
-                    }
-                }
-            }
-
-            PathItemButtonType.DELETE -> {
-                deleteOuterPathFromList(tempPathId)
-            }
-
-            else -> {}
-        }
-    }
-
-    fun onPathInListShortTap(
-        pathId: Long,
-        pathsMenuType: PathsMenuType
-    ) {
-        if ((pathsMenuType == PathsMenuType.MY_PATHS && !mapUiStateFlow.value.myPathsUiState.inSelectMode) ||
-            (pathsMenuType == PathsMenuType.OUTER_PATHS && !mapUiStateFlow.value.outerPathsUiState.inSelectMode)
-        ) {
-            return //ignore short tap without select mode
-        }
-
-        toggleMenuItemSelect(pathId, pathsMenuType)
-    }
-
-    fun onPathInListLongTap(
-        pathId: Long,
-        pathsMenuType: PathsMenuType
-    ) {
-        toggleMenuItemSelect(pathId, pathsMenuType)
-    }
-
-    private fun toggleMenuItemSelect(pathId: Long, pathsMenuType: PathsMenuType) {
-        val isItemSelected = if (selectedPathIdsInMenuList.contains(pathId)) {
-            selectedPathIdsInMenuList.remove(pathId)
-            false
-        } else {
-            selectedPathIdsInMenuList.add(pathId)
-            true
-        }
-
-        syncMenuSelectMode(pathsMenuType)
-
-        newPathInfoListItemStateFlow.tryEmit(
-            NewPathInfoItemState(
-                pathsMenuType,
-                PathInfoItemState(
-                    pathId,
-                    isSelected = isItemSelected
-                )
-            )
-        )
-    }
-
-    private fun syncMenuSelectMode(pathsMenuType: PathsMenuType) {
-        when (pathsMenuType) {
-            PathsMenuType.MY_PATHS -> mapUiStateFlow.update { uiState ->
-                uiState.copy(
-                    myPathsUiState = uiState.myPathsUiState.copy(
-                        inSelectMode = selectedPathIdsInMenuList.isNotEmpty()
-                    )
-                )
-            }
-
-            PathsMenuType.OUTER_PATHS -> mapUiStateFlow.update { uiState ->
-                uiState.copy(
-                    outerPathsUiState = uiState.outerPathsUiState.copy(
-                        inSelectMode = selectedPathIdsInMenuList.isNotEmpty()
-                    )
-                )
-            }
-        }
-    }
-
-    private fun checkPermissionsAndSharePath(pathId: Long) {
-        if (externalStoragePermissionsUseCase.isPermissionsGranted()) {
-            sharePath(pathId)
-        } else {
-            externalStoragePermissionsUseCase.requestPermissions(
-                allGranted = {
-                    sharePath(pathId)
-                },
-                someDenied = { deniedPermissions ->
-                    permissionsDeniedSharedFlow.tryEmit(
-                        deniedPermissions
-                    )
-                }
-            )
-        }
-    }
-
-    private fun sharePath(pathId: Long) {
-        newPathInfoListItemStateFlow.tryEmit(
-            NewPathInfoItemState(
-                PathsMenuType.MY_PATHS,
-                PathInfoItemState(
-                    pathId,
-                    shareButtonState = PathInfoItemShareButtonState.LOADING
-                )
-            )
-        )
-
-        viewModelScope.launch {
-            val path = mapPathsInteractor.getSavedRatingPath(pathId, false)
-            if (path != null) {
-                try {
-                    shareFileChannel.trySend(pathsSaverRepository.saveRatingPath(path))
-                } catch (exception: IOException) {
-                    //TODO show toast error
-                    Log.w(TAG, exception)
-                } finally {
-                    newPathInfoListItemStateFlow.tryEmit(
-                        NewPathInfoItemState(
-                            PathsMenuType.MY_PATHS,
-                            PathInfoItemState(
-                                pathId,
-                                shareButtonState = PathInfoItemShareButtonState.DEFAULT
-                            )
-                        )
-                    )
-                }
-            }
-        }
-    }
-
-    private fun showRatingPathOnMap(ratingPath: MapRatingPath) {
+    fun showRatingPathOnMap(ratingPath: MapRatingPath) {
         if (!showedPathIdsList.contains(ratingPath.pathId)) {
             newRatingPathFlow.tryEmit(ratingPath)
             showedPathIdsList.add(ratingPath.pathId)
         }
     }
 
-    private fun showCommonPathOnMap(commonPath: MapCommonPath) {
+    fun showCommonPathOnMap(commonPath: MapCommonPath) {
         if (!showedPathIdsList.contains(commonPath.pathId)) {
             newCommonPathFlow.tryEmit(commonPath)
             showedPathIdsList.add(commonPath.pathId)
         }
     }
 
-    private fun hidePathFromMap(pathId: Long) {
+    fun hidePathFromMap(pathId: Long) {
         if (showedPathIdsList.contains(pathId)) {
             showedPathIdsList.remove(pathId)
             hidePathFlow.tryEmit(pathId)
         }
     }
 
-    private fun clearMap() {
+    fun clearMap() {
         showedPathIdsList.clear()
         clearMapNowListener?.invoke()
     }
@@ -907,47 +371,6 @@ class MapViewModel(
         )
     }
 
-    fun onConfirmMyPathDelete(pathId: Long) {
-        viewModelScope.launch {
-            pathRedactor.deletePath(pathId)
-            checkIsPathsListNotEmptyNow()
-        }
-        hidePathFromMap(pathId)
-        deletePathInfoItemChannel.trySend(DeletePathInfoItemEvent(PathsMenuType.MY_PATHS, pathId))
-    }
-
-    private fun deleteOuterPathFromList(tempPathId: Long) {
-        outerPathsInteractor.removeCachedPath(tempPathId.toInt())
-        hidePathFromMap(tempPathId)
-        deletePathInfoItemChannel.trySend(DeletePathInfoItemEvent(PathsMenuType.OUTER_PATHS, tempPathId))
-
-        if (outerPathsInteractor.getCachedOuterPaths().isEmpty()) {
-            mapUiStateFlow.update { uiState ->
-                uiState.copy(
-                    outerPathsUiState = uiState.outerPathsUiState.copy(
-                        showPathsButtonState = ShowPathsButtonState.GONE,
-                        outerPathsInfoListState = OuterPathsInfoListState.EMPTY_LIST
-                    )
-                )
-            }
-        }
-    }
-
-    private fun checkIsPathsListNotEmptyNow() {
-        viewModelScope.launch {
-            if (mapPathsInteractor.getAllSavedPathsInfo().isEmpty()) {
-                mapUiStateFlow.update { uiState ->
-                    uiState.copy(
-                        myPathsUiState = uiState.myPathsUiState.copy(
-                            pathsInfoListState = MyPathsInfoListState.EMPTY_LIST,
-                            showPathsButtonState = ShowPathsButtonState.GONE,
-                            showPathsFilterButtonState = ShowPathsFilterButtonState.GONE
-                        )
-                    )
-                }
-            }
-        }
-    }
 
     fun onLocationPermissionDialogConfirmed() {
         geoPermissionsUseCase.let { geoPermissionsInteractor ->
@@ -966,51 +389,7 @@ class MapViewModel(
         }
     }
 
-    private fun loadAndShowSharedPaths(sharedFileUri: Uri) {
-        selectedPathIdsInMenuList.clear()
-
-        mapUiStateFlow.update { mapUiState ->
-            mapUiState.copy(
-                bottomMenuState = BottomMenuState.OUTER_PATHS_MENU,
-                outerPathsUiState = OuterPathsUiState(outerPathsInfoListState = OuterPathsInfoListState.LOADING, inSelectMode = false)
-            )
-        }
-
-        viewModelScope.launch {
-            val outerPathsInfo = outerPathsInteractor.getAllPaths(sharedFileUri)
-            if (outerPathsInfo.isNotEmpty()) {
-                newPathsInfoListFlow.tryEmit(NewPathInfoListEvent(PathsMenuType.OUTER_PATHS, outerPathsInfo))
-
-                mapUiStateFlow.update { mapUiState ->
-                    mapUiState.copy(
-                        outerPathsUiState = OuterPathsUiState(
-                            showPathsButtonState = ShowPathsButtonState.DEFAULT,
-                            outerPathsInfoListState = OuterPathsInfoListState.DEFAULT
-                        )
-                    )
-                }
-            } else {
-                mapUiStateFlow.update { mapUiState ->
-                    mapUiState.copy(
-                        outerPathsUiState = OuterPathsUiState(outerPathsInfoListState = OuterPathsInfoListState.EMPTY_LIST)
-                    )
-                }
-            }
-        }
-    }
-
-    fun onOuterPathsConfirmButtonClicked() {
-        selectedPathIdsInMenuList.clear()
-
-        viewModelScope.launch {
-            outerPathsInteractor.saveCachedPaths()
-        }
-
-        mapUiStateFlow.update { mapUiState ->
-            mapUiState.copy(
-                bottomMenuState = BottomMenuState.DEFAULT,
-                outerPathsUiState = OuterPathsUiState()
-            )
-        }
+    fun onBottomMenuStateChange(newBottomMenuState: BottomMenuState) {
+        mapUiStateFlow.update { uiState -> uiState.copy(bottomMenuState = newBottomMenuState) }
     }
 }

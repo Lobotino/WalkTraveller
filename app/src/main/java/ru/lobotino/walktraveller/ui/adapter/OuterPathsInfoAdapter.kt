@@ -73,14 +73,15 @@ class OuterPathsInfoAdapter(
             distanceFormatter: IDistanceToStringFormatter,
             mostCommonRatingColors: List<Int>
         ) {
+            currentShowButtonState = path.showButtonState
             pathMostCommonRatingColor.setCardBackgroundColor(mostCommonRatingColors[path.pathInfo.mostCommonRating.ordinal])
             pathDate.text = formatTimestampDate(path.pathInfo.timestamp)
             pathLength.text = distanceFormatter.formatDistance(path.pathInfo.length)
             pathButtonShow.setOnClickListener {
-                itemButtonClickedListener.invoke(path.pathInfo.pathId, PathItemButtonType.SHOW)
+                itemButtonClickedListener.invoke(path.pathInfo.pathId, PathItemButtonType.Show(currentShowButtonState))
             }
             pathButtonDelete.setOnClickListener {
-                itemButtonClickedListener.invoke(path.pathInfo.pathId, PathItemButtonType.DELETE)
+                itemButtonClickedListener.invoke(path.pathInfo.pathId, PathItemButtonType.Delete)
             }
             pathButtonShowImage.visibility = when (path.showButtonState) {
                 PathInfoItemShowButtonState.DEFAULT -> View.VISIBLE

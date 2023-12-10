@@ -59,6 +59,7 @@ import ru.lobotino.walktraveller.App
 import ru.lobotino.walktraveller.R
 import ru.lobotino.walktraveller.database.provideDatabase
 import ru.lobotino.walktraveller.di.MapViewModelFactory
+import ru.lobotino.walktraveller.di.PathsMenuViewModelFactory
 import ru.lobotino.walktraveller.model.SegmentRating
 import ru.lobotino.walktraveller.model.SegmentRating.BADLY
 import ru.lobotino.walktraveller.model.SegmentRating.GOOD
@@ -92,7 +93,9 @@ import ru.lobotino.walktraveller.services.VolumeKeysDetectorService
 import ru.lobotino.walktraveller.ui.model.BottomMenuState
 import ru.lobotino.walktraveller.ui.model.ConfirmDialogInfo
 import ru.lobotino.walktraveller.ui.model.ConfirmDialogType
+import ru.lobotino.walktraveller.ui.model.MapEvent
 import ru.lobotino.walktraveller.ui.model.MapUiState
+import ru.lobotino.walktraveller.ui.model.PathsMenuButton
 import ru.lobotino.walktraveller.ui.model.PathsMenuType
 import ru.lobotino.walktraveller.ui.view.FindMyLocationButton
 import ru.lobotino.walktraveller.ui.view.MyPathsMenuView
@@ -110,6 +113,7 @@ import ru.lobotino.walktraveller.utils.ext.openNavigationMenu
 import ru.lobotino.walktraveller.utils.ext.toGeoPoint
 import ru.lobotino.walktraveller.utils.ext.toMapPoint
 import ru.lobotino.walktraveller.viewmodels.MapViewModel
+import ru.lobotino.walktraveller.viewmodels.PathsMenuViewModel
 
 
 class MainMapFragment : Fragment() {
@@ -128,7 +132,8 @@ class MainMapFragment : Fragment() {
     }
 
     private lateinit var mapView: MapView
-    private lateinit var viewModel: MapViewModel
+    private lateinit var mapViewModel: MapViewModel
+    private lateinit var menuViewModel: PathsMenuViewModel
     private lateinit var walkStartButton: CardView
     private lateinit var walkStopButton: CardView
     private lateinit var openNavigationButton: CardView
@@ -195,14 +200,14 @@ class MainMapFragment : Fragment() {
             }
 
             if (location != null) {
-                viewModel.onNewLocationReceive(location)
+                mapViewModel.onNewLocationReceive(location)
             }
         }
     }
 
     private val ratingChangeReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            viewModel.onNewRatingReceive()
+            mapViewModel.onNewRatingReceive()
         }
     }
 
@@ -241,12 +246,12 @@ class MainMapFragment : Fragment() {
                 setMultiTouchControls(true)
                 addMapListener(object : MapListener {
                     override fun onScroll(event: ScrollEvent): Boolean {
-                        viewModel.onMapScrolled(event.source.mapCenter.toMapPoint())
+                        mapViewModel.onMapScrolled(event.source.mapCenter.toMapPoint())
                         return true
                     }
 
                     override fun onZoom(event: ZoomEvent): Boolean {
-                        viewModel.onMapZoomed()
+                        mapViewModel.onMapZoomed()
                         return true
                     }
                 })
@@ -260,36 +265,36 @@ class MainMapFragment : Fragment() {
 
             walkStartButton = view.findViewById<CardView>(R.id.walk_start_button)
                 .apply {
-                    setOnClickListener { viewModel.onStartPathButtonClicked() }
+                    setOnClickListener { mapViewModel.onStartPathButtonClicked() }
                 }
 
             ratingPerfectButton = view.findViewById<CardView>(R.id.rating_perfect)
                 .apply {
-                    setOnClickListener { viewModel.onRatingButtonClicked(PERFECT) }
+                    setOnClickListener { mapViewModel.onRatingButtonClicked(PERFECT) }
                 }
             ratingPerfectButtonStar = view.findViewById(R.id.rating_perfect_star)
 
             ratingGoodButton = view.findViewById<CardView>(R.id.rating_good)
                 .apply {
-                    setOnClickListener { viewModel.onRatingButtonClicked(GOOD) }
+                    setOnClickListener { mapViewModel.onRatingButtonClicked(GOOD) }
                 }
             ratingGoodButtonStar = view.findViewById(R.id.rating_good_star)
 
             ratingNormalButton = view.findViewById<CardView>(R.id.rating_normal)
                 .apply {
-                    setOnClickListener { viewModel.onRatingButtonClicked(NORMAL) }
+                    setOnClickListener { mapViewModel.onRatingButtonClicked(NORMAL) }
                 }
             ratingNormalButtonStar = view.findViewById(R.id.rating_normal_star)
 
             ratingBadlyButton = view.findViewById<CardView>(R.id.rating_badly)
                 .apply {
-                    setOnClickListener { viewModel.onRatingButtonClicked(BADLY) }
+                    setOnClickListener { mapViewModel.onRatingButtonClicked(BADLY) }
                 }
             ratingBadlyButtonStar = view.findViewById(R.id.rating_badly_star)
 
             ratingNoneButton = view.findViewById<CardView>(R.id.rating_none)
                 .apply {
-                    setOnClickListener { viewModel.onRatingButtonClicked(NONE) }
+                    setOnClickListener { mapViewModel.onRatingButtonClicked(NONE) }
                 }
             ratingNoneButtonStar = view.findViewById(R.id.rating_none_star)
 
@@ -324,56 +329,59 @@ class MainMapFragment : Fragment() {
                     }
                 }
 
-            walkStopButton.setOnClickListener { viewModel.onStopPathButtonClicked() }
+            walkStopButton.setOnClickListener { mapViewModel.onStopPathButtonClicked() }
 
             myPathsMenu = view.findViewById<MyPathsMenuView>(R.id.my_paths_menu).apply {
                 setupOnClickListeners(
-                    showAllPathsButtonClickListener = {
-                        viewModel.onShowAllPathsButtonClicked(PathsMenuType.MY_PATHS)
-                    },
-                    showPathsFilterButtonClickListener = {
-                        viewModel.onShowPathsFilterButtonClicked()
-                    },
-                    pathsMenuBackButtonClickListener = {
-                        viewModel.onPathsMenuBackButtonClicked()
+                    menuTitleButtonClickListener = { pathsMenuButton ->
+                        when (pathsMenuButton) {
+                            PathsMenuButton.SELECT_ALL -> menuViewModel.onSelectAllPathsButtonClicked(PathsMenuType.MY_PATHS)
+                            PathsMenuButton.FILTER_PATHS_COLOR -> menuViewModel.onShowPathsFilterButtonClicked()
+                            PathsMenuButton.BACK -> menuViewModel.onPathsMenuBackButtonClicked()
+                            PathsMenuButton.SHOW_PATHS -> menuViewModel.onShowAllPathsButtonClicked(PathsMenuType.MY_PATHS)
+                            PathsMenuButton.SHARE_SELECTED_PATHS -> menuViewModel.onShareSelectedPathsButtonClicked()
+                            PathsMenuButton.DELETE_SELECTED_PATHS -> menuViewModel.onDeleteSelectedPathsButtonClicked()
+                        }
                     },
                     itemButtonClickedListener = { pathId, itemButtonClickedType ->
-                        viewModel.onPathInListButtonClicked(pathId, itemButtonClickedType, PathsMenuType.MY_PATHS)
+                        menuViewModel.onPathInListButtonClicked(pathId, itemButtonClickedType, PathsMenuType.MY_PATHS)
                     },
                     itemShortTapListener = { pathId ->
-                        viewModel.onPathInListShortTap(pathId, PathsMenuType.MY_PATHS)
+                        menuViewModel.onPathInListShortTap(pathId, PathsMenuType.MY_PATHS)
                     },
                     itemLongTapListener = { pathId ->
-                        viewModel.onPathInListLongTap(pathId, PathsMenuType.MY_PATHS)
+                        menuViewModel.onPathInListLongTap(pathId, PathsMenuType.MY_PATHS)
                     })
             }
 
             outerPathsMenu = view.findViewById<OuterPathsMenuView>(R.id.outer_paths_menu).apply {
                 setupOnClickListeners(
                     showAllPathsButtonClickListener = {
-                        viewModel.onShowAllPathsButtonClicked(PathsMenuType.OUTER_PATHS)
+                        menuViewModel.onShowAllPathsButtonClicked(PathsMenuType.OUTER_PATHS)
                     },
                     pathsMenuBackButtonClickListener = {
-                        viewModel.onPathsMenuBackButtonClicked()
+                        menuViewModel.onPathsMenuBackButtonClicked()
                     },
                     confirmButtonClickListener = {
-                        viewModel.onOuterPathsConfirmButtonClicked()
+                        menuViewModel.onOuterPathsConfirmButtonClicked()
                     },
                     itemButtonClickedListener = { pathId, itemButtonClickedType ->
-                        viewModel.onPathInListButtonClicked(pathId, itemButtonClickedType, PathsMenuType.OUTER_PATHS)
+                        menuViewModel.onPathInListButtonClicked(pathId, itemButtonClickedType, PathsMenuType.OUTER_PATHS)
                     },
                     itemShortTapListener = { pathId ->
-                        viewModel.onPathInListShortTap(pathId, PathsMenuType.OUTER_PATHS)
+                        menuViewModel.onPathInListShortTap(pathId, PathsMenuType.OUTER_PATHS)
                     },
                     itemLongTapListener = { pathId ->
-                        viewModel.onPathInListLongTap(pathId, PathsMenuType.OUTER_PATHS)
+                        menuViewModel.onPathInListLongTap(pathId, PathsMenuType.OUTER_PATHS)
                     })
             }
 
             walkButtonsHolder = view.findViewById(R.id.walk_buttons_holder)
 
             showPathsMenuButton = view.findViewById<CardView>(R.id.show_paths_menu_button).apply {
-                setOnClickListener { viewModel.onShowMyPathsMenuClicked() }
+                setOnClickListener {
+                    menuViewModel.onShowPathsMenuButtonClick()
+                }
             }
 
             openNavigationButton =
@@ -382,9 +390,10 @@ class MainMapFragment : Fragment() {
                         openNavigationMenu()
                     }
                 }
+
             findMyLocationButton =
                 view.findViewById<FindMyLocationButton>(R.id.my_location_button).apply {
-                    setOnClickListener { viewModel.onFindMyLocationButtonClicked() }
+                    setOnClickListener { mapViewModel.onFindMyLocationButtonClicked() }
                 }
         }
     }
@@ -414,7 +423,106 @@ class MainMapFragment : Fragment() {
                 pathDistancesInMetersRepository
             )
 
-            viewModel =
+            val mapPathsInteractor = LocalMapPathsInteractor(
+                databasePathRepository = databasePathRepository,
+                cachePathRepository = CachePathsRepository(),
+                writingPathStatesRepository = writingPathStatesRepository,
+                lastCreatedPathIdRepository = lastCreatedPathIdRepository,
+                pathRedactor = pathRedactor,
+                optimizePathsSettingsRepository = OptimizePathsSettingsRepository(
+                    sharedPreferences
+                )
+            )
+
+            menuViewModel = ViewModelProvider(
+                this,
+                PathsMenuViewModelFactory(
+                    externalStoragePermissionsUseCase = ExternalStoragePermissionsUseCase(
+                        ExternalStoragePermissionsRepository(
+                            this@MainMapFragment,
+                            requireContext().applicationContext
+                        )
+                    ),
+                    mapPathsInteractor = mapPathsInteractor,
+                    pathsSaverRepository = FilePathsSaverRepository(requireContext().applicationContext),
+                    outerPathsInteractor = OuterPathsInteractor(
+                        PathsLoaderRepository(requireContext().applicationContext),
+                        pathDistancesInMetersRepository,
+                        databasePathRepository
+                    ),
+                    pathRedactor = pathRedactor,
+                    owner = this,
+                    bundle = bundle
+                )
+            )[PathsMenuViewModel::class.java].apply {
+                observeMyPathsMenuUiState.onEach { myPathsUiState ->
+                    myPathsMenu.syncState(myPathsUiState)
+                }.launchIn(lifecycleScope)
+
+                observeOuterPathsMenuUiState.onEach { outerPathsUiState ->
+                    outerPathsMenu.syncState(outerPathsUiState)
+                }.launchIn(lifecycleScope)
+
+                observeNewMapEvent.onEach { mapEvent ->
+                    when (mapEvent) {
+                        is MapEvent.ClearMap -> {
+                            mapViewModel.clearMap()
+                        }
+
+                        is MapEvent.ShowRatingPath -> {
+                            mapViewModel.showRatingPathOnMap(mapEvent.path)
+                        }
+
+                        is MapEvent.ShowCommonPath -> {
+                            mapViewModel.showCommonPathOnMap(mapEvent.path)
+                        }
+
+                        is MapEvent.HidePath -> {
+                            mapViewModel.hidePathFromMap(mapEvent.pathId)
+                        }
+
+                        is MapEvent.BottomMenuStateChange -> {
+                            mapViewModel.onBottomMenuStateChange(mapEvent.newBottomMenuState)
+                        }
+                    }
+                }.launchIn(lifecycleScope)
+
+                observeNewPathsInfoList.onEach { newPathsInfoListEvent ->
+                    when (newPathsInfoListEvent.pathsMenuType) {
+                        PathsMenuType.MY_PATHS -> myPathsMenu.setPathsInfoItems(newPathsInfoListEvent.newPathInfoList)
+                        PathsMenuType.OUTER_PATHS -> outerPathsMenu.setPathsInfoItems(newPathsInfoListEvent.newPathInfoList)
+                    }
+                }.launchIn(lifecycleScope)
+
+                observeNewPathInfoListItemState.onEach { newPathInfoStateEvent ->
+                    when (newPathInfoStateEvent.pathsMenuType) {
+                        PathsMenuType.MY_PATHS -> myPathsMenu.syncPathInfoItemState(newPathInfoStateEvent.pathInfoItemState)
+                        PathsMenuType.OUTER_PATHS -> outerPathsMenu.syncPathInfoItemState(newPathInfoStateEvent.pathInfoItemState)
+                    }
+                }.launchIn(lifecycleScope)
+
+                observeShareFileChannel.onEach { sharedFileUri ->
+                    val sendIntent = Intent().apply {
+                        action = Intent.ACTION_SEND
+                        type = "application/*"
+                        putExtra(Intent.EXTRA_STREAM, sharedFileUri)
+                    }
+                    startActivity(Intent.createChooser(sendIntent, getString(R.string.share_file_title)))
+                }.launchIn(lifecycleScope)
+
+                observeDeletePathInfoItemChannel.onEach { deletePathInfoItemEvent ->
+                    when (deletePathInfoItemEvent.pathsMenuType) {
+                        PathsMenuType.MY_PATHS -> myPathsMenu.deletePathInfoItem(deletePathInfoItemEvent.pathId)
+                        PathsMenuType.OUTER_PATHS -> outerPathsMenu.deletePathInfoItem(deletePathInfoItemEvent.pathId)
+                    }
+                }.launchIn(lifecycleScope)
+
+                observeNewConfirmDialog.onEach { confirmDialogInfo ->
+                    showConfirmDialog(confirmDialogInfo)
+                }.launchIn(lifecycleScope)
+            }
+
+            mapViewModel =
                 ViewModelProvider(
                     this,
                     MapViewModelFactory(
@@ -435,28 +543,13 @@ class MainMapFragment : Fragment() {
                                 requireContext().applicationContext
                             )
                         ),
-                        externalStoragePermissionsUseCase = ExternalStoragePermissionsUseCase(
-                            ExternalStoragePermissionsRepository(
-                                this@MainMapFragment,
-                                requireContext().applicationContext
-                            )
-                        ),
                         userLocationInteractor = UserLocationInteractor(
                             LocationUpdatesRepository(
                                 LocationServices.getFusedLocationProviderClient(requireActivity()),
                                 5000
                             )
                         ),
-                        mapPathsInteractor = LocalMapPathsInteractor(
-                            databasePathRepository = databasePathRepository,
-                            cachePathRepository = CachePathsRepository(),
-                            writingPathStatesRepository = writingPathStatesRepository,
-                            lastCreatedPathIdRepository = lastCreatedPathIdRepository,
-                            pathRedactor = pathRedactor,
-                            optimizePathsSettingsRepository = OptimizePathsSettingsRepository(
-                                sharedPreferences
-                            )
-                        ),
+                        mapPathsInteractor = mapPathsInteractor,
                         mapStateInteractor = MapStateInteractor(
                             LastSeenPointRepository(
                                 sharedPreferences
@@ -470,18 +563,10 @@ class MainMapFragment : Fragment() {
                             ) as SensorManager,
                             lifecycleScope
                         ),
-                        pathRedactor = pathRedactor,
                         owner = this,
-                        bundle = bundle,
-                        pathsSaverRepository = FilePathsSaverRepository(requireContext().applicationContext),
-                        outerPathsInteractor = OuterPathsInteractor(
-                            PathsLoaderRepository(requireContext().applicationContext),
-                            pathDistancesInMetersRepository,
-                            databasePathRepository
-                        )
+                        bundle = bundle
                     )
                 )[MapViewModel::class.java].apply {
-
                     observePermissionsDeniedResult.onEach {
                         showPermissionsDeniedError()
                     }.launchIn(lifecycleScope)
@@ -510,26 +595,12 @@ class MainMapFragment : Fragment() {
                         }
                     }.launchIn(lifecycleScope)
 
-                    observeNewPathsInfoList.onEach { newPathsInfoListEvent ->
-                        when (newPathsInfoListEvent.pathsMenuType) {
-                            PathsMenuType.MY_PATHS -> myPathsMenu.setPathsInfoItems(newPathsInfoListEvent.newPathInfoList)
-                            PathsMenuType.OUTER_PATHS -> outerPathsMenu.setPathsInfoItems(newPathsInfoListEvent.newPathInfoList)
-                        }
-                    }.launchIn(lifecycleScope)
-
                     observeNewMapCenter.onEach { newMapCenter ->
                         mapView.controller?.let { mapViewController ->
                             mapViewController.setCenter(newMapCenter.toGeoPoint())
                             if (mapView.zoomLevelDouble < DEFAULT_COMFORT_ZOOM) {
                                 mapViewController.setZoom(DEFAULT_COMFORT_ZOOM)
                             }
-                        }
-                    }.launchIn(lifecycleScope)
-
-                    observeNewPathInfoListItemState.onEach { newPathInfoStateEvent ->
-                        when (newPathInfoStateEvent.pathsMenuType) {
-                            PathsMenuType.MY_PATHS -> myPathsMenu.syncPathInfoItemState(newPathInfoStateEvent.pathInfoItemState)
-                            PathsMenuType.OUTER_PATHS -> outerPathsMenu.syncPathInfoItemState(newPathInfoStateEvent.pathInfoItemState)
                         }
                     }.launchIn(lifecycleScope)
 
@@ -568,24 +639,8 @@ class MainMapFragment : Fragment() {
                     }.launchIn(lifecycleScope)
 
                     observeNeedToClearMapNow {
-                        clearMap()
+                        this@MainMapFragment.clearMap()
                     }
-
-                    observeShareFileChannel.onEach { sharedFileUri ->
-                        val sendIntent = Intent().apply {
-                            action = Intent.ACTION_SEND
-                            type = "application/*"
-                            putExtra(Intent.EXTRA_STREAM, sharedFileUri)
-                        }
-                        startActivity(Intent.createChooser(sendIntent, getString(R.string.share_file_title)))
-                    }.launchIn(lifecycleScope)
-
-                    observeDeletePathInfoItemChannel.onEach { deletePathInfoItemEvent ->
-                        when (deletePathInfoItemEvent.pathsMenuType) {
-                            PathsMenuType.MY_PATHS -> myPathsMenu.deletePathInfoItem(deletePathInfoItemEvent.pathId)
-                            PathsMenuType.OUTER_PATHS -> outerPathsMenu.deletePathInfoItem(deletePathInfoItemEvent.pathId)
-                        }
-                    }.launchIn(lifecycleScope)
 
                     onInitFinish()
                 }
@@ -598,13 +653,13 @@ class MainMapFragment : Fragment() {
                 ConfirmDialogType.DELETE_PATH -> {
                     DeleteConfirmDialog(
                         context = context,
-                        onConfirm = { viewModel.onConfirmMyPathDelete(confirmDialogInfo.additionalInfo as Long) }).show()
+                        onConfirm = { menuViewModel.onConfirmMyPathDelete(confirmDialogInfo.additionalInfo as Long) }).show()
                 }
 
                 ConfirmDialogType.GEO_LOCATION_PERMISSION_REQUIRED -> {
                     GeoLocationRequiredDialog(
                         context = context,
-                        onConfirm = { viewModel.onLocationPermissionDialogConfirmed() }).show()
+                        onConfirm = { mapViewModel.onLocationPermissionDialogConfirmed() }).show()
                 }
             }
         }
@@ -648,7 +703,8 @@ class MainMapFragment : Fragment() {
 
     override fun onResume() {
         mapView.onResume()
-        viewModel.onResume(getExtraData())
+        mapViewModel.onResume()
+        menuViewModel.onResume(getExtraData())
         LocalBroadcastManager.getInstance(requireContext()).registerReceiver(
             locationChangeReceiver,
             IntentFilter(LocationUpdatesService.ACTION_BROADCAST)
@@ -670,7 +726,7 @@ class MainMapFragment : Fragment() {
 
     override fun onPause() {
         mapView.onPause()
-        viewModel.onPause()
+        mapViewModel.onPause()
         LocalBroadcastManager
             .getInstance(requireContext())
             .unregisterReceiver(locationChangeReceiver)
@@ -701,9 +757,6 @@ class MainMapFragment : Fragment() {
                 walkButtonsHolder.visibility = GONE
             }
         }
-
-        myPathsMenu.syncState(mapUiState.myPathsUiState)
-        outerPathsMenu.syncState(mapUiState.outerPathsUiState)
 
         findMyLocationButton.updateState(mapUiState.findMyLocationButtonState)
 

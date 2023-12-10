@@ -2,9 +2,11 @@ package ru.lobotino.walktraveller.repositories
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import java.io.IOException
 import java.io.InputStreamReader
 import java.io.Reader
+import java.lang.Exception
 import ru.lobotino.walktraveller.model.SegmentRating
 import ru.lobotino.walktraveller.model.map.MapPathSegment
 import ru.lobotino.walktraveller.model.map.MapPoint
@@ -19,7 +21,11 @@ class PathsLoaderRepository(private val applicationContext: Context) : IPathsLoa
             if (line == SHARE_FILE_NEW_MAP_RATING_PATH_TAG) {
                 resultPathsList.add(ArrayList())
             } else {
-                resultPathsList.last().add(getPathSegmentFromLine(line))
+                try {
+                    resultPathsList.last().add(getPathSegmentFromLine(line))
+                } catch (ex: Exception) {
+                    Log.w(TAG, ex)
+                }
             }
         }
         return resultPathsList
@@ -42,5 +48,9 @@ class PathsLoaderRepository(private val applicationContext: Context) : IPathsLoa
         val fileToWriteOutputStream = applicationContext.contentResolver.openInputStream(fileUri)
             ?: throw IOException("Error while trying to open input stream to file: $fileUri")
         return InputStreamReader(fileToWriteOutputStream)
+    }
+
+    companion object {
+        private val TAG = PathsLoaderRepository::class.java.canonicalName
     }
 }
