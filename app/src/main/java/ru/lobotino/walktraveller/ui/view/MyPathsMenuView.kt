@@ -39,7 +39,7 @@ class MyPathsMenuView : ConstraintLayout {
     private lateinit var showPathsFilterRatedOnlyStateImage: View
     private lateinit var showPathsFilterAllInCommonStateImage: View
 
-    private lateinit var showAllPathsButton: CardView
+    private lateinit var showSelectedPathsButton: CardView
     private lateinit var showAllPathsProgress: CircularProgressIndicator
     private lateinit var showAllPathsDefaultImage: ImageView
     private lateinit var showAllPathsHideImage: ImageView
@@ -99,34 +99,34 @@ class MyPathsMenuView : ConstraintLayout {
         menuTitle = view.findViewById(R.id.paths_list_title)
         titleButtonsHolder = view.findViewById(R.id.title_buttons_holder)
 
-        showAllPathsButton = view.findViewById<CardView>(R.id.show_all_paths_button).apply {
+        showSelectedPathsButton = view.findViewById<CardView>(R.id.show_selected_paths_button).apply {
             setOnClickListener {
-                onMenuTitleButtonClick(PathsMenuButton.SHOW_PATHS)
+                onMenuTitleButtonClick(PathsMenuButton.ShowSelectedPaths)
             }
         }
         showPathsFilterButton = view.findViewById<CardView>(R.id.show_paths_filter_button).apply {
             setOnClickListener {
-                onMenuTitleButtonClick(PathsMenuButton.FILTER_PATHS_COLOR)
+                onMenuTitleButtonClick(PathsMenuButton.FilterPathsColor)
             }
         }
         pathsMenuBackButton = view.findViewById<ImageView>(R.id.paths_menu_back_button).apply {
             setOnClickListener {
-                onMenuTitleButtonClick(PathsMenuButton.BACK)
+                onMenuTitleButtonClick(PathsMenuButton.Back)
             }
         }
         selectAllPathsButton = view.findViewById<CardView>(R.id.select_all_paths_button).apply {
             setOnClickListener {
-                onMenuTitleButtonClick(PathsMenuButton.SELECT_ALL)
+                onMenuTitleButtonClick(PathsMenuButton.SelectAll(pathsInfoListAdapter.getAllPathsItemsIds()))
             }
         }
         shareSelectedPathsButton = view.findViewById<CardView>(R.id.share_selected_paths_button).apply {
             setOnClickListener {
-                onMenuTitleButtonClick(PathsMenuButton.SHARE_SELECTED_PATHS)
+                onMenuTitleButtonClick(PathsMenuButton.ShareSelectedPaths)
             }
         }
         deleteSelectedPathsButton = view.findViewById<CardView>(R.id.delete_selected_paths_button).apply {
             setOnClickListener {
-                onMenuTitleButtonClick(PathsMenuButton.DELETE_SELECTED_PATHS)
+                onMenuTitleButtonClick(PathsMenuButton.DeleteSelectedPaths)
             }
         }
 
@@ -166,7 +166,7 @@ class MyPathsMenuView : ConstraintLayout {
     }
 
     fun syncState(myPathsUiState: MyPathsUiState) {
-        showAllPathsButton.visibility = when (myPathsUiState.showPathsButtonState) {
+        showSelectedPathsButton.visibility = when (myPathsUiState.showPathsButtonState) {
             ShowPathsButtonState.GONE -> GONE
             else -> VISIBLE
         }

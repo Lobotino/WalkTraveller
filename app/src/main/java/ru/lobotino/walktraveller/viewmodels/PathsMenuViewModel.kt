@@ -164,7 +164,7 @@ class PathsMenuViewModel(
         }
     }
 
-    fun onShowAllPathsButtonClicked(pathsMenuType: PathsMenuType) {
+    fun onShowSelectedPathsButtonClicked(pathsMenuType: PathsMenuType) {
         when (pathsMenuType) {
             PathsMenuType.MY_PATHS -> onShowAllPathsButtonClickedMyPathsMenu()
             PathsMenuType.OUTER_PATHS -> onShowAllPathsButtonClickedOuterPathsMenu()
@@ -634,8 +634,18 @@ class PathsMenuViewModel(
         newMapEventChannel.trySend(MapEvent.BottomMenuStateChange(BottomMenuState.DEFAULT))
     }
 
-    fun onSelectAllPathsButtonClicked(pathsMenuType: PathsMenuType) {
-
+    fun onSelectAllPathsButtonClicked(pathsMenuType: PathsMenuType, pathsIdsInList: List<Long>) {
+        selectedPathIdsInMenuList.clear()
+        selectedPathIdsInMenuList.addAll(pathsIdsInList)
+        newPathInfoListItemStateFlow.tryEmit(
+            NewPathInfoItemState(
+                pathsMenuType,
+                PathInfoItemState(
+                    -1,
+                    isSelected = true
+                )
+            )
+        )
     }
 
     fun onShareSelectedPathsButtonClicked(pathsMenuType: PathsMenuType) {

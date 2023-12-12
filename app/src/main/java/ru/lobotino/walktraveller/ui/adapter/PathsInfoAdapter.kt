@@ -44,6 +44,10 @@ open class PathsInfoAdapter(
         selectedItemBackgroundColor = ContextCompat.getColor(context, R.color.primary_green_light)
     }
 
+    fun getAllPathsItemsIds(): List<Long> {
+        return pathsItems.map { it.pathInfo.pathId }
+    }
+
     @SuppressLint("NotifyDataSetChanged")
     fun setPathsInfoItems(pathInfoItems: List<MapPathInfo>) {
         pathsItems = pathInfoItems.map { PathInfoItemModel(pathInfo = it) }.toMutableList()

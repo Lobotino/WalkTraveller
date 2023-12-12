@@ -63,7 +63,7 @@ class OuterPathsMenuView : ConstraintLayout {
     private fun initView(context: Context) {
         val view = LayoutInflater.from(context).inflate(R.layout.outer_paths_menu, this)
 
-        showAllPathsButton = view.findViewById(R.id.show_all_paths_button)
+        showAllPathsButton = view.findViewById(R.id.show_selected_paths_button)
         showAllPathsProgress = view.findViewById(R.id.show_all_paths_progress)
         showAllPathsDefaultImage = view.findViewById(R.id.show_all_paths_default_image)
         showAllPathsHideImage = view.findViewById(R.id.show_all_paths_hide_image)

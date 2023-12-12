@@ -1,10 +1,10 @@
 package ru.lobotino.walktraveller.ui.model
 
-enum class PathsMenuButton {
-    BACK,
-    SELECT_ALL,
-    SHOW_PATHS,
-    FILTER_PATHS_COLOR,
-    SHARE_SELECTED_PATHS,
-    DELETE_SELECTED_PATHS
+sealed class PathsMenuButton {
+    class SelectAll(val pathsIdsInList: List<Long>) : PathsMenuButton()
+    object Back : PathsMenuButton()
+    object ShowSelectedPaths : PathsMenuButton()
+    object FilterPathsColor : PathsMenuButton()
+    object ShareSelectedPaths : PathsMenuButton()
+    object DeleteSelectedPaths : PathsMenuButton()
 }

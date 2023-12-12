@@ -335,12 +335,16 @@ class MainMapFragment : Fragment() {
                 setupOnClickListeners(
                     menuTitleButtonClickListener = { pathsMenuButton ->
                         when (pathsMenuButton) {
-                            PathsMenuButton.SELECT_ALL -> menuViewModel.onSelectAllPathsButtonClicked(PathsMenuType.MY_PATHS)
-                            PathsMenuButton.FILTER_PATHS_COLOR -> menuViewModel.onShowPathsFilterButtonClicked()
-                            PathsMenuButton.BACK -> menuViewModel.onPathsMenuBackButtonClicked()
-                            PathsMenuButton.SHOW_PATHS -> menuViewModel.onShowAllPathsButtonClicked(PathsMenuType.MY_PATHS)
-                            PathsMenuButton.SHARE_SELECTED_PATHS -> menuViewModel.onShareSelectedPathsButtonClicked(PathsMenuType.MY_PATHS)
-                            PathsMenuButton.DELETE_SELECTED_PATHS -> menuViewModel.onDeleteSelectedPathsButtonClicked(PathsMenuType.MY_PATHS)
+                            is PathsMenuButton.SelectAll -> menuViewModel.onSelectAllPathsButtonClicked(
+                                PathsMenuType.MY_PATHS,
+                                pathsMenuButton.pathsIdsInList
+                            )
+
+                            PathsMenuButton.FilterPathsColor -> menuViewModel.onShowPathsFilterButtonClicked()
+                            PathsMenuButton.Back -> menuViewModel.onPathsMenuBackButtonClicked()
+                            PathsMenuButton.ShowSelectedPaths -> menuViewModel.onShowSelectedPathsButtonClicked(PathsMenuType.MY_PATHS)
+                            PathsMenuButton.ShareSelectedPaths -> menuViewModel.onShareSelectedPathsButtonClicked(PathsMenuType.MY_PATHS)
+                            PathsMenuButton.DeleteSelectedPaths -> menuViewModel.onDeleteSelectedPathsButtonClicked(PathsMenuType.MY_PATHS)
                         }
                     },
                     itemButtonClickedListener = { pathId, itemButtonClickedType ->
@@ -357,7 +361,7 @@ class MainMapFragment : Fragment() {
             outerPathsMenu = view.findViewById<OuterPathsMenuView>(R.id.outer_paths_menu).apply {
                 setupOnClickListeners(
                     showAllPathsButtonClickListener = {
-                        menuViewModel.onShowAllPathsButtonClicked(PathsMenuType.OUTER_PATHS)
+                        menuViewModel.onShowSelectedPathsButtonClicked(PathsMenuType.OUTER_PATHS)
                     },
                     pathsMenuBackButtonClickListener = {
                         menuViewModel.onPathsMenuBackButtonClicked()
