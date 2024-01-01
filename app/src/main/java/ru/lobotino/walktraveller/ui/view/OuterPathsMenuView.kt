@@ -19,6 +19,7 @@ import ru.lobotino.walktraveller.ui.model.OuterPathsInfoListState
 import ru.lobotino.walktraveller.ui.model.OuterPathsUiState
 import ru.lobotino.walktraveller.ui.model.PathInfoItemState
 import ru.lobotino.walktraveller.ui.model.PathItemButtonType
+import ru.lobotino.walktraveller.ui.model.PathsToAction
 import ru.lobotino.walktraveller.ui.model.ShowPathsButtonState
 import ru.lobotino.walktraveller.usecases.DistanceInMetersToStringFormatter
 import ru.lobotino.walktraveller.utils.ext.toColorInt
@@ -159,15 +160,11 @@ class OuterPathsMenuView : ConstraintLayout {
         pathsInfoListAdapter.setPathsInfoItems(newPathsInfoList)
     }
 
-    fun deletePathInfoItem(pathId: Long) {
-        pathsInfoListAdapter.deletePathInfoItem(pathId)
+    fun deletePathInfoItem(pathsToDelete: PathsToAction) {
+        pathsInfoListAdapter.deletePaths(pathsToDelete)
     }
 
     fun syncPathInfoItemState(pathInfoState: PathInfoItemState) {
-        if (pathInfoState.pathId == -1L) {
-            pathsInfoListAdapter.updateAllItemsState(pathInfoState)
-        } else {
-            pathsInfoListAdapter.updateItemState(pathInfoState)
-        }
+        pathsInfoListAdapter.updatePaths(pathInfoState)
     }
 }

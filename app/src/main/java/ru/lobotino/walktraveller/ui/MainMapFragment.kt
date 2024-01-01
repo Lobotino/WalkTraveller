@@ -54,6 +54,7 @@ import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.CustomZoomButtonsController
 import org.osmdroid.views.MapView
+import org.osmdroid.views.overlay.Overlay
 import org.osmdroid.views.overlay.Polyline
 import ru.lobotino.walktraveller.App
 import ru.lobotino.walktraveller.R
@@ -92,11 +93,14 @@ import ru.lobotino.walktraveller.services.LocationUpdatesService.Companion.EXTRA
 import ru.lobotino.walktraveller.services.VolumeKeysDetectorService
 import ru.lobotino.walktraveller.ui.model.BottomMenuState
 import ru.lobotino.walktraveller.ui.model.ConfirmDialogInfo
-import ru.lobotino.walktraveller.ui.model.ConfirmDialogType
+import ru.lobotino.walktraveller.ui.model.ConfirmDialogType.DELETE_MULTIPLE_PATHS
+import ru.lobotino.walktraveller.ui.model.ConfirmDialogType.DELETE_PATH
+import ru.lobotino.walktraveller.ui.model.ConfirmDialogType.GEO_LOCATION_PERMISSION_REQUIRED
 import ru.lobotino.walktraveller.ui.model.MapEvent
 import ru.lobotino.walktraveller.ui.model.MapUiState
 import ru.lobotino.walktraveller.ui.model.PathsMenuButton
 import ru.lobotino.walktraveller.ui.model.PathsMenuType
+import ru.lobotino.walktraveller.ui.model.PathsToAction
 import ru.lobotino.walktraveller.ui.view.FindMyLocationButton
 import ru.lobotino.walktraveller.ui.view.MyPathsMenuView
 import ru.lobotino.walktraveller.ui.view.OuterPathsMenuView
@@ -482,7 +486,7 @@ class MainMapFragment : Fragment() {
                         }
 
                         is MapEvent.HidePath -> {
-                            mapViewModel.hidePathFromMap(mapEvent.pathId)
+                            mapViewModel.hidePathsFromMap(mapEvent.pathsToHide)
                         }
 
                         is MapEvent.BottomMenuStateChange -> {
@@ -516,8 +520,8 @@ class MainMapFragment : Fragment() {
 
                 observeDeletePathInfoItemChannel.onEach { deletePathInfoItemEvent ->
                     when (deletePathInfoItemEvent.pathsMenuType) {
-                        PathsMenuType.MY_PATHS -> myPathsMenu.deletePathInfoItem(deletePathInfoItemEvent.pathId)
-                        PathsMenuType.OUTER_PATHS -> outerPathsMenu.deletePathInfoItem(deletePathInfoItemEvent.pathId)
+                        PathsMenuType.MY_PATHS -> myPathsMenu.deletePathInfoItem(deletePathInfoItemEvent.pathsToDelete)
+                        PathsMenuType.OUTER_PATHS -> outerPathsMenu.deletePathInfoItem(deletePathInfoItemEvent.pathsToDelete)
                     }
                 }.launchIn(lifecycleScope)
 
@@ -608,8 +612,20 @@ class MainMapFragment : Fragment() {
                         }
                     }.launchIn(lifecycleScope)
 
-                    observeHidePath.onEach { pathId ->
-                        hidePathById(pathId)
+                    observeHidePath.onEach { pathsToHide ->
+                        when (pathsToHide) {
+                            PathsToAction.All -> {
+                                this@MainMapFragment.clearMap()
+                            }
+
+                            is PathsToAction.Single -> {
+                                hidePathById(pathsToHide.pathId)
+                            }
+
+                            is PathsToAction.Multiple -> {
+                                hidePathsList(pathsToHide.pathIds)
+                            }
+                        }
                     }.launchIn(lifecycleScope)
 
                     observeNewCurrentUserLocation.onEach { newUserLocation ->
@@ -642,10 +658,6 @@ class MainMapFragment : Fragment() {
                         refreshMapNow()
                     }.launchIn(lifecycleScope)
 
-                    observeNeedToClearMapNow {
-                        this@MainMapFragment.clearMap()
-                    }
-
                     onInitFinish()
                 }
         }
@@ -654,16 +666,26 @@ class MainMapFragment : Fragment() {
     private fun showConfirmDialog(confirmDialogInfo: ConfirmDialogInfo) {
         context?.let { context ->
             when (confirmDialogInfo.dialogType) {
-                ConfirmDialogType.DELETE_PATH -> {
+                DELETE_PATH -> {
                     DeleteConfirmDialog(
                         context = context,
                         onConfirm = { menuViewModel.onConfirmMyPathDelete(confirmDialogInfo.additionalInfo as Long) }).show()
                 }
 
-                ConfirmDialogType.GEO_LOCATION_PERMISSION_REQUIRED -> {
+                GEO_LOCATION_PERMISSION_REQUIRED -> {
                     GeoLocationRequiredDialog(
                         context = context,
                         onConfirm = { mapViewModel.onLocationPermissionDialogConfirmed() }).show()
+                }
+
+                DELETE_MULTIPLE_PATHS -> {
+                    DeleteConfirmDialog(
+                        context = context,
+                        onConfirm = {
+                            @Suppress("UNCHECKED_CAST")
+                            menuViewModel.onConfirmMyPathListDelete(confirmDialogInfo.additionalInfo as List<Long>)
+                        }
+                    ).show()
                 }
             }
         }
@@ -918,6 +940,19 @@ class MainMapFragment : Fragment() {
         showingPathsPolylines.remove(pathId)
         mapView.overlays.removeAll(hidingPath)
         refreshMapNow()
+    }
+
+    private fun hidePathsList(pathIds: List<Long>) {
+        val segmentsToHide: MutableList<Overlay> = ArrayList()
+        for (pathId in pathIds) {
+            val pathsSegments = showingPathsPolylines[pathId] ?: continue
+            showingPathsPolylines.remove(pathId)
+            segmentsToHide.addAll(pathsSegments)
+        }
+        if (segmentsToHide.isNotEmpty()) {
+            mapView.overlays.removeAll(segmentsToHide)
+            refreshMapNow()
+        }
     }
 
     @ColorInt

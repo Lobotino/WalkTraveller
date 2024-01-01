@@ -32,6 +32,7 @@ import ru.lobotino.walktraveller.ui.model.PathInfoItemShowButtonState
 import ru.lobotino.walktraveller.ui.model.PathInfoItemState
 import ru.lobotino.walktraveller.ui.model.PathItemButtonType
 import ru.lobotino.walktraveller.ui.model.PathsMenuType
+import ru.lobotino.walktraveller.ui.model.PathsToAction
 import ru.lobotino.walktraveller.ui.model.ShowPathsButtonState
 import ru.lobotino.walktraveller.ui.model.ShowPathsFilterButtonState
 import ru.lobotino.walktraveller.usecases.interfaces.IMapPathsInteractor
@@ -135,7 +136,7 @@ class PathsMenuViewModel(
             NewPathInfoItemState(
                 PathsMenuType.MY_PATHS,
                 PathInfoItemState(
-                    pathId,
+                    PathsToAction.Single(pathId),
                     shareButtonState = PathInfoItemShareButtonState.LOADING
                 )
             )
@@ -154,7 +155,7 @@ class PathsMenuViewModel(
                         NewPathInfoItemState(
                             PathsMenuType.MY_PATHS,
                             PathInfoItemState(
-                                pathId,
+                                PathsToAction.Single(pathId),
                                 shareButtonState = PathInfoItemShareButtonState.DEFAULT
                             )
                         )
@@ -180,7 +181,7 @@ class PathsMenuViewModel(
                 NewPathInfoItemState(
                     PathsMenuType.MY_PATHS,
                     PathInfoItemState(
-                        -1,
+                        PathsToAction.All,
                         PathInfoItemShowButtonState.DEFAULT
                     )
                 )
@@ -193,7 +194,7 @@ class PathsMenuViewModel(
                     NewPathInfoItemState(
                         PathsMenuType.MY_PATHS,
                         PathInfoItemState(
-                            -1,
+                            PathsToAction.All,
                             PathInfoItemShowButtonState.DEFAULT
                         )
                     )
@@ -205,7 +206,7 @@ class PathsMenuViewModel(
                     NewPathInfoItemState(
                         PathsMenuType.MY_PATHS,
                         PathInfoItemState(
-                            -1,
+                            PathsToAction.All,
                             PathInfoItemShowButtonState.LOADING
                         )
                     )
@@ -231,7 +232,7 @@ class PathsMenuViewModel(
                     NewPathInfoItemState(
                         PathsMenuType.OUTER_PATHS,
                         PathInfoItemState(
-                            -1,
+                            PathsToAction.All,
                             PathInfoItemShowButtonState.DEFAULT
                         )
                     )
@@ -245,7 +246,7 @@ class PathsMenuViewModel(
                     NewPathInfoItemState(
                         PathsMenuType.OUTER_PATHS,
                         PathInfoItemState(
-                            -1,
+                            PathsToAction.All,
                             PathInfoItemShowButtonState.LOADING
                         )
                     )
@@ -256,7 +257,7 @@ class PathsMenuViewModel(
                         NewPathInfoItemState(
                             PathsMenuType.OUTER_PATHS,
                             PathInfoItemState(
-                                outerPath.pathId,
+                                PathsToAction.Single(outerPath.pathId),
                                 PathInfoItemShowButtonState.HIDE
                             )
                         )
@@ -271,7 +272,7 @@ class PathsMenuViewModel(
                     NewPathInfoItemState(
                         PathsMenuType.OUTER_PATHS,
                         PathInfoItemState(
-                            -1,
+                            PathsToAction.All,
                             PathInfoItemShowButtonState.DEFAULT
                         )
                     )
@@ -292,7 +293,7 @@ class PathsMenuViewModel(
                     NewPathInfoItemState(
                         PathsMenuType.MY_PATHS,
                         PathInfoItemState(
-                            path.pathId,
+                            PathsToAction.Single(path.pathId),
                             PathInfoItemShowButtonState.HIDE
                         )
                     )
@@ -311,7 +312,7 @@ class PathsMenuViewModel(
                     NewPathInfoItemState(
                         PathsMenuType.MY_PATHS,
                         PathInfoItemState(
-                            path.pathId,
+                            PathsToAction.Single(path.pathId),
                             PathInfoItemShowButtonState.HIDE
                         )
                     )
@@ -406,12 +407,12 @@ class PathsMenuViewModel(
             is PathItemButtonType.Show -> {
                 when (clickedButtonType.currentState) {
                     PathInfoItemShowButtonState.LOADING, PathInfoItemShowButtonState.HIDE -> {
-                        newMapEventChannel.trySend(MapEvent.HidePath(pathId))
+                        newMapEventChannel.trySend(MapEvent.HidePath(PathsToAction.Single(pathId)))
                         newPathInfoListItemStateFlow.tryEmit(
                             NewPathInfoItemState(
                                 PathsMenuType.MY_PATHS,
                                 PathInfoItemState(
-                                    pathId,
+                                    PathsToAction.Single(pathId),
                                     PathInfoItemShowButtonState.DEFAULT
                                 )
                             )
@@ -423,7 +424,7 @@ class PathsMenuViewModel(
                             NewPathInfoItemState(
                                 PathsMenuType.MY_PATHS,
                                 PathInfoItemState(
-                                    pathId,
+                                    PathsToAction.Single(pathId),
                                     PathInfoItemShowButtonState.LOADING
                                 )
                             )
@@ -436,7 +437,7 @@ class PathsMenuViewModel(
                                     NewPathInfoItemState(
                                         PathsMenuType.MY_PATHS,
                                         PathInfoItemState(
-                                            pathId,
+                                            PathsToAction.Single(pathId),
                                             PathInfoItemShowButtonState.HIDE
                                         )
                                     )
@@ -472,12 +473,12 @@ class PathsMenuViewModel(
             is PathItemButtonType.Show -> {
                 when (clickedButtonType.currentState) {
                     PathInfoItemShowButtonState.LOADING, PathInfoItemShowButtonState.HIDE -> {
-                        newMapEventChannel.trySend(MapEvent.HidePath(tempPathId))
+                        newMapEventChannel.trySend(MapEvent.HidePath(PathsToAction.Single(tempPathId)))
                         newPathInfoListItemStateFlow.tryEmit(
                             NewPathInfoItemState(
                                 PathsMenuType.OUTER_PATHS,
                                 PathInfoItemState(
-                                    tempPathId,
+                                    PathsToAction.Single(tempPathId),
                                     PathInfoItemShowButtonState.DEFAULT
                                 )
                             )
@@ -491,7 +492,7 @@ class PathsMenuViewModel(
                                 NewPathInfoItemState(
                                     PathsMenuType.OUTER_PATHS,
                                     PathInfoItemState(
-                                        tempPathId,
+                                        PathsToAction.Single(tempPathId),
                                         PathInfoItemShowButtonState.HIDE
                                     )
                                 )
@@ -547,7 +548,7 @@ class PathsMenuViewModel(
             NewPathInfoItemState(
                 pathsMenuType,
                 PathInfoItemState(
-                    pathId,
+                    PathsToAction.Single(pathId),
                     isSelected = isItemSelected
                 )
             )
@@ -561,20 +562,47 @@ class PathsMenuViewModel(
         }
     }
 
-
     fun onConfirmMyPathDelete(pathId: Long) {
         viewModelScope.launch {
             pathRedactor.deletePath(pathId)
             checkMyPathsListNotEmptyNow()
         }
-        newMapEventChannel.trySend(MapEvent.HidePath(pathId))
-        deletePathInfoItemChannel.trySend(DeletePathInfoItemEvent(PathsMenuType.MY_PATHS, pathId))
+        newMapEventChannel.trySend(MapEvent.HidePath(PathsToAction.Single(pathId)))
+        deletePathInfoItemChannel.trySend(DeletePathInfoItemEvent(PathsMenuType.MY_PATHS, PathsToAction.Single(pathId)))
+    }
+
+    fun onConfirmMyPathListDelete(pathIds: List<Long>) {
+        viewModelScope.launch {
+            for (pathId in pathIds) {
+                pathRedactor.deletePath(pathId)
+            }
+            checkMyPathsListNotEmptyNow()
+        }
+        newMapEventChannel.trySend(MapEvent.HidePath(PathsToAction.Multiple(pathIds)))
+        deletePathInfoItemChannel.trySend(DeletePathInfoItemEvent(PathsMenuType.MY_PATHS, PathsToAction.Multiple(pathIds)))
     }
 
     private fun deleteOuterPathFromList(tempPathId: Long) {
         outerPathsInteractor.removeCachedPath(tempPathId.toInt())
-        newMapEventChannel.trySend(MapEvent.HidePath(tempPathId))
-        deletePathInfoItemChannel.trySend(DeletePathInfoItemEvent(PathsMenuType.OUTER_PATHS, tempPathId))
+        newMapEventChannel.trySend(MapEvent.HidePath(PathsToAction.Single(tempPathId)))
+        deletePathInfoItemChannel.trySend(DeletePathInfoItemEvent(PathsMenuType.OUTER_PATHS, PathsToAction.Single(tempPathId)))
+
+        if (outerPathsInteractor.getCachedOuterPaths().isEmpty()) {
+            updateOuterPathsMenuState(
+                showPathsButtonState = ShowPathsButtonState.GONE,
+                outerPathsInfoListState = OuterPathsInfoListState.EMPTY_LIST
+            )
+        }
+    }
+
+    private fun deleteSelectedOuterPathsFromList() {
+        val selectedPathIds = selectedPathIdsInMenuList
+
+        for (pathId in selectedPathIds) {
+            outerPathsInteractor.removeCachedPath(pathId.toInt())
+        }
+        newMapEventChannel.trySend(MapEvent.HidePath(PathsToAction.Multiple(selectedPathIds)))
+        deletePathInfoItemChannel.trySend(DeletePathInfoItemEvent(PathsMenuType.OUTER_PATHS, PathsToAction.Multiple(selectedPathIds)))
 
         if (outerPathsInteractor.getCachedOuterPaths().isEmpty()) {
             updateOuterPathsMenuState(
@@ -641,7 +669,7 @@ class PathsMenuViewModel(
             NewPathInfoItemState(
                 pathsMenuType,
                 PathInfoItemState(
-                    -1,
+                    PathsToAction.All,
                     isSelected = true
                 )
             )
@@ -649,19 +677,20 @@ class PathsMenuViewModel(
     }
 
     fun onShareSelectedPathsButtonClicked(pathsMenuType: PathsMenuType) {
+        val selectedPathIdsInMenuList = ArrayList(selectedPathIdsInMenuList)
         newPathInfoListItemStateFlow.tryEmit(
             NewPathInfoItemState(
                 pathsMenuType,
                 PathInfoItemState(
-                    -1,
+                    PathsToAction.Multiple(selectedPathIdsInMenuList),
                     shareButtonState = PathInfoItemShareButtonState.LOADING
                 )
             )
         )
 
         viewModelScope.launch {
-            val selectedPathIdsInMenuList = selectedPathIdsInMenuList
             val selectedPaths = ArrayList<MapRatingPath>()
+
             for (pathId in selectedPathIdsInMenuList) {
                 val path = mapPathsInteractor.getSavedRatingPath(pathId, false)
                 if (path != null) {
@@ -680,22 +709,33 @@ class PathsMenuViewModel(
                 //TODO show toast error
             }
 
-            for (pathId in selectedPathIdsInMenuList) {
-                newPathInfoListItemStateFlow.tryEmit(
-                    NewPathInfoItemState(
-                        pathsMenuType,
-                        PathInfoItemState(
-                            pathId,
-                            shareButtonState = PathInfoItemShareButtonState.DEFAULT
-                        )
+            newPathInfoListItemStateFlow.tryEmit(
+                NewPathInfoItemState(
+                    pathsMenuType,
+                    PathInfoItemState(
+                        PathsToAction.Multiple(selectedPathIdsInMenuList),
+                        shareButtonState = PathInfoItemShareButtonState.DEFAULT
                     )
                 )
-            }
+            )
         }
     }
 
     fun onDeleteSelectedPathsButtonClicked(pathsMenuType: PathsMenuType) {
-        //TODO
+        when (pathsMenuType) {
+            PathsMenuType.MY_PATHS -> {
+                newConfirmDialogChannel.trySend(
+                    ConfirmDialogInfo(
+                        ConfirmDialogType.DELETE_MULTIPLE_PATHS,
+                        selectedPathIdsInMenuList
+                    )
+                )
+            }
+
+            PathsMenuType.OUTER_PATHS -> {
+                deleteSelectedOuterPathsFromList()
+            }
+        }
     }
 
     fun onResume(extraData: Uri?) {

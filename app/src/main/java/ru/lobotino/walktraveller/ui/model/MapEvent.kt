@@ -10,7 +10,7 @@ sealed class MapEvent {
 
     class ShowCommonPath(val path: MapCommonPath) : MapEvent()
 
-    class HidePath(val pathId: Long) : MapEvent()
+    class HidePath(val pathsToHide: PathsToAction) : MapEvent()
 
     class BottomMenuStateChange(val newBottomMenuState: BottomMenuState) : MapEvent()
 }

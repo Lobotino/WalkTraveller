@@ -12,17 +12,18 @@ import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.progressindicator.CircularProgressIndicator
-import ru.lobotino.walktraveller.R
-import ru.lobotino.walktraveller.model.map.MapPathInfo
-import ru.lobotino.walktraveller.ui.model.PathInfoItemModel
-import ru.lobotino.walktraveller.ui.model.PathInfoItemShowButtonState
-import ru.lobotino.walktraveller.usecases.interfaces.IDistanceToStringFormatter
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.properties.Delegates
+import ru.lobotino.walktraveller.R
+import ru.lobotino.walktraveller.model.map.MapPathInfo
+import ru.lobotino.walktraveller.ui.model.PathInfoItemModel
 import ru.lobotino.walktraveller.ui.model.PathInfoItemShareButtonState
+import ru.lobotino.walktraveller.ui.model.PathInfoItemShowButtonState
 import ru.lobotino.walktraveller.ui.model.PathInfoItemState
 import ru.lobotino.walktraveller.ui.model.PathItemButtonType
+import ru.lobotino.walktraveller.ui.model.PathsToAction
+import ru.lobotino.walktraveller.usecases.interfaces.IDistanceToStringFormatter
 
 
 open class PathsInfoAdapter(
@@ -54,10 +55,26 @@ open class PathsInfoAdapter(
         notifyDataSetChanged()
     }
 
-    fun updateItemState(pathInfoItemState: PathInfoItemState) {
+    fun updatePaths(pathInfoItemState: PathInfoItemState) {
+        when (val pathsToUpdate = pathInfoItemState.pathsToAction) {
+            PathsToAction.All -> {
+                updateAllItemsState(pathInfoItemState)
+            }
+
+            is PathsToAction.Single -> {
+                updateItemState(pathsToUpdate.pathId, pathInfoItemState)
+            }
+
+            is PathsToAction.Multiple -> {
+                updateItemsListState(pathsToUpdate.pathIds, pathInfoItemState)
+            }
+        }
+    }
+
+    private fun updateItemState(pathId: Long, pathInfoItemState: PathInfoItemState) {
         for (index in pathsItems.indices) {
             val item = pathsItems[index]
-            if (item.pathInfo.pathId == pathInfoItemState.pathId) {
+            if (item.pathInfo.pathId == pathId) {
                 if (pathInfoItemState.showButtonState != null) {
                     item.showButtonState = pathInfoItemState.showButtonState
                 }
@@ -73,7 +90,29 @@ open class PathsInfoAdapter(
         }
     }
 
-    fun updateAllItemsState(pathInfoItemState: PathInfoItemState) {
+    private fun updateItemsListState(pathIds: List<Long>, pathInfoItemState: PathInfoItemState) {
+        var updatedPathsCount = 0
+        for (index in pathsItems.indices) {
+            val item = pathsItems[index]
+            if (pathIds.contains(item.pathInfo.pathId)) {
+                if (pathInfoItemState.showButtonState != null) {
+                    item.showButtonState = pathInfoItemState.showButtonState
+                }
+                if (pathInfoItemState.shareButtonState != null) {
+                    item.shareButtonState = pathInfoItemState.shareButtonState
+                }
+                if (pathInfoItemState.isSelected != null) {
+                    item.isSelected = pathInfoItemState.isSelected
+                }
+                notifyItemChanged(index)
+                updatedPathsCount++
+
+                if (updatedPathsCount >= pathIds.size) return
+            }
+        }
+    }
+
+    private fun updateAllItemsState(pathInfoItemState: PathInfoItemState) {
         if (pathInfoItemState.showButtonState != null) {
             for (path in pathsItems) {
                 path.showButtonState = pathInfoItemState.showButtonState
@@ -92,7 +131,27 @@ open class PathsInfoAdapter(
         notifyItemRangeChanged(0, pathsItems.size)
     }
 
-    fun deletePathInfoItem(pathId: Long) {
+    fun deletePaths(pathsToDelete: PathsToAction) {
+        when (pathsToDelete) {
+            PathsToAction.All -> {
+                val pathsCount = pathsItems.size
+                pathsItems.clear()
+                notifyItemRangeRemoved(0, pathsCount)
+            }
+
+            is PathsToAction.Single -> {
+                deletePathInfoItem(pathsToDelete.pathId)
+            }
+
+            is PathsToAction.Multiple -> {
+                for (pathId in pathsToDelete.pathIds) {
+                    deletePathInfoItem(pathId)
+                }
+            }
+        }
+    }
+
+    private fun deletePathInfoItem(pathId: Long) {
         for (index in pathsItems.indices) {
             if (pathsItems[index].pathInfo.pathId == pathId) {
                 pathsItems.removeAt(index)

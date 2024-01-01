@@ -27,6 +27,7 @@ import ru.lobotino.walktraveller.ui.model.ConfirmDialogInfo
 import ru.lobotino.walktraveller.ui.model.ConfirmDialogType
 import ru.lobotino.walktraveller.ui.model.FindMyLocationButtonState
 import ru.lobotino.walktraveller.ui.model.MapUiState
+import ru.lobotino.walktraveller.ui.model.PathsToAction
 import ru.lobotino.walktraveller.usecases.IUserLocationInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IMapPathsInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IMapStateInteractor
@@ -63,7 +64,7 @@ class MapViewModel(
     private val permissionsDeniedSharedFlow =
         MutableSharedFlow<List<String>>(1, 0, BufferOverflow.DROP_OLDEST)
     private val hidePathFlow =
-        MutableSharedFlow<Long>(1, 0, BufferOverflow.DROP_OLDEST)
+        MutableSharedFlow<PathsToAction>(1, 0, BufferOverflow.DROP_OLDEST)
     private val newPathSegmentFlow =
         MutableSharedFlow<MapPathSegment>(1, 0, BufferOverflow.DROP_OLDEST)
     private val newCommonPathFlow =
@@ -84,7 +85,7 @@ class MapViewModel(
     val observeMapUiState: Flow<MapUiState> = mapUiStateFlow
     val observeRegularLocationUpdate: Flow<Boolean> = regularLocationUpdateStateFlow
     val observeNewMapCenter: Flow<MapPoint> = newMapCenterFlow
-    val observeHidePath: Flow<Long> = hidePathFlow
+    val observeHidePath: Flow<PathsToAction> = hidePathFlow
     val observeNewCurrentUserLocation: Flow<MapPoint> = newCurrentUserLocationFlow
     val observeWritingPathNow: Flow<Boolean> = writingPathNowState
     val observeNewConfirmDialog: Flow<ConfirmDialogInfo> = newConfirmDialogChannel.consumeAsFlow()
@@ -97,13 +98,8 @@ class MapViewModel(
     private var backgroundCachingPathsInfoJob: Job? = null
     private var lastPaintedPoint: MapPoint? = null
     private var showedPathIdsList: MutableList<Long> = ArrayList()
-    private var clearMapNowListener: (() -> Unit)? = null
 
     fun observeNewUserRotation(): Flow<Float> = userRotationRepository.observeUserRotation()
-
-    fun observeNeedToClearMapNow(listener: (() -> Unit)?) {
-        clearMapNowListener = listener
-    }
 
     fun onInitFinish() {
         setupMapCenterToLastSeenLocation()
@@ -284,16 +280,30 @@ class MapViewModel(
         }
     }
 
-    fun hidePathFromMap(pathId: Long) {
-        if (showedPathIdsList.contains(pathId)) {
-            showedPathIdsList.remove(pathId)
-            hidePathFlow.tryEmit(pathId)
+    fun hidePathsFromMap(pathsToHide: PathsToAction) {
+        when (pathsToHide) {
+            PathsToAction.All -> {
+                clearMap()
+            }
+
+            is PathsToAction.Single -> {
+                val pathId = pathsToHide.pathId
+                if (showedPathIdsList.contains(pathId)) {
+                    showedPathIdsList.remove(pathId)
+                    hidePathFlow.tryEmit(PathsToAction.Single(pathId))
+                }
+            }
+
+            is PathsToAction.Multiple -> {
+                showedPathIdsList.removeAll(pathsToHide.pathIds)
+                hidePathFlow.tryEmit(PathsToAction.Multiple(pathsToHide.pathIds))
+            }
         }
     }
 
     fun clearMap() {
         showedPathIdsList.clear()
-        clearMapNowListener?.invoke()
+        hidePathFlow.tryEmit(PathsToAction.All)
     }
 
     private fun startBackgroundCachingPaths() {
@@ -314,21 +324,23 @@ class MapViewModel(
                 updateCurrentMapCenterToUserLocation()
             } else {
                 geoPermissionsInteractor
-                    .requestPermissions({
-                                            regularLocationUpdateStateFlow.tryEmit(true)
-                                            updateCurrentMapCenterToUserLocation()
-                                        }, {
-                                            if (geoPermissionsInteractor.isGeneralGeoPermissionsGranted()) {
-                                                regularLocationUpdateStateFlow.tryEmit(true)
-                                                updateCurrentMapCenterToUserLocation()
-                                            } else {
-                                                mapUiStateFlow.update { mapUiState ->
-                                                    mapUiState.copy(
-                                                        findMyLocationButtonState = FindMyLocationButtonState.ERROR
-                                                    )
-                                                }
-                                            }
-                                        })
+                    .requestPermissions(
+                        {
+                            regularLocationUpdateStateFlow.tryEmit(true)
+                            updateCurrentMapCenterToUserLocation()
+                        }, {
+                            if (geoPermissionsInteractor.isGeneralGeoPermissionsGranted()) {
+                                regularLocationUpdateStateFlow.tryEmit(true)
+                                updateCurrentMapCenterToUserLocation()
+                            } else {
+                                mapUiStateFlow.update { mapUiState ->
+                                    mapUiState.copy(
+                                        findMyLocationButtonState = FindMyLocationButtonState.ERROR
+                                    )
+                                }
+                            }
+                        }
+                    )
             }
         }
     }
