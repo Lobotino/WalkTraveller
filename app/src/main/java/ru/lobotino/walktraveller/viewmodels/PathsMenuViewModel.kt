@@ -597,7 +597,7 @@ class PathsMenuViewModel(
     }
 
     private fun deleteSelectedOuterPathsFromList() {
-        val selectedPathIds = selectedPathIdsInMenuList
+        val selectedPathIds = ArrayList(selectedPathIdsInMenuList)
 
         for (pathId in selectedPathIds) {
             outerPathsInteractor.removeCachedPath(pathId.toInt())
