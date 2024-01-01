@@ -370,7 +370,8 @@ class PathsMenuViewModel(
                 updateMyPathsMenuState(
                     pathsInfoListState = MyPathsInfoListState.EMPTY_LIST,
                     showPathsButtonState = ShowPathsButtonState.GONE,
-                    showPathsFilterButtonState = ShowPathsFilterButtonState.GONE
+                    showPathsFilterButtonState = ShowPathsFilterButtonState.GONE,
+                    inSelectMode = false
                 )
             }
         }
@@ -617,7 +618,8 @@ class PathsMenuViewModel(
             updateMyPathsMenuState(
                 pathsInfoListState = MyPathsInfoListState.EMPTY_LIST,
                 showPathsButtonState = ShowPathsButtonState.GONE,
-                showPathsFilterButtonState = ShowPathsFilterButtonState.GONE
+                showPathsFilterButtonState = ShowPathsFilterButtonState.GONE,
+                inSelectMode = false
             )
         }
     }
