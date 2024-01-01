@@ -12,10 +12,10 @@ interface IOuterPathsInteractor {
 
     fun getCachedOuterPaths(): List<MapRatingPath>
 
-    fun getCachedOuterPath(tempPathId: Int): MapRatingPath?
+    fun getCachedOuterPath(tempPathId: Long): MapRatingPath?
 
     fun clearCachedOuterPaths()
 
-    fun removeCachedPath(tempPathId: Int)
+    fun removeCachedPath(tempPathId: Long)
 
 }

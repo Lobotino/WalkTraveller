@@ -22,6 +22,7 @@ import ru.lobotino.walktraveller.ui.model.OuterPathsInfoListState
 import ru.lobotino.walktraveller.ui.model.OuterPathsUiState
 import ru.lobotino.walktraveller.ui.model.PathInfoItemState
 import ru.lobotino.walktraveller.ui.model.PathItemButtonType
+import ru.lobotino.walktraveller.ui.model.PathsMenuButton
 import ru.lobotino.walktraveller.ui.model.PathsToAction
 import ru.lobotino.walktraveller.ui.model.ShowPathsButtonState
 import ru.lobotino.walktraveller.usecases.DistanceInMetersToStringFormatter
@@ -47,6 +48,7 @@ class OuterPathsMenuView : ConstraintLayout {
 
     private lateinit var confirmButton: Button
 
+    private lateinit var onMenuTitleButtonClick: (PathsMenuButton) -> Unit
     private lateinit var itemButtonClickedListener: (Long, PathItemButtonType) -> Unit
     private lateinit var itemShortTapListener: (Long) -> Unit
     private lateinit var itemLongTapListener: (Long) -> Unit
@@ -110,19 +112,27 @@ class OuterPathsMenuView : ConstraintLayout {
     }
 
     fun setupOnClickListeners(
-        showAllPathsButtonClickListener: OnClickListener,
-        pathsMenuBackButtonClickListener: OnClickListener,
+        menuTitleButtonClickListener: (PathsMenuButton) -> Unit,
         confirmButtonClickListener: OnClickListener,
         itemButtonClickedListener: (Long, PathItemButtonType) -> Unit,
         itemShortTapListener: (Long) -> Unit,
         itemLongTapListener: (Long) -> Unit
     ) {
-        showAllPathsButton.setOnClickListener(showAllPathsButtonClickListener)
-        pathsMenuBackButton.setOnClickListener(pathsMenuBackButtonClickListener)
         confirmButton.setOnClickListener(confirmButtonClickListener)
+        this.onMenuTitleButtonClick = menuTitleButtonClickListener
         this.itemButtonClickedListener = itemButtonClickedListener
         this.itemShortTapListener = itemShortTapListener
         this.itemLongTapListener = itemLongTapListener
+
+        showAllPathsButton.setOnClickListener {
+            onMenuTitleButtonClick(PathsMenuButton.ShowSelectedPaths)
+        }
+        deleteSelectedPathsButton.setOnClickListener {
+            onMenuTitleButtonClick(PathsMenuButton.DeleteSelectedPaths)
+        }
+        pathsMenuBackButton.setOnClickListener {
+            onMenuTitleButtonClick(PathsMenuButton.Back)
+        }
     }
 
     fun syncState(outerPathsUiState: OuterPathsUiState) {

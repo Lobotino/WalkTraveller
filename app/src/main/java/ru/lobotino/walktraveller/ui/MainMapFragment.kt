@@ -364,11 +364,13 @@ class MainMapFragment : Fragment() {
 
             outerPathsMenu = view.findViewById<OuterPathsMenuView>(R.id.outer_paths_menu).apply {
                 setupOnClickListeners(
-                    showAllPathsButtonClickListener = {
-                        menuViewModel.onShowSelectedPathsButtonClicked(PathsMenuType.OUTER_PATHS)
-                    },
-                    pathsMenuBackButtonClickListener = {
-                        menuViewModel.onPathsMenuBackButtonClicked()
+                    menuTitleButtonClickListener = { pathsMenuButton ->
+                        when (pathsMenuButton) {
+                            PathsMenuButton.ShowSelectedPaths -> menuViewModel.onShowSelectedPathsButtonClicked(PathsMenuType.OUTER_PATHS)
+                            PathsMenuButton.DeleteSelectedPaths -> menuViewModel.onDeleteSelectedPathsButtonClicked(PathsMenuType.OUTER_PATHS)
+                            PathsMenuButton.Back -> menuViewModel.onPathsMenuBackButtonClicked()
+                            else -> {}
+                        }
                     },
                     confirmButtonClickListener = {
                         menuViewModel.onOuterPathsConfirmButtonClicked()

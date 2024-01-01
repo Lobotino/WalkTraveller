@@ -2,8 +2,9 @@ package ru.lobotino.walktraveller.usecases
 
 import android.net.Uri
 import java.util.Date
+import java.util.concurrent.ConcurrentHashMap
+import kotlin.random.Random
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import ru.lobotino.walktraveller.model.map.MapPathInfo
@@ -20,11 +21,11 @@ class OuterPathsInteractor(
     private val pathRepository: IPathRepository
 ) : IOuterPathsInteractor {
 
-    private val cachedOuterPaths = ArrayList<OuterMapPathInfo>()
+    private val cachedOuterPaths = ConcurrentHashMap<Long, OuterMapPathInfo>()
 
     override suspend fun saveCachedPaths() = coroutineScope {
         cachedOuterPaths.let { cachedOuterPaths ->
-            for (path in cachedOuterPaths) {
+            for (path in cachedOuterPaths.elements()) {
                 withContext(Dispatchers.IO) {
                     pathRepository.createNewPath(
                         path.pathSegments,
@@ -48,34 +49,32 @@ class OuterPathsInteractor(
 
             for (index in paths.indices) {
                 val pathSegments = paths[index]
-                cachedOuterPaths.add(
-                    OuterMapPathInfo(
-                        MapPathInfo(
-                            index.toLong(),
-                            todayDate,
-                            pathDistancesRepository.calculateMostCommonPathRating(pathSegments.toTypedArray()),
-                            pathDistancesRepository.calculatePathLength(pathSegments.toTypedArray()),
-                            true
-                        ), pathSegments
-                    )
+                val tempPathId = Random.nextLong()
+                cachedOuterPaths[tempPathId] = OuterMapPathInfo(
+                    MapPathInfo(
+                        tempPathId,
+                        todayDate,
+                        pathDistancesRepository.calculateMostCommonPathRating(pathSegments.toTypedArray()),
+                        pathDistancesRepository.calculatePathLength(pathSegments.toTypedArray()),
+                        true
+                    ), pathSegments
                 )
             }
 
-            return cachedOuterPaths.map { it.pathInfo }
+            return cachedOuterPaths.values.map { it.pathInfo }
         }
     }
 
     override fun getCachedOuterPaths(): List<MapRatingPath> {
-        return cachedOuterPaths.map { MapRatingPath(it.pathInfo.pathId, it.pathSegments) }
+        return cachedOuterPaths.values.map { MapRatingPath(it.pathInfo.pathId, it.pathSegments) }
     }
 
-    override fun getCachedOuterPath(tempPathId: Int): MapRatingPath? {
-        synchronized(cachedOuterPaths) {
-            if (tempPathId in cachedOuterPaths.indices) {
-                return MapRatingPath(tempPathId.toLong(), cachedOuterPaths[tempPathId].pathSegments)
-            } else {
-                return null
-            }
+    override fun getCachedOuterPath(tempPathId: Long): MapRatingPath? {
+        val pathSegments = cachedOuterPaths[tempPathId]?.pathSegments
+        return if (pathSegments != null) {
+            MapRatingPath(tempPathId, pathSegments)
+        } else {
+            null
         }
     }
 
@@ -83,12 +82,8 @@ class OuterPathsInteractor(
         cachedOuterPaths.clear()
     }
 
-    override fun removeCachedPath(tempPathId: Int) {
-        synchronized(cachedOuterPaths) {
-            if (tempPathId in cachedOuterPaths.indices) {
-                cachedOuterPaths.removeAt(tempPathId)
-            }
-        }
+    override fun removeCachedPath(tempPathId: Long) {
+        cachedOuterPaths.remove(tempPathId)
     }
 
     data class OuterMapPathInfo(val pathInfo: MapPathInfo, val pathSegments: List<MapPathSegment>)

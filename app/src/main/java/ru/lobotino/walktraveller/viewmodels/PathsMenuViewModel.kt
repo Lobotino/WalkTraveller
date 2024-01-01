@@ -487,7 +487,7 @@ class PathsMenuViewModel(
                     }
 
                     PathInfoItemShowButtonState.DEFAULT -> {
-                        val cachedPath = outerPathsInteractor.getCachedOuterPath(tempPathId.toInt())
+                        val cachedPath = outerPathsInteractor.getCachedOuterPath(tempPathId)
                         if (cachedPath != null) {
                             newPathInfoListItemStateFlow.tryEmit(
                                 NewPathInfoItemState(
@@ -584,7 +584,7 @@ class PathsMenuViewModel(
     }
 
     private fun deleteOuterPathFromList(tempPathId: Long) {
-        outerPathsInteractor.removeCachedPath(tempPathId.toInt())
+        outerPathsInteractor.removeCachedPath(tempPathId)
         newMapEventChannel.trySend(MapEvent.HidePath(PathsToAction.Single(tempPathId)))
         deletePathInfoItemChannel.trySend(DeletePathInfoItemEvent(PathsMenuType.OUTER_PATHS, PathsToAction.Single(tempPathId)))
 
@@ -600,7 +600,7 @@ class PathsMenuViewModel(
         val selectedPathIds = ArrayList(selectedPathIdsInMenuList)
 
         for (pathId in selectedPathIds) {
-            outerPathsInteractor.removeCachedPath(pathId.toInt())
+            outerPathsInteractor.removeCachedPath(pathId)
         }
         newMapEventChannel.trySend(MapEvent.HidePath(PathsToAction.Multiple(selectedPathIds)))
         deletePathInfoItemChannel.trySend(DeletePathInfoItemEvent(PathsMenuType.OUTER_PATHS, PathsToAction.Multiple(selectedPathIds)))
