@@ -44,16 +44,9 @@ class PrivacyPolicyDialog(
         findViewById<TextView>(R.id.dialog_title).text = privacyPolicyTitle
     }
 
-    @Suppress("DEPRECATION")
     private fun setupText() {
         findViewById<TextView>(R.id.dialog_text).apply {
-            text =
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    Html.fromHtml(privacyPolicyText, Html.FROM_HTML_MODE_COMPACT)
-                } else {
-                    Html.fromHtml(privacyPolicyText)
-                }
-
+            text = Html.fromHtml(privacyPolicyText, Html.FROM_HTML_MODE_COMPACT)
             movementMethod = LinkMovementMethod.getInstance()
         }
     }

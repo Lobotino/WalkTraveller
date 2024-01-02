@@ -75,8 +75,8 @@
                             android:layout_width="80dp"
                             android:layout_height="80dp"
                             android:layout_gravity="center"
-                            android:src="@drawable/ic_launcher_foreground"
-                            tools:ignore="ContentDescription"/>
+                            android:contentDescription="@string/content_desc_start_walk_button"
+                            android:src="@drawable/ic_launcher_foreground"/>
 
                     </androidx.cardview.widget.CardView>
 
@@ -96,8 +96,8 @@
                             android:layout_height="match_parent"
                             android:layout_gravity="center"
                             android:layout_margin="10dp"
-                            android:src="@drawable/ic_baseline_flag_24"
-                            tools:ignore="ContentDescription"/>
+                            android:contentDescription="@string/content_desc_stop_walk_button"
+                            android:src="@drawable/ic_baseline_flag_24"/>
 
                         <com.google.android.material.progressindicator.CircularProgressIndicator
                             android:id="@+id/walk_stop_accept_progress"
@@ -129,8 +129,8 @@
                         android:layout_height="33dp"
                         android:layout_gravity="center"
                         android:layout_margin="8dp"
-                        android:src="@drawable/ic_path"
-                        tools:ignore="ContentDescription"/>
+                        android:contentDescription="@string/content_desc_show_paths_menu_button"
+                        android:src="@drawable/ic_path"/>
 
                 </androidx.cardview.widget.CardView>
 
@@ -152,8 +152,8 @@
                         android:layout_height="36dp"
                         android:layout_gravity="center"
                         android:layout_margin="8dp"
-                        android:src="@drawable/ic_baseline_menu_24"
-                        tools:ignore="ContentDescription"/>
+                        android:contentDescription="@string/content_desc_show_navigation_menu_button"
+                        android:src="@drawable/ic_baseline_menu_24"/>
 
                 </androidx.cardview.widget.CardView>
 
@@ -214,6 +214,7 @@
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:layout_gravity="center"
+                android:contentDescription="@string/content_desc_rating_none_button"
                 android:src="@drawable/ic_star_slash"
                 app:tint="@color/rating_none"/>
 

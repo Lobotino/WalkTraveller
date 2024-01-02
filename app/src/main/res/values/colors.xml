@@ -12,8 +12,6 @@
     <color name="common_path_color">#1EF6E1</color>
     <color name="bottom_button_color">@color/primary_green</color>
     <color name="bottom_button_color_dark">@color/primary_green_dark</color>
-    <color name="current_path">#DD0034CF</color>
-    <color name="finished_path">#9C27B0</color>
     <color name="rating_perfect">#00BF54</color>
     <color name="rating_good">#008359</color>
     <color name="rating_normal">#FFCC22</color>

@@ -27,17 +27,13 @@ class PathWritingNowNotificationInteractor(
     }
 
     override fun isNotificationShowingNow(): Boolean {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            for (notification in notificationManager.activeNotifications) {
-                if (notification.id == getNotificationId()) {
-                    isNotificationShowingNow = true
-                    return true
-                }
+        for (notification in notificationManager.activeNotifications) {
+            if (notification.id == getNotificationId()) {
+                isNotificationShowingNow = true
+                return true
             }
-            return false
-        } else {
-            return isNotificationShowingNow
         }
+        return false
     }
 
     override fun getNotificationId(): Int {

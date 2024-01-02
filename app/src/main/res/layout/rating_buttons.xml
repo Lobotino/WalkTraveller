@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
@@ -28,8 +29,9 @@
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:layout_gravity="center"
+                android:contentDescription="@string/content_desc_rating_badly"
                 android:src="@drawable/ic_baseline_star_24"
-                app:tint="@color/rating_badly" />
+                app:tint="@color/rating_badly"/>
 
         </androidx.cardview.widget.CardView>
 
@@ -50,8 +52,9 @@
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:layout_gravity="center"
+                android:contentDescription="@string/content_desc_rating_normal"
                 android:src="@drawable/ic_baseline_star_24"
-                app:tint="@color/rating_normal" />
+                app:tint="@color/rating_normal"/>
 
         </androidx.cardview.widget.CardView>
 
@@ -72,8 +75,9 @@
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:layout_gravity="center"
+                android:contentDescription="@string/content_desc_rating_good"
                 android:src="@drawable/ic_baseline_star_24"
-                app:tint="@color/rating_good" />
+                app:tint="@color/rating_good"/>
 
         </androidx.cardview.widget.CardView>
 
@@ -94,8 +98,9 @@
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:layout_gravity="center"
+                android:contentDescription="@string/content_desc_rating_perfect"
                 android:src="@drawable/ic_baseline_star_24"
-                app:tint="@color/rating_perfect" />
+                app:tint="@color/rating_perfect"/>
 
         </androidx.cardview.widget.CardView>
     </LinearLayout>
