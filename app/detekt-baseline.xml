@@ -1,0 +1,101 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <CurrentIssues>
+    <ID>ComplexCondition:PathsMenuViewModel.kt$PathsMenuViewModel$(pathsMenuType == PathsMenuType.MY_PATHS &amp;&amp; !myPathsMenuUiStateFlow.value.inSelectMode) || (pathsMenuType == PathsMenuType.OUTER_PATHS &amp;&amp; !outerPathsMenuUiStateFlow.value.inSelectMode)</ID>
+    <ID>CyclomaticComplexMethod:LocalMapPathsInteractor.kt$LocalMapPathsInteractor$override suspend fun getAllSavedPathsInfo(): List&lt;MapPathInfo&gt;</ID>
+    <ID>CyclomaticComplexMethod:MainMapFragment.kt$MainMapFragment$private fun initViewModel(bundle: Bundle?)</ID>
+    <ID>CyclomaticComplexMethod:MainMapFragment.kt$MainMapFragment$private fun initViews(rootLayout: View)</ID>
+    <ID>CyclomaticComplexMethod:MyPathsMenuView.kt$MyPathsMenuView$fun syncState(myPathsUiState: MyPathsUiState)</ID>
+    <ID>EmptyFunctionBlock:UserRotationRepository.kt$UserRotationRepository.&lt;no name provided&gt;${}</ID>
+    <ID>EmptyFunctionBlock:VolumeKeysDetectorService.kt$VolumeKeysDetectorService${}</ID>
+    <ID>Filename:WelcomeScreenViewState.kt$ru.lobotino.walktraveller.ui.model.WelcomeScreenViewState.kt</ID>
+    <ID>LargeClass:MainMapFragment.kt$MainMapFragment : Fragment</ID>
+    <ID>LargeClass:PathsMenuViewModel.kt$PathsMenuViewModel : ViewModel</ID>
+    <ID>LongMethod:LocalMapPathsInteractor.kt$LocalMapPathsInteractor$override suspend fun getAllSavedPathsInfo(): List&lt;MapPathInfo&gt;</ID>
+    <ID>LongMethod:MainMapFragment.kt$MainMapFragment$private fun initViewModel(bundle: Bundle?)</ID>
+    <ID>LongMethod:MainMapFragment.kt$MainMapFragment$private fun initViews(rootLayout: View)</ID>
+    <ID>LongMethod:MyPathsMenuView.kt$MyPathsMenuView$private fun initView(context: Context)</ID>
+    <ID>LongParameterList:LocalMapPathsInteractor.kt$LocalMapPathsInteractor$( private val databasePathRepository: IPathRepository, private val cachePathRepository: ICachePathsRepository, private val defaultDispatcher: CoroutineDispatcher = Dispatchers.IO, private val writingPathStatesRepository: IWritingPathStatesRepository, private val lastCreatedPathIdRepository: ILastCreatedPathIdRepository, private val pathRedactor: IPathRedactor, private val optimizePathsSettingsRepository: IOptimizePathsSettingsRepository )</ID>
+    <ID>LongParameterList:MapViewModel.kt$MapViewModel$( private val notificationsPermissionsInteractor: IPermissionsUseCase, private val volumeKeysListenerPermissionsInteractor: IPermissionsUseCase, private val geoPermissionsUseCase: GeoPermissionsUseCase, private val userLocationInteractor: IUserLocationInteractor, private val mapPathsInteractor: IMapPathsInteractor, private val mapStateInteractor: IMapStateInteractor, private val writingPathStatesRepository: IWritingPathStatesRepository, private val pathRatingRepository: IPathRatingRepository, private val userRotationRepository: IUserRotationRepository )</ID>
+    <ID>LongParameterList:MapViewModelFactory.kt$MapViewModelFactory$( private val notificationsPermissionsInteractor: IPermissionsUseCase, private val volumeKeysListenerPermissionsInteractor: IPermissionsUseCase, private val geoPermissionsUseCase: GeoPermissionsUseCase, private val userLocationInteractor: IUserLocationInteractor, private val mapPathsInteractor: IMapPathsInteractor, private val mapStateInteractor: IMapStateInteractor, private val writingPathStatesRepository: IWritingPathStatesRepository, private val pathRatingRepository: IPathRatingRepository, private val userRotationRepository: IUserRotationRepository, owner: SavedStateRegistryOwner, bundle: Bundle? )</ID>
+    <ID>LongParameterList:PathsInfoAdapter.kt$PathsInfoAdapter.PathInfoItem$( path: PathInfoItemModel, itemButtonClickedListener: (Long, PathItemButtonType) -&gt; Unit, itemShortTapListener: (Long) -&gt; Unit, itemLongTapListener: (Long) -&gt; Unit, distanceFormatter: IDistanceToStringFormatter, mostCommonRatingColors: List&lt;Int&gt; )</ID>
+    <ID>LongParameterList:PathsMenuViewModelFactory.kt$PathsMenuViewModelFactory$( private val pathsSaverRepository: IPathsSaverRepository, private val externalStoragePermissionsUseCase: IPermissionsUseCase, private val mapPathsInteractor: IMapPathsInteractor, private val outerPathsInteractor: IOuterPathsInteractor, private val pathRedactor: IPathRedactor, owner: SavedStateRegistryOwner, bundle: Bundle? )</ID>
+    <ID>LoopWithTooManyJumpStatements:LocalMapPathsInteractor.kt$LocalMapPathsInteractor$for</ID>
+    <ID>MagicNumber:AppDatabase.kt$&lt;no name provided&gt;$3</ID>
+    <ID>MagicNumber:AppDatabase.kt$&lt;no name provided&gt;$4</ID>
+    <ID>MagicNumber:DistanceInMetersToStringFormatter.kt$DistanceInMetersToStringFormatter$10</ID>
+    <ID>MagicNumber:DistanceInMetersToStringFormatter.kt$DistanceInMetersToStringFormatter$1000</ID>
+    <ID>MagicNumber:LocationUpdatesService.kt$LocationUpdatesService$5000</ID>
+    <ID>MagicNumber:MainMapFragment.kt$MainMapFragment$100</ID>
+    <ID>MagicNumber:MainMapFragment.kt$MainMapFragment$5</ID>
+    <ID>MagicNumber:MainMapFragment.kt$MainMapFragment$5000</ID>
+    <ID>MagicNumber:MapPointExt.kt$4</ID>
+    <ID>MagicNumber:MapViewModel.kt$MapViewModel$50L</ID>
+    <ID>MagicNumber:MyPathsMenuView.kt$MyPathsMenuView$150</ID>
+    <ID>MagicNumber:MyPathsMenuView.kt$MyPathsMenuView$250</ID>
+    <ID>MagicNumber:MyPathsMenuView.kt$MyPathsMenuView$400</ID>
+    <ID>MagicNumber:MyPathsMenuView.kt$MyPathsMenuView$89f</ID>
+    <ID>MagicNumber:OuterPathsMenuView.kt$OuterPathsMenuView$400</ID>
+    <ID>MagicNumber:OuterPathsMenuView.kt$OuterPathsMenuView$44f</ID>
+    <ID>MagicNumber:PathApproximationHelper.kt$PathApproximationHelper$3</ID>
+    <ID>MagicNumber:PathsLoaderRepository.kt$PathsLoaderRepository$3</ID>
+    <ID>MagicNumber:UserLocationOverlay.kt$UserLocationOverlay$360</ID>
+    <ID>MagicNumber:UserRotationRepository.kt$UserRotationRepository$3</ID>
+    <ID>MagicNumber:UserRotationRepository.kt$UserRotationRepository$45</ID>
+    <ID>MagicNumber:UserRotationRepository.kt$UserRotationRepository$9</ID>
+    <ID>MatchingDeclarationName:WelcomeScreenViewState.kt$WelcomeContinueButtonState</ID>
+    <ID>MaxLineLength:ExternalStoragePermissionsRepository.kt$ExternalStoragePermissionsRepository$class</ID>
+    <ID>MaxLineLength:ExternalStoragePermissionsUseCase.kt$ExternalStoragePermissionsUseCase$class</ID>
+    <ID>MaxLineLength:LocalMapPathsInteractor.kt$LocalMapPathsInteractor$?.</ID>
+    <ID>MaxLineLength:LocalMapPathsInteractor.kt$LocalMapPathsInteractor$if</ID>
+    <ID>MaxLineLength:LocationMediator.kt$LocationMediator$if</ID>
+    <ID>MaxLineLength:MainMapFragment.kt$MainMapFragment$PathsMenuButton.DeleteSelectedPaths -&gt; menuViewModel.onDeleteSelectedPathsButtonClicked(PathsMenuType.MY_PATHS)</ID>
+    <ID>MaxLineLength:MainMapFragment.kt$MainMapFragment$PathsMenuButton.DeleteSelectedPaths -&gt; menuViewModel.onDeleteSelectedPathsButtonClicked(PathsMenuType.OUTER_PATHS)</ID>
+    <ID>MaxLineLength:MainMapFragment.kt$MainMapFragment$PathsMenuButton.ShareSelectedPaths -&gt; menuViewModel.onShareSelectedPathsButtonClicked(PathsMenuType.MY_PATHS)</ID>
+    <ID>MaxLineLength:MainMapFragment.kt$MainMapFragment$PathsMenuButton.ShowSelectedPaths -&gt; menuViewModel.onShowSelectedPathsButtonClicked(PathsMenuType.MY_PATHS)</ID>
+    <ID>MaxLineLength:MainMapFragment.kt$MainMapFragment$PathsMenuButton.ShowSelectedPaths -&gt; menuViewModel.onShowSelectedPathsButtonClicked(PathsMenuType.OUTER_PATHS)</ID>
+    <ID>MaxLineLength:MainMapFragment.kt$MainMapFragment$PathsMenuType.MY_PATHS -&gt; myPathsMenu.syncPathInfoItemState(newPathInfoStateEvent.pathInfoItemState)</ID>
+    <ID>MaxLineLength:MainMapFragment.kt$MainMapFragment$PathsMenuType.OUTER_PATHS -&gt; outerPathsMenu.deletePathInfoItem(deletePathInfoItemEvent.pathsToDelete)</ID>
+    <ID>MaxLineLength:MainMapFragment.kt$MainMapFragment$PathsMenuType.OUTER_PATHS -&gt; outerPathsMenu.setPathsInfoItems(newPathsInfoListEvent.newPathInfoList)</ID>
+    <ID>MaxLineLength:MainMapFragment.kt$MainMapFragment$PathsMenuType.OUTER_PATHS -&gt; outerPathsMenu.syncPathInfoItemState(newPathInfoStateEvent.pathInfoItemState)</ID>
+    <ID>MaxLineLength:MainMapFragment.kt$MainMapFragment$if</ID>
+    <ID>MaxLineLength:MainMapFragment.kt$MainMapFragment$menuViewModel.onPathInListButtonClicked(pathId, itemButtonClickedType, PathsMenuType.OUTER_PATHS)</ID>
+    <ID>MaxLineLength:NotificationsPermissionsUseCase.kt$NotificationsPermissionsUseCase$class</ID>
+    <ID>MaxLineLength:PathSegmentRelationsDao.kt$PathSegmentRelationsDao$"SELECT * FROM points, path_segments WHERE path_segments.id_start_point = :pointId and points.id = path_segments.id_finish_point"</ID>
+    <ID>MaxLineLength:PathWritingNowNotificationRepository.kt$PathWritingNowNotificationRepository$if (Build.VERSION.SDK_INT &gt;= Build.VERSION_CODES.N) NotificationManager.IMPORTANCE_DEFAULT else Notification.PRIORITY_DEFAULT</ID>
+    <ID>MaxLineLength:PathsDao.kt$PathsDao$"SELECT points.id, latitude, longitude FROM points, paths WHERE paths.id = :pathId and points.id = start_point_id"</ID>
+    <ID>MaximumLineLength:ExternalStoragePermissionsRepository.kt$ExternalStoragePermissionsRepository$class</ID>
+    <ID>MaximumLineLength:ExternalStoragePermissionsUseCase.kt$ExternalStoragePermissionsUseCase$class</ID>
+    <ID>MaximumLineLength:LocalMapPathsInteractor.kt$LocalMapPathsInteractor$ </ID>
+    <ID>MaximumLineLength:LocationMediator.kt$LocationMediator$ </ID>
+    <ID>MaximumLineLength:MainMapFragment.kt$MainMapFragment$ </ID>
+    <ID>MaximumLineLength:NotificationsPermissionsUseCase.kt$NotificationsPermissionsUseCase$class</ID>
+    <ID>MaximumLineLength:PathSegmentRelationsDao.kt$PathSegmentRelationsDao$ </ID>
+    <ID>MaximumLineLength:PathWritingNowNotificationRepository.kt$PathWritingNowNotificationRepository$ </ID>
+    <ID>MaximumLineLength:PathsDao.kt$PathsDao$ </ID>
+    <ID>MemberNameEqualsClassName:NotificationsPermissionsRepository.kt$NotificationsPermissionsRepository$@RequiresApi(Build.VERSION_CODES.TIRAMISU) private val notificationsPermissionsRepository = PermissionsRepository( fragment, arrayListOf( Manifest.permission.POST_NOTIFICATIONS ), { allGrantedCallback?.invoke() }, { deniedPermissions -&gt; someDeniedCallback?.invoke(deniedPermissions) } )</ID>
+    <ID>NestedBlockDepth:DatabasePathRepository.kt$DatabasePathRepository$override suspend fun getAllPathSegments( pathId: Long ): List&lt;EntityPathSegment&gt;</ID>
+    <ID>NestedBlockDepth:MainMapFragment.kt$MainMapFragment$private fun paintNewRatingPaths(pathList: List&lt;MapRatingPath&gt;)</ID>
+    <ID>NoWildcardImports:GeoPermissionsRepository.kt$import android.Manifest.permission.*</ID>
+    <ID>NoWildcardImports:UserRotationRepository.kt$import kotlinx.coroutines.*</ID>
+    <ID>NoWildcardImports:VolumeKeysDetectorService.kt$import kotlinx.coroutines.*</ID>
+    <ID>ReturnCount:LastSeenPointRepository.kt$LastSeenPointRepository$override fun getLastSeenPoint(): MapPoint?</ID>
+    <ID>ReturnCount:PathApproximationHelper.kt$PathApproximationHelper$fun approximatePathPoints( pathPoints: List&lt;MapPoint&gt;, approximationDistance: Float ): List&lt;MapPoint&gt;</ID>
+    <ID>ReturnCount:PathWritingNowNotificationInteractor.kt$PathWritingNowNotificationInteractor$override fun isNotificationShowingNow(): Boolean</ID>
+    <ID>TooGenericExceptionCaught:PathsLoaderRepository.kt$PathsLoaderRepository$ex: Exception</ID>
+    <ID>TooGenericExceptionThrown:DatabasePathRepository.kt$DatabasePathRepository$throw RuntimeException("Trying to add next point to path without start point!")</ID>
+    <ID>TooManyFunctions:DatabasePathRepository.kt$DatabasePathRepository : IPathRepository</ID>
+    <ID>TooManyFunctions:IPathRepository.kt$IPathRepository</ID>
+    <ID>TooManyFunctions:LocationUpdatesService.kt$LocationUpdatesService : Service</ID>
+    <ID>TooManyFunctions:MainMapFragment.kt$MainMapFragment : Fragment</ID>
+    <ID>TooManyFunctions:MapViewModel.kt$MapViewModel : ViewModel</ID>
+    <ID>TooManyFunctions:PathsInfoAdapter.kt$PathsInfoAdapter : Adapter</ID>
+    <ID>TooManyFunctions:PathsMenuViewModel.kt$PathsMenuViewModel : ViewModel</ID>
+    <ID>UnusedPrivateProperty:FilePathsSaverRepository.kt$FilePathsSaverRepository.Companion$private val TAG = FilePathsSaverRepository::class.java.canonicalName</ID>
+    <ID>UnusedPrivateProperty:MapViewModel.kt$MapViewModel$private val volumeKeysListenerPermissionsInteractor: IPermissionsUseCase</ID>
+    <ID>WildcardImport:GeoPermissionsRepository.kt$import android.Manifest.permission.*</ID>
+    <ID>WildcardImport:UserRotationRepository.kt$import kotlinx.coroutines.*</ID>
+    <ID>WildcardImport:VolumeKeysDetectorService.kt$import kotlinx.coroutines.*</ID>
+  </CurrentIssues>
+</SmellBaseline>
