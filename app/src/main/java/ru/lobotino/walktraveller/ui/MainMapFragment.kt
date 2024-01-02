@@ -487,6 +487,14 @@ class MainMapFragment : Fragment() {
                             mapViewModel.showCommonPathOnMap(mapEvent.path)
                         }
 
+                        is MapEvent.ShowRatingPathList -> {
+                            mapViewModel.showRatingPathListOnMap(mapEvent.pathList)
+                        }
+
+                        is MapEvent.ShowCommonPathList -> {
+                            mapViewModel.showCommonPathListOnMap(mapEvent.pathList)
+                        }
+
                         is MapEvent.HidePath -> {
                             mapViewModel.hidePathsFromMap(mapEvent.pathsToHide)
                         }
@@ -585,12 +593,12 @@ class MainMapFragment : Fragment() {
                         paintNewCurrentPathSegment(pathSegment)
                     }.launchIn(lifecycleScope)
 
-                    observeNewCommonPath.onEach { path ->
-                        paintNewCommonPath(path, commonPathColor)
+                    observeNewCommonPath.onEach { pathList ->
+                        paintNewCommonPaths(pathList, commonPathColor)
                     }.launchIn(lifecycleScope)
 
-                    observeNewRatingPath.onEach { path ->
-                        paintNewRatingPath(path)
+                    observeNewRatingPath.onEach { pathList ->
+                        paintNewRatingPaths(pathList)
                     }.launchIn(lifecycleScope)
 
                     observeMapUiState.onEach { mapUiState ->
@@ -861,9 +869,12 @@ class MainMapFragment : Fragment() {
         }
     }
 
-    private fun paintNewCommonPath(path: MapCommonPath, color: Int) {
-        if (context != null) {
-            mapView.overlays.add(Polyline(mapView).apply {
+    private fun paintNewCommonPaths(pathList: List<MapCommonPath>, color: Int) {
+        context ?: return
+
+        val allAddedPolylines = ArrayList<Polyline>()
+        for (path in pathList) {
+            val pathPolyline = Polyline(mapView).apply {
                 outlinePaint.color = color
 
                 setPoints(path.pathPoints.map { point ->
@@ -872,34 +883,41 @@ class MainMapFragment : Fragment() {
                         point.longitude
                     )
                 })
-
-                showingPathsPolylines[path.pathId] = listOf(this)
-            })
-            refreshMapNow()
+            }
+            showingPathsPolylines[path.pathId] = listOf(pathPolyline)
+            allAddedPolylines.add(pathPolyline)
         }
+        mapView.overlays.addAll(allAddedPolylines)
+        refreshMapNow()
     }
 
-    private fun paintNewRatingPath(path: MapRatingPath) {
-        val resultPolylineList = ArrayList<Polyline>()
+    private fun paintNewRatingPaths(pathList: List<MapRatingPath>) {
+        context ?: return
+
+        val allAddedPolylines = ArrayList<Polyline>()
         var lastAddedPolyline: Polyline? = null
         var lastSegment: MapPathSegment? = null
-        for (segment in path.pathSegments) {
-            if (lastAddedPolyline == null) {
-                lastAddedPolyline = createRatingSegmentPolyline(segment)
-                lastSegment = segment
-                resultPolylineList.add(lastAddedPolyline)
-            } else {
-                if (lastSegment != null && segment.rating == lastSegment.rating && segment.startPoint == lastSegment.finishPoint) {
-                    lastAddedPolyline.addPoint(segment.finishPoint.toGeoPoint())
-                } else {
+        for (path in pathList) {
+            val pathPolylines = ArrayList<Polyline>()
+            for (segment in path.pathSegments) {
+                if (lastAddedPolyline == null) {
                     lastAddedPolyline = createRatingSegmentPolyline(segment)
                     lastSegment = segment
-                    resultPolylineList.add(lastAddedPolyline)
+                    pathPolylines.add(lastAddedPolyline)
+                } else {
+                    if (lastSegment != null && segment.rating == lastSegment.rating && segment.startPoint == lastSegment.finishPoint) {
+                        lastAddedPolyline.addPoint(segment.finishPoint.toGeoPoint())
+                    } else {
+                        lastAddedPolyline = createRatingSegmentPolyline(segment)
+                        lastSegment = segment
+                        pathPolylines.add(lastAddedPolyline)
+                    }
                 }
             }
+            showingPathsPolylines[path.pathId] = pathPolylines
+            allAddedPolylines.addAll(pathPolylines)
         }
-        mapView.overlays.addAll(resultPolylineList)
-        showingPathsPolylines[path.pathId] = resultPolylineList
+        mapView.overlays.addAll(allAddedPolylines)
         refreshMapNow()
     }
 

@@ -60,7 +60,7 @@ class OuterPathsInfoAdapter(
             pathMostCommonRatingColor = view.findViewById(R.id.path_most_common_rating_color)
             pathButtonShow = view.findViewById(R.id.path_button_show)
             pathButtonShowImage = view.findViewById(R.id.path_button_show_image)
-            pathButtonHideImage = view.findViewById(R.id.show_all_paths_hide_image)
+            pathButtonHideImage = view.findViewById(R.id.show_selected_paths_hide_image)
             pathButtonShowProgress = view.findViewById(R.id.path_button_show_progress)
             pathButtonDelete = view.findViewById(R.id.path_button_delete)
         }

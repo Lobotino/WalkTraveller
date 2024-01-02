@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import ru.lobotino.walktraveller.model.map.MapCommonPath
 import ru.lobotino.walktraveller.model.map.MapRatingPath
 import ru.lobotino.walktraveller.repositories.interfaces.IPathsSaverRepository
 import ru.lobotino.walktraveller.ui.model.BottomMenuState
@@ -79,7 +80,7 @@ class PathsMenuViewModel(
     val observeOuterPathsMenuUiState: Flow<OuterPathsUiState> = outerPathsMenuUiStateFlow
     val observeNewPathsInfoList: Flow<NewPathInfoListEvent> = newPathsInfoListFlow
 
-    private var downloadAllPathsJob: Job? = null
+    private var loadPathsJob: Job? = null
     private var downloadAllPathsInfoJob: Job? = null
 
     private var selectedPathIdsInMenuList: MutableList<Long> = ArrayList()
@@ -167,28 +168,16 @@ class PathsMenuViewModel(
 
     fun onShowSelectedPathsButtonClicked(pathsMenuType: PathsMenuType) {
         when (pathsMenuType) {
-            PathsMenuType.MY_PATHS -> onShowAllPathsButtonClickedMyPathsMenu()
-            PathsMenuType.OUTER_PATHS -> onShowAllPathsButtonClickedOuterPathsMenu()
+            PathsMenuType.MY_PATHS -> onShowSelectedPathsButtonClickedMyPathsMenu()
+            PathsMenuType.OUTER_PATHS -> onShowSelectedPathsButtonClickedOuterPathsMenu()
         }
     }
 
-    private fun onShowAllPathsButtonClickedMyPathsMenu() {
-        if (myPathsMenuUiStateFlow.value.showPathsButtonState == ShowPathsButtonState.LOADING) {
-            downloadAllPathsJob?.cancel()
-            downloadAllPathsJob = null
-            updateMyPathsMenuState(showPathsButtonState = ShowPathsButtonState.DEFAULT)
-            newPathInfoListItemStateFlow.tryEmit(
-                NewPathInfoItemState(
-                    PathsMenuType.MY_PATHS,
-                    PathInfoItemState(
-                        PathsToAction.All,
-                        PathInfoItemShowButtonState.DEFAULT
-                    )
-                )
-            )
-        } else {
-            if (myPathsMenuUiStateFlow.value.showPathsButtonState == ShowPathsButtonState.HIDE) {
-                newMapEventChannel.trySend(MapEvent.ClearMap)
+    private fun onShowSelectedPathsButtonClickedMyPathsMenu() {
+        when (myPathsMenuUiStateFlow.value.showPathsButtonState) {
+            ShowPathsButtonState.LOADING -> {
+                loadPathsJob?.cancel()
+                loadPathsJob = null
                 updateMyPathsMenuState(showPathsButtonState = ShowPathsButtonState.DEFAULT)
                 newPathInfoListItemStateFlow.tryEmit(
                     NewPathInfoItemState(
@@ -199,14 +188,19 @@ class PathsMenuViewModel(
                         )
                     )
                 )
-            } else {
-                newMapEventChannel.trySend(MapEvent.ClearMap)
+            }
+
+            ShowPathsButtonState.DEFAULT -> {
+                if (selectedPathIdsInMenuList.isEmpty()) {
+                    newMapEventChannel.trySend(MapEvent.ClearMap)
+                }
+
                 updateMyPathsMenuState(showPathsButtonState = ShowPathsButtonState.LOADING)
                 newPathInfoListItemStateFlow.tryEmit(
                     NewPathInfoItemState(
                         PathsMenuType.MY_PATHS,
                         PathInfoItemState(
-                            PathsToAction.All,
+                            PathsToAction.Multiple(selectedPathIdsInMenuList),
                             PathInfoItemShowButtonState.LOADING
                         )
                     )
@@ -214,17 +208,50 @@ class PathsMenuViewModel(
 //                backgroundCachingRatingPathsJob?.cancel()
 
                 when (myPathsMenuUiStateFlow.value.showPathsFilterButtonState) {
-                    ShowPathsFilterButtonState.RATED_ONLY -> startDownloadAllRatedPaths()
-                    ShowPathsFilterButtonState.ALL_IN_COMMON_COLOR -> startDownloadAllPathsAsCommon()
+                    ShowPathsFilterButtonState.RATED_ONLY -> loadAndShowSelectedRatedPaths()
+                    ShowPathsFilterButtonState.ALL_IN_COMMON_COLOR -> loadAndShowSelectedPathsAsCommon()
                     else -> {
                         updateMyPathsMenuState(showPathsButtonState = ShowPathsButtonState.HIDE)
                     }
                 }
             }
+
+            ShowPathsButtonState.HIDE -> {
+                hideSelectedPaths()
+            }
+
+            else -> {}
         }
     }
 
-    private fun onShowAllPathsButtonClickedOuterPathsMenu() {
+    private fun hideSelectedPaths() {
+        updateMyPathsMenuState(showPathsButtonState = ShowPathsButtonState.DEFAULT)
+
+        val pathsToHide = if (selectedPathIdsInMenuList.isEmpty()) {
+            PathsToAction.All
+        } else {
+            PathsToAction.Multiple(selectedPathIdsInMenuList)
+        }
+
+        val hideMapEvent = if (pathsToHide == PathsToAction.All) {
+            MapEvent.ClearMap
+        } else {
+            MapEvent.HidePath(pathsToHide)
+        }
+
+        newMapEventChannel.trySend(hideMapEvent)
+        newPathInfoListItemStateFlow.tryEmit(
+            NewPathInfoItemState(
+                PathsMenuType.MY_PATHS,
+                PathInfoItemState(
+                    pathsToHide,
+                    PathInfoItemShowButtonState.DEFAULT
+                )
+            )
+        )
+    }
+
+    private fun onShowSelectedPathsButtonClickedOuterPathsMenu() {
         when (outerPathsMenuUiStateFlow.value.showPathsButtonState) {
             ShowPathsButtonState.LOADING -> {
                 updateOuterPathsMenuState(showPathsButtonState = ShowPathsButtonState.DEFAULT)
@@ -240,13 +267,16 @@ class PathsMenuViewModel(
             }
 
             ShowPathsButtonState.DEFAULT -> {
-                newMapEventChannel.trySend(MapEvent.ClearMap)
+                if (selectedPathIdsInMenuList.isEmpty()) {
+                    newMapEventChannel.trySend(MapEvent.ClearMap)
+                }
+
                 updateOuterPathsMenuState(showPathsButtonState = ShowPathsButtonState.HIDE)
                 newPathInfoListItemStateFlow.tryEmit(
                     NewPathInfoItemState(
                         PathsMenuType.OUTER_PATHS,
                         PathInfoItemState(
-                            PathsToAction.All,
+                            PathsToAction.Multiple(selectedPathIdsInMenuList),
                             PathInfoItemShowButtonState.LOADING
                         )
                     )
@@ -266,27 +296,82 @@ class PathsMenuViewModel(
             }
 
             ShowPathsButtonState.HIDE -> {
-                newMapEventChannel.trySend(MapEvent.ClearMap)
-                updateOuterPathsMenuState(showPathsButtonState = ShowPathsButtonState.DEFAULT)
-                newPathInfoListItemStateFlow.tryEmit(
-                    NewPathInfoItemState(
-                        PathsMenuType.OUTER_PATHS,
-                        PathInfoItemState(
-                            PathsToAction.All,
-                            PathInfoItemShowButtonState.DEFAULT
-                        )
-                    )
-                )
+                hideSelectedPaths()
             }
 
             else -> {}
         }
     }
 
+    private fun loadAndShowSelectedRatedPaths() {
+        val selectedPathsIds = ArrayList(selectedPathIdsInMenuList)
+        if (selectedPathsIds.isEmpty()) {
+            loadAndShowAllRatedPaths()
+        } else {
+            loadPathsJob?.cancel()
+            loadPathsJob = viewModelScope.launch {
+                val loadedPaths = ArrayList<MapRatingPath>()
+                for (pathId in selectedPathsIds) {
+                    val ratingPath = mapPathsInteractor.getSavedRatingPath(pathId, true)
+                    if (ratingPath != null) {
+                        loadedPaths.add(ratingPath)
+                    }
+                }
+                if (loadedPaths.isNotEmpty()) {
+                    newMapEventChannel.trySend(MapEvent.ShowRatingPathList(loadedPaths))
+                    newPathInfoListItemStateFlow.tryEmit(
+                        NewPathInfoItemState(
+                            PathsMenuType.MY_PATHS,
+                            PathInfoItemState(
+                                PathsToAction.Multiple(selectedPathsIds),
+                                PathInfoItemShowButtonState.HIDE
+                            )
+                        )
+                    )
+                    updateMyPathsMenuState(showPathsButtonState = ShowPathsButtonState.HIDE)
+                } else {
+                    updateMyPathsMenuState(showPathsButtonState = ShowPathsButtonState.DEFAULT)
+                }
+            }
+        }
+    }
 
-    private fun startDownloadAllRatedPaths() {
-        downloadAllPathsJob?.cancel()
-        downloadAllPathsJob = viewModelScope.launch {
+    private fun loadAndShowSelectedPathsAsCommon() {
+        val selectedPathsIds = ArrayList(selectedPathIdsInMenuList)
+        if (selectedPathsIds.isEmpty()) {
+            loadAndShowAllPathsAsCommon()
+        } else {
+            loadPathsJob?.cancel()
+            loadPathsJob = viewModelScope.launch {
+                val loadedPaths = ArrayList<MapCommonPath>()
+                for (pathId in selectedPathsIds) {
+                    val commonPath = mapPathsInteractor.getSavedCommonPath(pathId)
+                    if (commonPath != null) {
+                        loadedPaths.add(commonPath)
+                    }
+                }
+                if (loadedPaths.isNotEmpty()) {
+                    newMapEventChannel.trySend(MapEvent.ShowCommonPathList(loadedPaths))
+                    newPathInfoListItemStateFlow.tryEmit(
+                        NewPathInfoItemState(
+                            PathsMenuType.MY_PATHS,
+                            PathInfoItemState(
+                                PathsToAction.Multiple(selectedPathsIds),
+                                PathInfoItemShowButtonState.HIDE
+                            )
+                        )
+                    )
+                    updateMyPathsMenuState(showPathsButtonState = ShowPathsButtonState.HIDE)
+                } else {
+                    updateMyPathsMenuState(showPathsButtonState = ShowPathsButtonState.DEFAULT)
+                }
+            }
+        }
+    }
+
+    private fun loadAndShowAllRatedPaths() {
+        loadPathsJob?.cancel()
+        loadPathsJob = viewModelScope.launch {
             for (path in mapPathsInteractor.getAllSavedRatingPaths(true)) {
                 newMapEventChannel.trySend(MapEvent.ShowRatingPath(path))
                 newPathInfoListItemStateFlow.tryEmit(
@@ -303,9 +388,9 @@ class PathsMenuViewModel(
         }
     }
 
-    private fun startDownloadAllPathsAsCommon() {
-        downloadAllPathsJob?.cancel()
-        downloadAllPathsJob = viewModelScope.launch {
+    private fun loadAndShowAllPathsAsCommon() {
+        loadPathsJob?.cancel()
+        loadPathsJob = viewModelScope.launch {
             for (path in mapPathsInteractor.getAllSavedPathsAsCommon()) {
                 newMapEventChannel.trySend(MapEvent.ShowCommonPath(path))
                 newPathInfoListItemStateFlow.tryEmit(
@@ -334,8 +419,8 @@ class PathsMenuViewModel(
         when (myPathsMenuUiStateFlow.value.showPathsButtonState) {
             ShowPathsButtonState.LOADING -> {
                 when (newFilterValue) {
-                    ShowPathsFilterButtonState.RATED_ONLY -> startDownloadAllRatedPaths()
-                    ShowPathsFilterButtonState.ALL_IN_COMMON_COLOR -> startDownloadAllPathsAsCommon()
+                    ShowPathsFilterButtonState.RATED_ONLY -> loadAndShowSelectedRatedPaths()
+                    ShowPathsFilterButtonState.ALL_IN_COMMON_COLOR -> loadAndShowSelectedPathsAsCommon()
                     else -> {
                         updateMyPathsMenuState(showPathsButtonState = ShowPathsButtonState.HIDE)
                     }
@@ -351,7 +436,7 @@ class PathsMenuViewModel(
     }
 
     fun onShowPathsMenuButtonClick() {
-        downloadAllPathsJob?.cancel()
+        loadPathsJob?.cancel()
         selectedPathIdsInMenuList.clear()
 
         newMapEventChannel.trySend(MapEvent.BottomMenuStateChange(BottomMenuState.MY_PATHS_MENU))
@@ -378,7 +463,7 @@ class PathsMenuViewModel(
     }
 
     fun onPathsMenuBackButtonClicked() {
-        downloadAllPathsJob?.cancel()
+        loadPathsJob?.cancel()
         selectedPathIdsInMenuList.clear()
 
         updateMyPathsMenuState(

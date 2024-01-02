@@ -69,7 +69,7 @@
                     tools:visibility="visible">
 
                     <ImageView
-                        android:id="@+id/show_all_paths_default_image"
+                        android:id="@+id/show_selected_paths_default_image"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:layout_gravity="center"
@@ -78,7 +78,7 @@
                         tools:ignore="ContentDescription"/>
 
                     <ImageView
-                        android:id="@+id/show_all_paths_hide_image"
+                        android:id="@+id/show_selected_paths_hide_image"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:layout_gravity="center"
@@ -88,7 +88,7 @@
                         tools:ignore="ContentDescription"/>
 
                     <com.google.android.material.progressindicator.CircularProgressIndicator
-                        android:id="@+id/show_all_paths_progress"
+                        android:id="@+id/show_selected_paths_progress"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center"

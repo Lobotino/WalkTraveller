@@ -41,9 +41,9 @@ class MyPathsMenuView : ConstraintLayout {
     private lateinit var showPathsFilterAllInCommonStateImage: View
 
     private lateinit var showSelectedPathsButton: CardView
-    private lateinit var showAllPathsProgress: CircularProgressIndicator
-    private lateinit var showAllPathsDefaultImage: ImageView
-    private lateinit var showAllPathsHideImage: ImageView
+    private lateinit var showSelectedPathsProgress: CircularProgressIndicator
+    private lateinit var showSelectedPathsDefaultImage: ImageView
+    private lateinit var showSelectedPathsHideImage: ImageView
 
     private lateinit var pathsMenuBackButton: ImageView
 
@@ -85,9 +85,9 @@ class MyPathsMenuView : ConstraintLayout {
     private fun initView(context: Context) {
         val view = LayoutInflater.from(context).inflate(R.layout.my_paths_menu, this)
 
-        showAllPathsProgress = view.findViewById(R.id.show_all_paths_progress)
-        showAllPathsDefaultImage = view.findViewById(R.id.show_all_paths_default_image)
-        showAllPathsHideImage = view.findViewById(R.id.show_all_paths_hide_image)
+        showSelectedPathsProgress = view.findViewById(R.id.show_selected_paths_progress)
+        showSelectedPathsDefaultImage = view.findViewById(R.id.show_selected_paths_default_image)
+        showSelectedPathsHideImage = view.findViewById(R.id.show_selected_paths_hide_image)
 
         showPathsFilterAllInCommonStateImage =
             view.findViewById(R.id.show_paths_filter_button_all_in_common_state)
@@ -171,15 +171,15 @@ class MyPathsMenuView : ConstraintLayout {
             ShowPathsButtonState.GONE -> GONE
             else -> VISIBLE
         }
-        showAllPathsDefaultImage.visibility = when (myPathsUiState.showPathsButtonState) {
+        showSelectedPathsDefaultImage.visibility = when (myPathsUiState.showPathsButtonState) {
             ShowPathsButtonState.DEFAULT -> VISIBLE
             else -> GONE
         }
-        showAllPathsHideImage.visibility = when (myPathsUiState.showPathsButtonState) {
+        showSelectedPathsHideImage.visibility = when (myPathsUiState.showPathsButtonState) {
             ShowPathsButtonState.HIDE -> VISIBLE
             else -> GONE
         }
-        showAllPathsProgress.visibility = when (myPathsUiState.showPathsButtonState) {
+        showSelectedPathsProgress.visibility = when (myPathsUiState.showPathsButtonState) {
             ShowPathsButtonState.LOADING -> VISIBLE
             else -> GONE
         }

@@ -33,10 +33,10 @@ class OuterPathsMenuView : ConstraintLayout {
 
     private lateinit var titleButtonsHolder: ViewGroup
 
-    private lateinit var showAllPathsButton: CardView
-    private lateinit var showAllPathsProgress: CircularProgressIndicator
-    private lateinit var showAllPathsDefaultImage: ImageView
-    private lateinit var showAllPathsHideImage: ImageView
+    private lateinit var showSelectedPathsButton: CardView
+    private lateinit var showSelectedPathsProgress: CircularProgressIndicator
+    private lateinit var showSelectedPathsDefaultImage: ImageView
+    private lateinit var showSelectedPathsHideImage: ImageView
 
     private lateinit var deleteSelectedPathsButton: CardView
 
@@ -77,10 +77,10 @@ class OuterPathsMenuView : ConstraintLayout {
         val view = LayoutInflater.from(context).inflate(R.layout.outer_paths_menu, this)
 
         titleButtonsHolder = view.findViewById(R.id.title_buttons_holder)
-        showAllPathsButton = view.findViewById(R.id.show_selected_paths_button)
-        showAllPathsProgress = view.findViewById(R.id.show_all_paths_progress)
-        showAllPathsDefaultImage = view.findViewById(R.id.show_all_paths_default_image)
-        showAllPathsHideImage = view.findViewById(R.id.show_all_paths_hide_image)
+        showSelectedPathsButton = view.findViewById(R.id.show_selected_paths_button)
+        showSelectedPathsProgress = view.findViewById(R.id.show_selected_paths_progress)
+        showSelectedPathsDefaultImage = view.findViewById(R.id.show_selected_paths_default_image)
+        showSelectedPathsHideImage = view.findViewById(R.id.show_selected_paths_hide_image)
         deleteSelectedPathsButton = view.findViewById(R.id.delete_selected_paths_button)
         pathsEmptyListError = view.findViewById(R.id.empty_paths_error)
         pathsMenuBackButton = view.findViewById(R.id.paths_menu_back_button)
@@ -124,7 +124,7 @@ class OuterPathsMenuView : ConstraintLayout {
         this.itemShortTapListener = itemShortTapListener
         this.itemLongTapListener = itemLongTapListener
 
-        showAllPathsButton.setOnClickListener {
+        showSelectedPathsButton.setOnClickListener {
             onMenuTitleButtonClick(PathsMenuButton.ShowSelectedPaths)
         }
         deleteSelectedPathsButton.setOnClickListener {
@@ -136,19 +136,19 @@ class OuterPathsMenuView : ConstraintLayout {
     }
 
     fun syncState(outerPathsUiState: OuterPathsUiState) {
-        showAllPathsButton.visibility = when (outerPathsUiState.showPathsButtonState) {
+        showSelectedPathsButton.visibility = when (outerPathsUiState.showPathsButtonState) {
             ShowPathsButtonState.GONE -> GONE
             else -> VISIBLE
         }
-        showAllPathsDefaultImage.visibility = when (outerPathsUiState.showPathsButtonState) {
+        showSelectedPathsDefaultImage.visibility = when (outerPathsUiState.showPathsButtonState) {
             ShowPathsButtonState.DEFAULT -> VISIBLE
             else -> GONE
         }
-        showAllPathsHideImage.visibility = when (outerPathsUiState.showPathsButtonState) {
+        showSelectedPathsHideImage.visibility = when (outerPathsUiState.showPathsButtonState) {
             ShowPathsButtonState.HIDE -> VISIBLE
             else -> GONE
         }
-        showAllPathsProgress.visibility = when (outerPathsUiState.showPathsButtonState) {
+        showSelectedPathsProgress.visibility = when (outerPathsUiState.showPathsButtonState) {
             ShowPathsButtonState.LOADING -> VISIBLE
             else -> GONE
         }

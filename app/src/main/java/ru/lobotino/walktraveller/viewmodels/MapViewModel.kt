@@ -68,9 +68,9 @@ class MapViewModel(
     private val newPathSegmentFlow =
         MutableSharedFlow<MapPathSegment>(1, 0, BufferOverflow.DROP_OLDEST)
     private val newCommonPathFlow =
-        MutableSharedFlow<MapCommonPath>(1, 0, BufferOverflow.DROP_OLDEST)
+        MutableSharedFlow<List<MapCommonPath>>(1, 0, BufferOverflow.DROP_OLDEST)
     private val newRatingPathFlow =
-        MutableSharedFlow<MapRatingPath>(1, 0, BufferOverflow.DROP_OLDEST)
+        MutableSharedFlow<List<MapRatingPath>>(1, 0, BufferOverflow.DROP_OLDEST)
     private val newMapCenterFlow =
         MutableSharedFlow<MapPoint>(1, 0, BufferOverflow.DROP_OLDEST)
     private val newCurrentUserLocationFlow =
@@ -80,8 +80,8 @@ class MapViewModel(
 
     val observePermissionsDeniedResult: Flow<List<String>> = permissionsDeniedSharedFlow
     val observeNewPathSegment: Flow<MapPathSegment> = newPathSegmentFlow
-    val observeNewCommonPath: Flow<MapCommonPath> = newCommonPathFlow
-    val observeNewRatingPath: Flow<MapRatingPath> = newRatingPathFlow
+    val observeNewCommonPath: Flow<List<MapCommonPath>> = newCommonPathFlow
+    val observeNewRatingPath: Flow<List<MapRatingPath>> = newRatingPathFlow
     val observeMapUiState: Flow<MapUiState> = mapUiStateFlow
     val observeRegularLocationUpdate: Flow<Boolean> = regularLocationUpdateStateFlow
     val observeNewMapCenter: Flow<MapPoint> = newMapCenterFlow
@@ -97,7 +97,7 @@ class MapViewModel(
     private var backgroundCachingCommonPathsJob: Job? = null
     private var backgroundCachingPathsInfoJob: Job? = null
     private var lastPaintedPoint: MapPoint? = null
-    private var showedPathIdsList: MutableList<Long> = ArrayList()
+    private var showedPathIdsSet: MutableSet<Long> = HashSet()
 
     fun observeNewUserRotation(): Flow<Float> = userRotationRepository.observeUserRotation()
 
@@ -267,17 +267,29 @@ class MapViewModel(
     }
 
     fun showRatingPathOnMap(ratingPath: MapRatingPath) {
-        if (!showedPathIdsList.contains(ratingPath.pathId)) {
-            newRatingPathFlow.tryEmit(ratingPath)
-            showedPathIdsList.add(ratingPath.pathId)
+        if (!showedPathIdsSet.contains(ratingPath.pathId)) {
+            newRatingPathFlow.tryEmit(listOf(ratingPath))
+            showedPathIdsSet.add(ratingPath.pathId)
         }
     }
 
     fun showCommonPathOnMap(commonPath: MapCommonPath) {
-        if (!showedPathIdsList.contains(commonPath.pathId)) {
-            newCommonPathFlow.tryEmit(commonPath)
-            showedPathIdsList.add(commonPath.pathId)
+        if (!showedPathIdsSet.contains(commonPath.pathId)) {
+            newCommonPathFlow.tryEmit(listOf(commonPath))
+            showedPathIdsSet.add(commonPath.pathId)
         }
+    }
+
+    fun showRatingPathListOnMap(ratingPaths: List<MapRatingPath>) {
+        val pathsToShow = ratingPaths.filter { !showedPathIdsSet.contains(it.pathId) }
+        newRatingPathFlow.tryEmit(pathsToShow)
+        showedPathIdsSet.addAll(pathsToShow.map { it.pathId })
+    }
+
+    fun showCommonPathListOnMap(commonPaths: List<MapCommonPath>) {
+        val pathsToShow = commonPaths.filter { !showedPathIdsSet.contains(it.pathId) }
+        newCommonPathFlow.tryEmit(pathsToShow)
+        showedPathIdsSet.addAll(pathsToShow.map { it.pathId })
     }
 
     fun hidePathsFromMap(pathsToHide: PathsToAction) {
@@ -288,21 +300,21 @@ class MapViewModel(
 
             is PathsToAction.Single -> {
                 val pathId = pathsToHide.pathId
-                if (showedPathIdsList.contains(pathId)) {
-                    showedPathIdsList.remove(pathId)
+                if (showedPathIdsSet.contains(pathId)) {
+                    showedPathIdsSet.remove(pathId)
                     hidePathFlow.tryEmit(PathsToAction.Single(pathId))
                 }
             }
 
             is PathsToAction.Multiple -> {
-                showedPathIdsList.removeAll(pathsToHide.pathIds)
+                showedPathIdsSet.removeAll(pathsToHide.pathIds.toSet())
                 hidePathFlow.tryEmit(PathsToAction.Multiple(pathsToHide.pathIds))
             }
         }
     }
 
     fun clearMap() {
-        showedPathIdsList.clear()
+        showedPathIdsSet.clear()
         hidePathFlow.tryEmit(PathsToAction.All)
     }
 
