@@ -43,7 +43,8 @@ class SettingsFragment : Fragment() {
 
     private fun initViewModel(bundle: Bundle?) {
         viewModel = ViewModelProvider(
-            this, SettingsViewModelFactory(
+            this,
+            SettingsViewModelFactory(
                 optimizePathsSettingsRepository = OptimizePathsSettingsRepository(
                     sharedPreferences = requireContext().getSharedPreferences(
                         App.SHARED_PREFS_TAG,
@@ -72,7 +73,7 @@ class SettingsFragment : Fragment() {
         optimizePathsSlider = view.findViewById<Slider>(R.id.optimizing_paths_slider).apply {
             addOnSliderTouchListener(object : Slider.OnSliderTouchListener {
                 override fun onStartTrackingTouch(slider: Slider) {
-                    //do nothing
+                    // do nothing
                 }
 
                 override fun onStopTrackingTouch(slider: Slider) {

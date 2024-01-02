@@ -11,5 +11,4 @@ interface IPathDistancesRepository {
     fun calculatePathLength(allPathSegments: Array<MapPathSegment>): Float
 
     fun calculateMostCommonPathRating(allPathSegments: Array<MapPathSegment>): MostCommonRating
-
 }

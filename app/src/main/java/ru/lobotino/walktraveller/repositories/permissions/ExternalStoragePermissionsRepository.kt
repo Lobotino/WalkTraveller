@@ -13,15 +13,19 @@ class ExternalStoragePermissionsRepository(fragment: Fragment, private val appCo
     private var someDeniedCallback: ((List<String>) -> Unit)? = null
 
     private val externalStoragePermissionRepository =
-        PermissionsRepository(fragment,
-                              arrayListOf(
-                                  Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                                  Manifest.permission.READ_EXTERNAL_STORAGE
-                              ), {
-                                  allGrantedCallback?.invoke()
-                              }, { deniedPermissions ->
-                                  someDeniedCallback?.invoke(deniedPermissions)
-                              })
+        PermissionsRepository(
+            fragment,
+            arrayListOf(
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                Manifest.permission.READ_EXTERNAL_STORAGE
+            ),
+            {
+                allGrantedCallback?.invoke()
+            },
+            { deniedPermissions ->
+                someDeniedCallback?.invoke(deniedPermissions)
+            }
+        )
 
     override fun requestPermissions(
         allGranted: (() -> Unit)?,
@@ -33,12 +37,14 @@ class ExternalStoragePermissionsRepository(fragment: Fragment, private val appCo
     }
 
     override fun isPermissionsGranted(): Boolean {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.R || (ContextCompat.checkSelfPermission(
-            appContext,
-            Manifest.permission.READ_EXTERNAL_STORAGE
-        ) == PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(
-            appContext,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE
-        ) == PackageManager.PERMISSION_GRANTED)
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.R || (
+            ContextCompat.checkSelfPermission(
+                appContext,
+                Manifest.permission.READ_EXTERNAL_STORAGE
+            ) == PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(
+                appContext,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE
+            ) == PackageManager.PERMISSION_GRANTED
+            )
     }
 }

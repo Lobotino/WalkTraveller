@@ -11,8 +11,7 @@ class PermissionsRepository(
     private val someDeniedCallback: ((List<String>) -> Unit)?
 ) {
     private val permissionsRequest: ActivityResultLauncher<Array<String>> =
-        fragment.registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions())
-        { resultPermissions ->
+        fragment.registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { resultPermissions ->
             val deniedPermissions = ArrayList<String>()
             for (permission in resultPermissions.entries) {
                 if (!permission.value) {

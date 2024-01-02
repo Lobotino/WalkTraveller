@@ -8,5 +8,4 @@ interface IPermissionsUseCase {
     )
 
     fun isPermissionsGranted(): Boolean
-
 }

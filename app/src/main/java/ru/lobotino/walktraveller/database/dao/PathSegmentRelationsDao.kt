@@ -12,7 +12,9 @@ interface PathSegmentRelationsDao {
     @Query("SELECT * FROM path_segments")
     suspend fun getAllPathSegments(): List<EntityPathSegment>
 
-    @Query("SELECT * FROM points, path_segments WHERE path_segments.id_start_point = :pointId and points.id = path_segments.id_finish_point")
+    @Query(
+        "SELECT * FROM points, path_segments WHERE path_segments.id_start_point = :pointId and points.id = path_segments.id_finish_point"
+    )
     suspend fun getNextPathPoint(pointId: Long): EntityPoint?
 
     @Query("SELECT * FROM path_segments WHERE id_start_point = :startPointId and id_finish_point = :finishPointId")
@@ -20,5 +22,4 @@ interface PathSegmentRelationsDao {
 
     @Insert
     suspend fun insertPathSegments(segments: List<EntityPathSegment>)
-
 }

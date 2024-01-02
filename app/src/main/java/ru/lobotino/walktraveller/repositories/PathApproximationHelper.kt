@@ -70,7 +70,7 @@ object PathApproximationHelper {
             finishPathPoint.y - startPathPoint.y,
             -1 * (finishPathPoint.x - startPathPoint.x),
             -1 * startPathPoint.x * (finishPathPoint.y - startPathPoint.y) +
-                    startPathPoint.y * (finishPathPoint.x - startPathPoint.x)
+                startPathPoint.y * (finishPathPoint.x - startPathPoint.x)
         )
     }
 
@@ -80,10 +80,10 @@ object PathApproximationHelper {
     ): Double {
         return abs(
             lineEquation.aParam * point.x +
-                    lineEquation.bParam * point.y + lineEquation.cParam
+                lineEquation.bParam * point.y + lineEquation.cParam
         ) / sqrt(
             lineEquation.aParam.pow(2.0) +
-                    lineEquation.bParam.pow(2.0)
+                lineEquation.bParam.pow(2.0)
         )
     }
 

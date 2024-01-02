@@ -7,5 +7,4 @@ interface ILastSeenPointRepository {
     fun setLastSeenPoint(point: MapPoint)
 
     fun getLastSeenPoint(): MapPoint?
-
 }

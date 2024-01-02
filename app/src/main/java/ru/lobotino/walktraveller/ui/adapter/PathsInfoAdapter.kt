@@ -12,9 +12,6 @@ import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.progressindicator.CircularProgressIndicator
-import java.text.SimpleDateFormat
-import java.util.*
-import kotlin.properties.Delegates
 import ru.lobotino.walktraveller.R
 import ru.lobotino.walktraveller.model.map.MapPathInfo
 import ru.lobotino.walktraveller.ui.model.PathInfoItemModel
@@ -24,7 +21,9 @@ import ru.lobotino.walktraveller.ui.model.PathInfoItemState
 import ru.lobotino.walktraveller.ui.model.PathItemButtonType
 import ru.lobotino.walktraveller.ui.model.PathsToAction
 import ru.lobotino.walktraveller.usecases.interfaces.IDistanceToStringFormatter
-
+import java.text.SimpleDateFormat
+import java.util.*
+import kotlin.properties.Delegates
 
 open class PathsInfoAdapter(
     private val distanceFormatter: IDistanceToStringFormatter,
@@ -245,7 +244,9 @@ open class PathsInfoAdapter(
             mostCommonRatingColors: List<Int>
         ) {
             currentShowButtonState = path.showButtonState
-            pathMostCommonRatingColor.setCardBackgroundColor(mostCommonRatingColors[path.pathInfo.mostCommonRating.ordinal])
+            pathMostCommonRatingColor.setCardBackgroundColor(
+                mostCommonRatingColors[path.pathInfo.mostCommonRating.ordinal]
+            )
             pathDate.text = formatTimestampDate(path.pathInfo.timestamp)
             pathLength.text = distanceFormatter.formatDistance(path.pathInfo.length)
             pathButtonShow.setOnClickListener {

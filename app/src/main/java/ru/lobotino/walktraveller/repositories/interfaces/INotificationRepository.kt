@@ -7,5 +7,4 @@ interface INotificationRepository {
     fun getNotification(): Notification
 
     fun getNotificationId(): Int
-
 }

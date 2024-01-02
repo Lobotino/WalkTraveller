@@ -5,5 +5,4 @@ interface IWritingPathStatesRepository {
     fun setWritingPathNow(writingPathNow: Boolean)
 
     fun isWritingPathNow(): Boolean
-
 }

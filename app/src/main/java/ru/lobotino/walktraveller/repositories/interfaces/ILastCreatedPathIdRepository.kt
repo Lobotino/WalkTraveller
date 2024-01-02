@@ -5,5 +5,4 @@ interface ILastCreatedPathIdRepository {
     fun getLastCreatedPathId(): Long?
 
     fun setLastCreatedPathId(pathId: Long)
-
 }

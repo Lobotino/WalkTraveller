@@ -32,7 +32,9 @@ class PathWritingNowNotificationRepository(
             .setContentText(notificationInfoText)
             .setContentTitle(notificationTitleText)
             .setOngoing(true)
-            .setPriority(if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) NotificationManager.IMPORTANCE_DEFAULT else Notification.PRIORITY_DEFAULT)
+            .setPriority(
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) NotificationManager.IMPORTANCE_DEFAULT else Notification.PRIORITY_DEFAULT
+            )
             .setSmallIcon(R.drawable.ic_path)
             .setTicker(notificationInfoText).apply {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

@@ -14,7 +14,6 @@ import ru.lobotino.walktraveller.App
 import ru.lobotino.walktraveller.model.SegmentRating
 import ru.lobotino.walktraveller.repositories.PathRatingRepository
 
-
 class VolumeKeysDetectorService : AccessibilityService() {
 
     companion object {

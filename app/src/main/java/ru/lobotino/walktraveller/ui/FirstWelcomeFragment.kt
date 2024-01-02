@@ -27,7 +27,6 @@ import ru.lobotino.walktraveller.ui.model.WelcomeContinueButtonState
 import ru.lobotino.walktraveller.utils.ext.navigateTo
 import ru.lobotino.walktraveller.viewmodels.FirstWelcomeViewModel
 
-
 class FirstWelcomeFragment : Fragment() {
 
     private lateinit var continueButton: Button

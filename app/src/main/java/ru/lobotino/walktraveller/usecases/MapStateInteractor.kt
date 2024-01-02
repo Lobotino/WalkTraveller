@@ -8,7 +8,7 @@ class MapStateInteractor(private val lastSeenPointRepository: LastSeenPointRepos
     IMapStateInteractor {
 
     companion object {
-        //Moscow city coordinates
+        // Moscow city coordinates
         private val defaultLastSeenPoint = MapPoint(55.7522200, 37.6155600)
     }
 

@@ -22,7 +22,14 @@ class OuterPathsInfoAdapter(
     itemShortTapListener: (Long) -> Unit,
     itemLongTapListener: (Long) -> Unit,
     context: Context
-) : PathsInfoAdapter(distanceFormatter, mostCommonRatingColors, itemButtonClickedListener, itemShortTapListener, itemLongTapListener, context) {
+) : PathsInfoAdapter(
+    distanceFormatter,
+    mostCommonRatingColors,
+    itemButtonClickedListener,
+    itemShortTapListener,
+    itemLongTapListener,
+    context
+) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PathInfoItem {
         return OuterPathInfoItem(
@@ -74,7 +81,9 @@ class OuterPathsInfoAdapter(
             mostCommonRatingColors: List<Int>
         ) {
             currentShowButtonState = path.showButtonState
-            pathMostCommonRatingColor.setCardBackgroundColor(mostCommonRatingColors[path.pathInfo.mostCommonRating.ordinal])
+            pathMostCommonRatingColor.setCardBackgroundColor(
+                mostCommonRatingColors[path.pathInfo.mostCommonRating.ordinal]
+            )
             pathDate.text = formatTimestampDate(path.pathInfo.timestamp)
             pathLength.text = distanceFormatter.formatDistance(path.pathInfo.length)
             pathButtonShow.setOnClickListener {

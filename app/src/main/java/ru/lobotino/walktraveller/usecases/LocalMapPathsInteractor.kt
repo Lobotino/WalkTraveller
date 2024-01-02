@@ -58,13 +58,15 @@ class LocalMapPathsInteractor(
                     val pathPoints = getAllPoints.await()
                     if (pathPoints.isEmpty()) continue
 
-                    add(MapCommonPath(
-                        path.id,
-                        startPoint.toMapPoint(),
-                        pathPoints.map { it.toMapPoint() })
-                        .also { ratingPath ->
-                            cachePathRepository.saveCommonPath(ratingPath)
-                        }
+                    add(
+                        MapCommonPath(
+                            path.id,
+                            startPoint.toMapPoint(),
+                            pathPoints.map { it.toMapPoint() }
+                        )
+                            .also { ratingPath ->
+                                cachePathRepository.saveCommonPath(ratingPath)
+                            }
                     )
                 }
             }
@@ -73,7 +75,9 @@ class LocalMapPathsInteractor(
 
     override suspend fun getLastSavedRatingPath(): MapRatingPath? {
         return coroutineScope {
-            mapRatingPath(withContext(defaultDispatcher) { databasePathRepository.getLastPathInfo() })?.also { ratingPath ->
+            mapRatingPath(
+                withContext(defaultDispatcher) { databasePathRepository.getLastPathInfo() }
+            )?.also { ratingPath ->
                 tryCacheRatingPath(ratingPath)
             }
         }
@@ -111,7 +115,8 @@ class LocalMapPathsInteractor(
                         }) {
                             add(entityPathSegment.toMapPathSegment() ?: continue)
                         }
-                    })
+                    }
+                )
             } else {
                 null
             }
@@ -231,7 +236,7 @@ class LocalMapPathsInteractor(
             val optimizedPathPoints = PathApproximationHelper.approximatePathPoints(
                 pathPoints,
                 optimizePathsSettingsRepository.getOptimizePathsApproximationDistance() ?: 1f
-            ) //TODO change approximation logic to mapZoom depends
+            ) // TODO change approximation logic to mapZoom depends
 
             MapCommonPath(
                 pathId,

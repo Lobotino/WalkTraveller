@@ -15,7 +15,6 @@ import ru.lobotino.walktraveller.ui.model.FindMyLocationButtonState.DEFAULT
 import ru.lobotino.walktraveller.ui.model.FindMyLocationButtonState.ERROR
 import ru.lobotino.walktraveller.ui.model.FindMyLocationButtonState.LOADING
 
-
 class FindMyLocationButton : CardView {
 
     companion object {

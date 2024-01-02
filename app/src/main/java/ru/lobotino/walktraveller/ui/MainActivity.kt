@@ -15,9 +15,10 @@ import ru.lobotino.walktraveller.repositories.UserInfoRepository
 import ru.lobotino.walktraveller.repositories.interfaces.AppScreen
 import ru.lobotino.walktraveller.repositories.interfaces.IScreenNavigation
 
-
-class MainActivity : AppCompatActivity(R.layout.activity_main),
-    NavigationView.OnNavigationItemSelectedListener, IScreenNavigation {
+class MainActivity :
+    AppCompatActivity(R.layout.activity_main),
+    NavigationView.OnNavigationItemSelectedListener,
+    IScreenNavigation {
 
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var actionBarDrawerToggle: ActionBarDrawerToggle
@@ -32,7 +33,7 @@ class MainActivity : AppCompatActivity(R.layout.activity_main),
     }
 
     private fun checkStartNavigation() {
-        //fixme move userInfoRepository into other layer
+        // fixme move userInfoRepository into other layer
         val userInfoRepository = UserInfoRepository(
             getSharedPreferences(
                 App.SHARED_PREFS_TAG,

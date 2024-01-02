@@ -19,9 +19,11 @@ class PathRatingRepository(private val sharedPreferences: SharedPreferences) : I
     }
 
     override fun getCurrentRating(): SegmentRating {
-        return ratingList[sharedPreferences.getInt(
-            KEY_LAST_SEGMENT_RATING,
-            SegmentRating.NORMAL.ordinal
-        )]
+        return ratingList[
+            sharedPreferences.getInt(
+                KEY_LAST_SEGMENT_RATING,
+                SegmentRating.NORMAL.ordinal
+            )
+        ]
     }
 }

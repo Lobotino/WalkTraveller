@@ -7,5 +7,4 @@ interface IPathRatingRepository {
     fun setCurrentRating(rating: SegmentRating)
 
     fun getCurrentRating(): SegmentRating
-
 }

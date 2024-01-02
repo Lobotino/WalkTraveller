@@ -13,5 +13,4 @@ interface INotificationInteractor {
     fun getNotificationId(): Int
 
     fun getNotification(): Notification
-
 }

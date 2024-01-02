@@ -215,7 +215,6 @@ class MapViewModel(
         lastPaintedPoint = null
     }
 
-
     fun onRatingButtonClicked(ratingGiven: SegmentRating) {
         pathRatingRepository.setCurrentRating(ratingGiven)
         mapUiStateFlow.update { uiState ->
@@ -227,7 +226,6 @@ class MapViewModel(
         if (!updatingYetUnpaintedPaths) {
             updatingYetUnpaintedPaths = true
             if (writingPathStatesRepository.isWritingPathNow()) {
-
                 if (!writingPathNowState.value) {
                     writingPathNowState.tryEmit(true)
                 }
@@ -340,7 +338,8 @@ class MapViewModel(
                         {
                             regularLocationUpdateStateFlow.tryEmit(true)
                             updateCurrentMapCenterToUserLocation()
-                        }, {
+                        },
+                        {
                             if (geoPermissionsInteractor.isGeneralGeoPermissionsGranted()) {
                                 regularLocationUpdateStateFlow.tryEmit(true)
                                 updateCurrentMapCenterToUserLocation()
@@ -361,40 +360,57 @@ class MapViewModel(
         mapStateInteractor.setLastSeenPoint(mapPoint)
 
         if (mapUiStateFlow.value.findMyLocationButtonState == FindMyLocationButtonState.CENTER_ON_CURRENT_LOCATION) {
-            mapUiStateFlow.update { mapUiState -> mapUiState.copy(findMyLocationButtonState = FindMyLocationButtonState.DEFAULT) }
+            mapUiStateFlow.update { mapUiState ->
+                mapUiState.copy(
+                    findMyLocationButtonState = FindMyLocationButtonState.DEFAULT
+                )
+            }
         }
     }
 
     fun onMapZoomed() {
-        //TODO
+        // TODO
     }
 
     private fun updateCurrentMapCenterToUserLocation() {
         val setLoadingStateWithDelayJob = viewModelScope.launch {
             delay(50L)
-            mapUiStateFlow.update { mapUiState -> mapUiState.copy(findMyLocationButtonState = FindMyLocationButtonState.LOADING) }
+            mapUiStateFlow.update { mapUiState ->
+                mapUiState.copy(
+                    findMyLocationButtonState = FindMyLocationButtonState.LOADING
+                )
+            }
         }
 
         val setLocationButtonStateToError = {
-            mapUiStateFlow.update { mapUiState -> mapUiState.copy(findMyLocationButtonState = FindMyLocationButtonState.ERROR) }
+            mapUiStateFlow.update { mapUiState ->
+                mapUiState.copy(
+                    findMyLocationButtonState = FindMyLocationButtonState.ERROR
+                )
+            }
         }
 
         userLocationInteractor.getCurrentUserLocation(
             { location ->
                 setLoadingStateWithDelayJob.cancel()
                 newMapCenterFlow.tryEmit(location)
-                mapUiStateFlow.update { mapUiState -> mapUiState.copy(findMyLocationButtonState = FindMyLocationButtonState.CENTER_ON_CURRENT_LOCATION) }
-            }, {
+                mapUiStateFlow.update { mapUiState ->
+                    mapUiState.copy(
+                        findMyLocationButtonState = FindMyLocationButtonState.CENTER_ON_CURRENT_LOCATION
+                    )
+                }
+            },
+            {
                 setLoadingStateWithDelayJob.cancel()
                 setLocationButtonStateToError()
-            }, { error ->
+            },
+            { error ->
                 Log.e(TAG, error.message, error)
                 setLoadingStateWithDelayJob.cancel()
                 setLocationButtonStateToError()
             }
         )
     }
-
 
     fun onLocationPermissionDialogConfirmed() {
         geoPermissionsUseCase.let { geoPermissionsInteractor ->
@@ -406,7 +422,11 @@ class MapViewModel(
                     regularLocationUpdateStateFlow.tryEmit(true)
                     updateCurrentMapCenterToUserLocation()
                 } else {
-                    mapUiStateFlow.update { mapUiState -> mapUiState.copy(findMyLocationButtonState = FindMyLocationButtonState.ERROR) }
+                    mapUiStateFlow.update { mapUiState ->
+                        mapUiState.copy(
+                            findMyLocationButtonState = FindMyLocationButtonState.ERROR
+                        )
+                    }
                     permissionsDeniedSharedFlow.tryEmit(deniedPermissions)
                 }
             })

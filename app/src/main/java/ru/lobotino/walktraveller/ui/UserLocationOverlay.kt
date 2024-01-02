@@ -12,10 +12,11 @@ class UserLocationOverlay(
 
     init {
         mIcon = (
-                AppCompatResources.getDrawable(
-                    context,
-                    R.drawable.ic_user_marker
-                ))
+            AppCompatResources.getDrawable(
+                context,
+                R.drawable.ic_user_marker
+            )
+            )
     }
 
     fun setPosition(position: GeoPoint) {

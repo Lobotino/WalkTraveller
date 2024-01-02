@@ -38,7 +38,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.gms.location.LocationServices
 import com.google.android.material.progressindicator.CircularProgressIndicator
-import kotlin.properties.Delegates
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -118,7 +117,7 @@ import ru.lobotino.walktraveller.utils.ext.toGeoPoint
 import ru.lobotino.walktraveller.utils.ext.toMapPoint
 import ru.lobotino.walktraveller.viewmodels.MapViewModel
 import ru.lobotino.walktraveller.viewmodels.PathsMenuViewModel
-
+import kotlin.properties.Delegates
 
 class MainMapFragment : Fragment() {
 
@@ -359,7 +358,8 @@ class MainMapFragment : Fragment() {
                     },
                     itemLongTapListener = { pathId ->
                         menuViewModel.onPathInListLongTap(pathId, PathsMenuType.MY_PATHS)
-                    })
+                    }
+                )
             }
 
             outerPathsMenu = view.findViewById<OuterPathsMenuView>(R.id.outer_paths_menu).apply {
@@ -383,7 +383,8 @@ class MainMapFragment : Fragment() {
                     },
                     itemLongTapListener = { pathId ->
                         menuViewModel.onPathInListLongTap(pathId, PathsMenuType.OUTER_PATHS)
-                    })
+                    }
+                )
             }
 
             walkButtonsHolder = view.findViewById(R.id.walk_buttons_holder)
@@ -679,13 +680,15 @@ class MainMapFragment : Fragment() {
                 DELETE_PATH -> {
                     DeleteConfirmDialog(
                         context = context,
-                        onConfirm = { menuViewModel.onConfirmMyPathDelete(confirmDialogInfo.additionalInfo as Long) }).show()
+                        onConfirm = { menuViewModel.onConfirmMyPathDelete(confirmDialogInfo.additionalInfo as Long) }
+                    ).show()
                 }
 
                 GEO_LOCATION_PERMISSION_REQUIRED -> {
                     GeoLocationRequiredDialog(
                         context = context,
-                        onConfirm = { mapViewModel.onLocationPermissionDialogConfirmed() }).show()
+                        onConfirm = { mapViewModel.onLocationPermissionDialogConfirmed() }
+                    ).show()
                 }
 
                 DELETE_MULTIPLE_PATHS -> {
@@ -877,12 +880,14 @@ class MainMapFragment : Fragment() {
             val pathPolyline = Polyline(mapView).apply {
                 outlinePaint.color = color
 
-                setPoints(path.pathPoints.map { point ->
-                    GeoPoint(
-                        point.latitude,
-                        point.longitude
-                    )
-                })
+                setPoints(
+                    path.pathPoints.map { point ->
+                        GeoPoint(
+                            point.latitude,
+                            point.longitude
+                        )
+                    }
+                )
             }
             showingPathsPolylines[path.pathId] = listOf(pathPolyline)
             allAddedPolylines.add(pathPolyline)

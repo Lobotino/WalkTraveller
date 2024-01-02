@@ -9,5 +9,4 @@ interface IUserLocationInteractor {
         onEmpty: () -> Unit,
         onError: (Exception) -> Unit
     )
-
 }

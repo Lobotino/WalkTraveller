@@ -102,7 +102,8 @@ class LocationUpdatesRepository(
                         CancellationTokenSource().token
 
                     override fun isCancellationRequested() = false
-                })
+                }
+            )
                 .addOnSuccessListener { location: Location? ->
                     if (location == null) {
                         onEmpty()

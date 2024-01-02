@@ -25,7 +25,7 @@ open class ConfirmInfoDialog(
     }
 
     private fun setupWindowSettings() {
-        window?.setBackgroundDrawableResource(android.R.color.transparent);
+        window?.setBackgroundDrawableResource(android.R.color.transparent)
         requestWindowFeature(Window.FEATURE_NO_TITLE)
     }
 

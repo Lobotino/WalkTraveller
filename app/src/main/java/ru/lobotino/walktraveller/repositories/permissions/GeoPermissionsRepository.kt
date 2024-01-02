@@ -18,25 +18,32 @@ class GeoPermissionsRepository(fragment: Fragment, private val appContext: Conte
         arrayListOf(
             ACCESS_FINE_LOCATION,
             ACCESS_COARSE_LOCATION
-        ), {
+        ),
+        {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 backgroundGeoPermissionsRepository.requestPermissions()
             } else {
                 allGrantedCallback?.invoke()
             }
-        }, { deniedPermissions ->
+        },
+        { deniedPermissions ->
             someDeniedCallback?.invoke(deniedPermissions)
-        })
+        }
+    )
 
     @RequiresApi(Build.VERSION_CODES.Q)
-    private val backgroundGeoPermissionsRepository = PermissionsRepository(fragment,
+    private val backgroundGeoPermissionsRepository = PermissionsRepository(
+        fragment,
         arrayListOf(
             ACCESS_BACKGROUND_LOCATION
-        ), {
+        ),
+        {
             allGrantedCallback?.invoke()
-        }, { deniedPermissions ->
+        },
+        { deniedPermissions ->
             someDeniedCallback?.invoke(deniedPermissions)
-        })
+        }
+    )
 
     fun requestPermissions(
         allGranted: (() -> Unit)?,

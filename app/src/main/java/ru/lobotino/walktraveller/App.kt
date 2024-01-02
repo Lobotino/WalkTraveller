@@ -20,6 +20,6 @@ class App : Application() {
             applicationContext,
             PreferenceManager.getDefaultSharedPreferences(applicationContext)
         )
-        Stetho.initializeWithDefaults(this);
+        Stetho.initializeWithDefaults(this)
     }
 }

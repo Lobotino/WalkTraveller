@@ -1,9 +1,6 @@
 package ru.lobotino.walktraveller.usecases
 
 import android.net.Uri
-import java.util.Date
-import java.util.concurrent.ConcurrentHashMap
-import kotlin.random.Random
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
@@ -14,6 +11,9 @@ import ru.lobotino.walktraveller.repositories.interfaces.IPathDistancesRepositor
 import ru.lobotino.walktraveller.repositories.interfaces.IPathRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IPathsLoaderRepository
 import ru.lobotino.walktraveller.usecases.interfaces.IOuterPathsInteractor
+import java.util.Date
+import java.util.concurrent.ConcurrentHashMap
+import kotlin.random.Random
 
 class OuterPathsInteractor(
     private val pathsLoaderRepository: IPathsLoaderRepository,
@@ -41,7 +41,7 @@ class OuterPathsInteractor(
     }
 
     override suspend fun getAllPaths(pathsUri: Uri): List<MapPathInfo> {
-        val todayDate = Date().time //fixme save timestamp on share
+        val todayDate = Date().time // fixme save timestamp on share
         val paths = withContext(Dispatchers.IO) { pathsLoaderRepository.loadAllRatingPathsFromFile(pathsUri) }
 
         synchronized(cachedOuterPaths) {
@@ -57,7 +57,8 @@ class OuterPathsInteractor(
                         pathDistancesRepository.calculateMostCommonPathRating(pathSegments.toTypedArray()),
                         pathDistancesRepository.calculatePathLength(pathSegments.toTypedArray()),
                         true
-                    ), pathSegments
+                    ),
+                    pathSegments
                 )
             }
 

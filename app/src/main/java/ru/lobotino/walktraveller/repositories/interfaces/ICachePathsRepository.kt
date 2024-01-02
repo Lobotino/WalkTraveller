@@ -17,5 +17,4 @@ interface ICachePathsRepository {
     fun getCommonPath(pathId: Long): MapCommonPath?
 
     fun getMapPathInfo(pathId: Long): MapPathInfo?
-
 }

@@ -7,17 +7,19 @@ import androidx.room.ForeignKey
 @Entity(
     tableName = "path_segments",
     primaryKeys = ["id_start_point", "id_finish_point"],
-    foreignKeys = [ForeignKey(
-        entity = EntityPoint::class,
-        parentColumns = ["id"],
-        childColumns = ["id_start_point"],
-        onDelete = ForeignKey.CASCADE
-    ), ForeignKey(
-        entity = EntityPoint::class,
-        parentColumns = ["id"],
-        childColumns = ["id_finish_point"],
-        onDelete = ForeignKey.CASCADE
-    )]
+    foreignKeys = [
+        ForeignKey(
+            entity = EntityPoint::class,
+            parentColumns = ["id"],
+            childColumns = ["id_start_point"],
+            onDelete = ForeignKey.CASCADE
+        ), ForeignKey(
+            entity = EntityPoint::class,
+            parentColumns = ["id"],
+            childColumns = ["id_finish_point"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ]
 )
 data class EntityPathSegment(
     @ColumnInfo(name = "id_start_point") val startPointId: Long,

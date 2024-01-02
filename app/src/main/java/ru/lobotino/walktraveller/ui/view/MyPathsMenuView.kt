@@ -33,7 +33,6 @@ import ru.lobotino.walktraveller.usecases.DistanceInMetersToStringFormatter
 import ru.lobotino.walktraveller.utils.Utils
 import ru.lobotino.walktraveller.utils.ext.toColorInt
 
-
 class MyPathsMenuView : ConstraintLayout {
 
     private lateinit var showPathsFilterButton: CardView
@@ -259,7 +258,8 @@ class MyPathsMenuView : ConstraintLayout {
                                 view.visibility = View.GONE
                             }
                         }
-                    })
+                    }
+                )
             }
     }
 

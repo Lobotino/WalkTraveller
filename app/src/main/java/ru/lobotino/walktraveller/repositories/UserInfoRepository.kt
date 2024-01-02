@@ -54,9 +54,11 @@ class UserInfoRepository(private val sharedPreferences: SharedPreferences) : IUs
     }
 
     override fun getWelcomeTutorialStep(): WelcomeTutorialStep {
-        return WelcomeTutorialStep.values()[sharedPreferences.getInt(
-            WELCOME_TUTORIAL_STEP_PREFERENCE,
-            WelcomeTutorialStep.PRIVACY_POLICY.ordinal
-        )]
+        return WelcomeTutorialStep.values()[
+            sharedPreferences.getInt(
+                WELCOME_TUTORIAL_STEP_PREFERENCE,
+                WelcomeTutorialStep.PRIVACY_POLICY.ordinal
+            )
+        ]
     }
 }

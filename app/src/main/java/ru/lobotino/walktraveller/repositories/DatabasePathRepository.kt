@@ -8,10 +8,10 @@ import ru.lobotino.walktraveller.database.model.EntityPathSegment
 import ru.lobotino.walktraveller.database.model.EntityPoint
 import ru.lobotino.walktraveller.model.MostCommonRating
 import ru.lobotino.walktraveller.model.SegmentRating
+import ru.lobotino.walktraveller.model.map.MapPathSegment
 import ru.lobotino.walktraveller.model.map.MapPoint
 import ru.lobotino.walktraveller.repositories.interfaces.ILastCreatedPathIdRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IPathRepository
-import ru.lobotino.walktraveller.model.map.MapPathSegment
 
 class DatabasePathRepository(
     database: AppDatabase,

@@ -7,5 +7,4 @@ interface ICurrentPathInteractor {
     suspend fun addNewPathPoint(point: MapPoint)
 
     fun finishCurrentPath()
-
 }

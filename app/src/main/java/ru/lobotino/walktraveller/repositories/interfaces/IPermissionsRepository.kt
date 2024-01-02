@@ -8,5 +8,4 @@ interface IPermissionsRepository {
     )
 
     fun isPermissionsGranted(): Boolean
-
 }

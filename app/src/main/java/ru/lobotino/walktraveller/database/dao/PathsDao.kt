@@ -15,7 +15,9 @@ interface PathsDao {
     @Query("SELECT * FROM paths WHERE id = :pathId")
     suspend fun getPathById(pathId: Long): EntityPath?
 
-    @Query("SELECT points.id, latitude, longitude FROM points, paths WHERE paths.id = :pathId and points.id = start_point_id")
+    @Query(
+        "SELECT points.id, latitude, longitude FROM points, paths WHERE paths.id = :pathId and points.id = start_point_id"
+    )
     suspend fun getPathStartPoint(pathId: Long): EntityPoint?
 
     @Insert
@@ -29,5 +31,4 @@ interface PathsDao {
 
     @Query("UPDATE paths SET most_common_rating = :mostCommonRating WHERE id = :pathId")
     suspend fun updatePathMostCommonRating(pathId: Long, mostCommonRating: Int)
-
 }

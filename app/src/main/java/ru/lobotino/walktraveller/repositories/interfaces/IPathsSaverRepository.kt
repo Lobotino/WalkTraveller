@@ -14,5 +14,4 @@ interface IPathsSaverRepository {
      * @return saved path file name
      */
     suspend fun saveRatingPathList(paths: List<MapRatingPath>): Uri
-
 }

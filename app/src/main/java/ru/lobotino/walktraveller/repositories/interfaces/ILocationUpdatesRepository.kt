@@ -18,5 +18,4 @@ interface ILocationUpdatesRepository {
     fun observeLocationUpdates(): Flow<Location>
 
     fun observeLocationUpdatesErrors(): Flow<String>
-
 }

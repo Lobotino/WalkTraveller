@@ -7,5 +7,4 @@ interface IMapStateInteractor {
     fun setLastSeenPoint(point: MapPoint)
 
     fun getLastSeenPoint(): MapPoint
-
 }

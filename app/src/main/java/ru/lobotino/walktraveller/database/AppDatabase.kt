@@ -30,7 +30,7 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
  */
 val MIGRATION_2_3 = object : Migration(2, 3) {
     override fun migrate(database: SupportSQLiteDatabase) {
-        //Default value 5 because it's ordinal of UNKNOWN state in MostCommonRating model
+        // Default value 5 because it's ordinal of UNKNOWN state in MostCommonRating model
         database.execSQL("ALTER TABLE paths ADD COLUMN most_common_rating INTEGER DEFAULT 5 NOT NULL")
     }
 }
@@ -58,7 +58,8 @@ abstract class AppDatabase : RoomDatabase() {
 fun provideDatabase(applicationContext: Context): AppDatabase {
     return Room.databaseBuilder(
         applicationContext,
-        AppDatabase::class.java, App.PATH_DATABASE_NAME
+        AppDatabase::class.java,
+        App.PATH_DATABASE_NAME
     ).addMigrations(MIGRATION_1_2)
         .addMigrations(MIGRATION_2_3)
         .addMigrations(MIGRATION_3_4)

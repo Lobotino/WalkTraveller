@@ -17,9 +17,11 @@ class AccessibilityPermissionRepository(private val appContext: Context) : IPerm
         allGranted: (() -> Unit)?,
         someDenied: ((List<String>) -> Unit)?
     ) {
-        appContext.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK
-        })
+        appContext.startActivity(
+            Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+        )
     }
 
     override fun isPermissionsGranted(): Boolean {

@@ -17,5 +17,4 @@ interface IOuterPathsInteractor {
     fun clearCachedOuterPaths()
 
     fun removeCachedPath(tempPathId: Long)
-
 }

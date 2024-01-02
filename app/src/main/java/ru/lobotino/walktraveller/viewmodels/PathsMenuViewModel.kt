@@ -4,7 +4,6 @@ import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import java.io.IOException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
@@ -40,6 +39,7 @@ import ru.lobotino.walktraveller.usecases.interfaces.IMapPathsInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IOuterPathsInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IPathRedactor
 import ru.lobotino.walktraveller.usecases.interfaces.IPermissionsUseCase
+import java.io.IOException
 
 class PathsMenuViewModel(
     private val pathsSaverRepository: IPathsSaverRepository,
@@ -149,7 +149,7 @@ class PathsMenuViewModel(
                 try {
                     shareFileChannel.trySend(pathsSaverRepository.saveRatingPath(path))
                 } catch (exception: IOException) {
-                    //TODO show toast error
+                    // TODO show toast error
                     Log.w(TAG, exception)
                 } finally {
                     newPathInfoListItemStateFlow.tryEmit(
@@ -528,7 +528,7 @@ class PathsMenuViewModel(
                                     )
                                 )
                             } else {
-                                //TODO handle bd error
+                                // TODO handle bd error
                             }
                         }
                     }
@@ -605,7 +605,7 @@ class PathsMenuViewModel(
         if ((pathsMenuType == PathsMenuType.MY_PATHS && !myPathsMenuUiStateFlow.value.inSelectMode) ||
             (pathsMenuType == PathsMenuType.OUTER_PATHS && !outerPathsMenuUiStateFlow.value.inSelectMode)
         ) {
-            return //ignore short tap without select mode
+            return // ignore short tap without select mode
         }
 
         toggleMenuItemSelect(pathId, pathsMenuType)
@@ -643,7 +643,9 @@ class PathsMenuViewModel(
     private fun syncMenuSelectMode(pathsMenuType: PathsMenuType) {
         when (pathsMenuType) {
             PathsMenuType.MY_PATHS -> updateMyPathsMenuState(inSelectMode = selectedPathIdsInMenuList.isNotEmpty())
-            PathsMenuType.OUTER_PATHS -> updateOuterPathsMenuState(inSelectMode = selectedPathIdsInMenuList.isNotEmpty())
+            PathsMenuType.OUTER_PATHS -> updateOuterPathsMenuState(
+                inSelectMode = selectedPathIdsInMenuList.isNotEmpty()
+            )
         }
     }
 
@@ -664,13 +666,17 @@ class PathsMenuViewModel(
             checkMyPathsListNotEmptyNow()
         }
         newMapEventChannel.trySend(MapEvent.HidePath(PathsToAction.Multiple(pathIds)))
-        deletePathInfoItemChannel.trySend(DeletePathInfoItemEvent(PathsMenuType.MY_PATHS, PathsToAction.Multiple(pathIds)))
+        deletePathInfoItemChannel.trySend(
+            DeletePathInfoItemEvent(PathsMenuType.MY_PATHS, PathsToAction.Multiple(pathIds))
+        )
     }
 
     private fun deleteOuterPathFromList(tempPathId: Long) {
         outerPathsInteractor.removeCachedPath(tempPathId)
         newMapEventChannel.trySend(MapEvent.HidePath(PathsToAction.Single(tempPathId)))
-        deletePathInfoItemChannel.trySend(DeletePathInfoItemEvent(PathsMenuType.OUTER_PATHS, PathsToAction.Single(tempPathId)))
+        deletePathInfoItemChannel.trySend(
+            DeletePathInfoItemEvent(PathsMenuType.OUTER_PATHS, PathsToAction.Single(tempPathId))
+        )
 
         if (outerPathsInteractor.getCachedOuterPaths().isEmpty()) {
             updateOuterPathsMenuState(
@@ -687,7 +693,9 @@ class PathsMenuViewModel(
             outerPathsInteractor.removeCachedPath(pathId)
         }
         newMapEventChannel.trySend(MapEvent.HidePath(PathsToAction.Multiple(selectedPathIds)))
-        deletePathInfoItemChannel.trySend(DeletePathInfoItemEvent(PathsMenuType.OUTER_PATHS, PathsToAction.Multiple(selectedPathIds)))
+        deletePathInfoItemChannel.trySend(
+            DeletePathInfoItemEvent(PathsMenuType.OUTER_PATHS, PathsToAction.Multiple(selectedPathIds))
+        )
 
         if (outerPathsInteractor.getCachedOuterPaths().isEmpty()) {
             updateOuterPathsMenuState(
@@ -788,11 +796,11 @@ class PathsMenuViewModel(
                 try {
                     shareFileChannel.trySend(pathsSaverRepository.saveRatingPathList(selectedPaths))
                 } catch (exception: IOException) {
-                    //TODO show toast error
+                    // TODO show toast error
                     Log.w(TAG, exception)
                 }
             } else {
-                //TODO show toast error
+                // TODO show toast error
             }
 
             newPathInfoListItemStateFlow.tryEmit(

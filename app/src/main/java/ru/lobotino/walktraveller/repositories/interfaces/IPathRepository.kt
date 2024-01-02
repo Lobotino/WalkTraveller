@@ -49,5 +49,4 @@ interface IPathRepository {
     suspend fun updatePathLength(pathId: Long, length: Float)
 
     suspend fun updatePathMostCommonRating(pathId: Long, mostCommonRating: MostCommonRating)
-
 }

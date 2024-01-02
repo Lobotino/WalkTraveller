@@ -3,15 +3,15 @@ package ru.lobotino.walktraveller.repositories
 import android.content.Context
 import android.net.Uri
 import android.util.Log
-import java.io.IOException
-import java.io.InputStreamReader
-import java.io.Reader
-import java.lang.Exception
 import ru.lobotino.walktraveller.model.SegmentRating
 import ru.lobotino.walktraveller.model.map.MapPathSegment
 import ru.lobotino.walktraveller.model.map.MapPoint
 import ru.lobotino.walktraveller.repositories.interfaces.IPathsLoaderRepository
 import ru.lobotino.walktraveller.utils.SHARE_FILE_NEW_MAP_RATING_PATH_TAG
+import java.io.IOException
+import java.io.InputStreamReader
+import java.io.Reader
+import java.lang.Exception
 
 class PathsLoaderRepository(private val applicationContext: Context) : IPathsLoaderRepository {
 

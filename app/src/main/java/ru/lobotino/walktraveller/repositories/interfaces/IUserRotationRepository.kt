@@ -9,5 +9,4 @@ interface IUserRotationRepository {
     fun stopTrackUserRotation()
 
     fun observeUserRotation(): Flow<Float>
-
 }

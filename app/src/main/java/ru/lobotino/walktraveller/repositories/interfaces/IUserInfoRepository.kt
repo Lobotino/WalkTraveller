@@ -19,5 +19,4 @@ interface IUserInfoRepository {
     fun setWelcomeTutorialFinished(isFinished: Boolean)
 
     fun isWelcomeTutorialFinished(): Boolean
-
 }

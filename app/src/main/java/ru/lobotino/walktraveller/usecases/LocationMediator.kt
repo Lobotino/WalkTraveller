@@ -20,9 +20,10 @@ class LocationMediator(private var lastLocation: Location? = null) : ILocationMe
             realLocation?.invoke(newLocation)
         } else {
             Log.d(
-                TAG, "Fake location expected. " +
-                        "Last location: ${lastLocation?.latitude}, ${lastLocation?.longitude}. " +
-                        "New location: ${newLocation.latitude}, ${newLocation.longitude}"
+                TAG,
+                "Fake location expected. " +
+                    "Last location: ${lastLocation?.latitude}, ${lastLocation?.longitude}. " +
+                    "New location: ${newLocation.latitude}, ${newLocation.longitude}"
             )
         }
     }

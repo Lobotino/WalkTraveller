@@ -39,7 +39,6 @@ import ru.lobotino.walktraveller.usecases.interfaces.ILocationMediator
 import ru.lobotino.walktraveller.usecases.interfaces.INotificationInteractor
 import ru.lobotino.walktraveller.utils.ext.toMapPoint
 
-
 class LocationUpdatesService : Service() {
 
     companion object {
@@ -115,7 +114,7 @@ class LocationUpdatesService : Service() {
                             ).apply {
                                 description = "Location updates for saving current user path"
                                 enableLights(true)
-                                lightColor = Color.BLUE;
+                                lightColor = Color.BLUE
                             }
                         )
                     }
@@ -147,9 +146,11 @@ class LocationUpdatesService : Service() {
             }
 
             LocalBroadcastManager.getInstance(applicationContext)
-                .sendBroadcast(Intent(ACTION_BROADCAST).apply {
-                    putExtra(EXTRA_LOCATION, location)
-                })
+                .sendBroadcast(
+                    Intent(ACTION_BROADCAST).apply {
+                        putExtra(EXTRA_LOCATION, location)
+                    }
+                )
         }
     }
 

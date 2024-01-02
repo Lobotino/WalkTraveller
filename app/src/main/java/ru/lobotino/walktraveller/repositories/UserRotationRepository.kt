@@ -12,7 +12,6 @@ import ru.lobotino.walktraveller.repositories.interfaces.IUserRotationRepository
 import kotlin.math.abs
 import kotlin.math.round
 
-
 class UserRotationRepository(
     private val sensorManager: SensorManager,
     private val coroutineScope: CoroutineScope

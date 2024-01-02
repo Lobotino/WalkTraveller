@@ -16,5 +16,4 @@ interface PathPointsRelationsDao {
 
     @Insert
     suspend fun insertPathPointsRelations(pathPointRelations: List<EntityPathPointRelation>)
-
 }

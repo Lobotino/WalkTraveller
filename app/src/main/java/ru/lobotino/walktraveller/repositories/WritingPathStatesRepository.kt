@@ -1,7 +1,6 @@
 package ru.lobotino.walktraveller.repositories
 
 import android.content.SharedPreferences
-import android.util.Log
 import ru.lobotino.walktraveller.repositories.interfaces.IWritingPathStatesRepository
 
 class WritingPathStatesRepository(private val sharedPreferences: SharedPreferences) :

@@ -11,5 +11,4 @@ interface IPathRedactor {
     suspend fun updatePathLength(path: MapCommonPath): Float
 
     suspend fun updatePathMostCommonRating(path: MapRatingPath): MostCommonRating
-
 }
