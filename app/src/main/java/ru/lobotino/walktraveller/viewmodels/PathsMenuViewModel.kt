@@ -217,15 +217,18 @@ class PathsMenuViewModel(
             }
 
             ShowPathsButtonState.HIDE -> {
-                hideSelectedPaths()
+                hideSelectedPaths(PathsMenuType.MY_PATHS)
             }
 
             else -> {}
         }
     }
 
-    private fun hideSelectedPaths() {
-        updateMyPathsMenuState(showPathsButtonState = ShowPathsButtonState.DEFAULT)
+    private fun hideSelectedPaths(pathsMenuType: PathsMenuType) {
+        when (pathsMenuType) {
+            PathsMenuType.MY_PATHS -> updateMyPathsMenuState(showPathsButtonState = ShowPathsButtonState.DEFAULT)
+            PathsMenuType.OUTER_PATHS -> updateOuterPathsMenuState(showPathsButtonState = ShowPathsButtonState.DEFAULT)
+        }
 
         val pathsToHide = if (selectedPathIdsInMenuList.isEmpty()) {
             PathsToAction.All
@@ -242,7 +245,7 @@ class PathsMenuViewModel(
         newMapEventChannel.trySend(hideMapEvent)
         newPathInfoListItemStateFlow.tryEmit(
             NewPathInfoItemState(
-                PathsMenuType.MY_PATHS,
+                pathsMenuType,
                 PathInfoItemState(
                     pathsToHide,
                     PathInfoItemShowButtonState.DEFAULT
@@ -272,31 +275,27 @@ class PathsMenuViewModel(
                 }
 
                 updateOuterPathsMenuState(showPathsButtonState = ShowPathsButtonState.HIDE)
+
+                val outerPathsToShow = if (selectedPathIdsInMenuList.isEmpty()) {
+                    outerPathsInteractor.getCachedOuterPaths()
+                } else {
+                    outerPathsInteractor.getCachedOuterPaths().filter { selectedPathIdsInMenuList.contains(it.pathId) }
+                }
+
+                newMapEventChannel.trySend(MapEvent.ShowRatingPathList(outerPathsToShow))
                 newPathInfoListItemStateFlow.tryEmit(
                     NewPathInfoItemState(
                         PathsMenuType.OUTER_PATHS,
                         PathInfoItemState(
-                            PathsToAction.Multiple(selectedPathIdsInMenuList),
-                            PathInfoItemShowButtonState.LOADING
+                            PathsToAction.Multiple(outerPathsToShow.map { it.pathId }),
+                            PathInfoItemShowButtonState.HIDE
                         )
                     )
                 )
-                for (outerPath in outerPathsInteractor.getCachedOuterPaths()) {
-                    newMapEventChannel.trySend(MapEvent.ShowRatingPath(outerPath))
-                    newPathInfoListItemStateFlow.tryEmit(
-                        NewPathInfoItemState(
-                            PathsMenuType.OUTER_PATHS,
-                            PathInfoItemState(
-                                PathsToAction.Single(outerPath.pathId),
-                                PathInfoItemShowButtonState.HIDE
-                            )
-                        )
-                    )
-                }
             }
 
             ShowPathsButtonState.HIDE -> {
-                hideSelectedPaths()
+                hideSelectedPaths(PathsMenuType.OUTER_PATHS)
             }
 
             else -> {}
