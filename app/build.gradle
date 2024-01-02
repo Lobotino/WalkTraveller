@@ -48,6 +48,16 @@ android {
     kotlinOptions {
         jvmTarget = '17'
     }
+
+    lint {
+        abortOnError true
+        checkDependencies true
+        htmlReport true
+        xmlReport false
+        warningsAsErrors false
+        baseline file("$rootDir/tools/android-lint-baseline.xml")
+        disable 'GradleDependency', 'ObsoleteLayoutParam'
+    }
 }
 
 dependencies {
