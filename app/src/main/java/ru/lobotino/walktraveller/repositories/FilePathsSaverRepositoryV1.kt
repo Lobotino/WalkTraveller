@@ -6,25 +6,27 @@ import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
+import java.io.File
+import java.io.IOException
+import java.io.OutputStreamWriter
+import java.io.Writer
+import java.util.Date
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import ru.lobotino.walktraveller.model.map.MapRatingPath
 import ru.lobotino.walktraveller.repositories.interfaces.IPathsSaverRepository
 import ru.lobotino.walktraveller.utils.SHARE_FILE_EXTENSION
 import ru.lobotino.walktraveller.utils.SHARE_FILE_NEW_MAP_RATING_PATH_TAG
+import ru.lobotino.walktraveller.utils.SHARE_FILE_VERSION_1_TAG
 import ru.lobotino.walktraveller.utils.ext.toText
-import java.io.File
-import java.io.IOException
-import java.io.OutputStreamWriter
-import java.io.Writer
-import java.util.Date
 
-class FilePathsSaverRepository(private val applicationContext: Context) : IPathsSaverRepository {
+class FilePathsSaverRepositoryV1(private val applicationContext: Context) : IPathsSaverRepository {
 
     override suspend fun saveRatingPath(path: MapRatingPath): Uri = withContext(Dispatchers.IO) {
         val fileName = generateFileName(path)
         val fileUri = createFileToWrite(fileName) ?: throw IOException("Error while trying to open file to write")
         openFileToWrite(fileUri).use { file ->
+            writeVersionToFile(file)
             writePathToFile(path, file)
         }
         return@withContext fileUri
@@ -34,6 +36,7 @@ class FilePathsSaverRepository(private val applicationContext: Context) : IPaths
         val fileName = generateFileName(paths)
         val fileUri = createFileToWrite(fileName) ?: throw IOException("Error while trying to open file to write")
         openFileToWrite(fileUri).use { file ->
+            writeVersionToFile(file)
             for (path in paths) {
                 writePathToFile(path, file)
             }
@@ -76,6 +79,10 @@ class FilePathsSaverRepository(private val applicationContext: Context) : IPaths
         }
     }
 
+    private fun writeVersionToFile(file: Writer) {
+        file.write("$SHARE_FILE_VERSION_1_TAG\n")
+    }
+
     private fun generateFileName(path: MapRatingPath): String {
         return "Path_${path.pathSegments.size + 1}_points_${Date().time}"
     }
@@ -85,6 +92,6 @@ class FilePathsSaverRepository(private val applicationContext: Context) : IPaths
     }
 
     companion object {
-        private val TAG = FilePathsSaverRepository::class.java.canonicalName
+        private val TAG = FilePathsSaverRepositoryV1::class.java.canonicalName
     }
 }

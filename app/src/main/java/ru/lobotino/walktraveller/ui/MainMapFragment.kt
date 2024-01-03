@@ -72,7 +72,7 @@ import ru.lobotino.walktraveller.model.map.MapPathSegment
 import ru.lobotino.walktraveller.model.map.MapRatingPath
 import ru.lobotino.walktraveller.repositories.CachePathsRepository
 import ru.lobotino.walktraveller.repositories.DatabasePathRepository
-import ru.lobotino.walktraveller.repositories.FilePathsSaverRepository
+import ru.lobotino.walktraveller.repositories.FilePathsSaverRepositoryV1
 import ru.lobotino.walktraveller.repositories.LastCreatedPathIdRepository
 import ru.lobotino.walktraveller.repositories.LastSeenPointRepository
 import ru.lobotino.walktraveller.repositories.LocationUpdatesRepository
@@ -80,7 +80,8 @@ import ru.lobotino.walktraveller.repositories.LocationsDistanceRepository
 import ru.lobotino.walktraveller.repositories.OptimizePathsSettingsRepository
 import ru.lobotino.walktraveller.repositories.PathDistancesInMetersRepository
 import ru.lobotino.walktraveller.repositories.PathRatingRepository
-import ru.lobotino.walktraveller.repositories.PathsLoaderRepository
+import ru.lobotino.walktraveller.repositories.PathsLoaderRepositoryV1
+import ru.lobotino.walktraveller.repositories.PathsLoaderVersionHelper
 import ru.lobotino.walktraveller.repositories.UserRotationRepository
 import ru.lobotino.walktraveller.repositories.WritingPathStatesRepository
 import ru.lobotino.walktraveller.repositories.permissions.AccessibilityPermissionRepository
@@ -452,9 +453,10 @@ class MainMapFragment : Fragment() {
                         )
                     ),
                     mapPathsInteractor = mapPathsInteractor,
-                    pathsSaverRepository = FilePathsSaverRepository(requireContext().applicationContext),
+                    pathsSaverRepository = FilePathsSaverRepositoryV1(requireContext().applicationContext),
                     outerPathsInteractor = OuterPathsInteractor(
-                        PathsLoaderRepository(requireContext().applicationContext),
+                        PathsLoaderVersionHelper(requireContext().applicationContext),
+                        PathsLoaderRepositoryV1(requireContext().applicationContext),
                         pathDistancesInMetersRepository,
                         databasePathRepository
                     ),

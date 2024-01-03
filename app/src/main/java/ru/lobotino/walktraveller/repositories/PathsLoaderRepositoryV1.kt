@@ -3,28 +3,40 @@ package ru.lobotino.walktraveller.repositories
 import android.content.Context
 import android.net.Uri
 import android.util.Log
+import java.io.IOException
+import java.io.InputStreamReader
+import java.io.Reader
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import ru.lobotino.walktraveller.model.SegmentRating
 import ru.lobotino.walktraveller.model.map.MapPathSegment
 import ru.lobotino.walktraveller.model.map.MapPoint
 import ru.lobotino.walktraveller.repositories.interfaces.IPathsLoaderRepository
 import ru.lobotino.walktraveller.utils.SHARE_FILE_NEW_MAP_RATING_PATH_TAG
-import java.io.IOException
-import java.io.InputStreamReader
-import java.io.Reader
-import java.lang.Exception
+import ru.lobotino.walktraveller.utils.SHARE_FILE_VERSION_1_TAG
 
-class PathsLoaderRepository(private val applicationContext: Context) : IPathsLoaderRepository {
+class PathsLoaderRepositoryV1(private val applicationContext: Context) : IPathsLoaderRepository {
 
     override suspend fun loadAllRatingPathsFromFile(fileUri: Uri): List<List<MapPathSegment>> {
         val resultPathsList = ArrayList<MutableList<MapPathSegment>>()
-        openFileToRead(fileUri).forEachLine { line ->
-            if (line == SHARE_FILE_NEW_MAP_RATING_PATH_TAG) {
-                resultPathsList.add(ArrayList())
-            } else {
-                try {
-                    resultPathsList.last().add(getPathSegmentFromLine(line))
-                } catch (ex: Exception) {
-                    Log.w(TAG, ex)
+        withContext(Dispatchers.IO) {
+            openFileToRead(fileUri).forEachLine { line ->
+                when (line) {
+                    SHARE_FILE_VERSION_1_TAG -> {
+                        //skip
+                    }
+
+                    SHARE_FILE_NEW_MAP_RATING_PATH_TAG -> {
+                        resultPathsList.add(ArrayList())
+                    }
+
+                    else -> {
+                        try {
+                            resultPathsList.last().add(getPathSegmentFromLine(line))
+                        } catch (ex: Exception) {
+                            Log.w(TAG, ex)
+                        }
+                    }
                 }
             }
         }
@@ -51,6 +63,6 @@ class PathsLoaderRepository(private val applicationContext: Context) : IPathsLoa
     }
 
     companion object {
-        private val TAG = PathsLoaderRepository::class.java.canonicalName
+        private val TAG = PathsLoaderRepositoryV1::class.java.canonicalName
     }
 }
