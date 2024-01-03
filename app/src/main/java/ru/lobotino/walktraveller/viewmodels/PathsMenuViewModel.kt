@@ -652,6 +652,8 @@ class PathsMenuViewModel(
         }
         newMapEventChannel.trySend(MapEvent.HidePath(PathsToAction.Single(pathId)))
         deletePathInfoItemChannel.trySend(DeletePathInfoItemEvent(PathsMenuType.MY_PATHS, PathsToAction.Single(pathId)))
+        selectedPathIdsInMenuList.remove(pathId)
+        checkStillInSelectedMode(PathsMenuType.MY_PATHS)
     }
 
     fun onConfirmMyPathListDelete(pathIds: List<Long>) {
@@ -660,6 +662,8 @@ class PathsMenuViewModel(
                 pathRedactor.deletePath(pathId)
             }
             checkMyPathsListNotEmptyNow()
+            selectedPathIdsInMenuList.removeAll(pathIds)
+            checkStillInSelectedMode(PathsMenuType.MY_PATHS)
         }
         newMapEventChannel.trySend(MapEvent.HidePath(PathsToAction.Multiple(pathIds)))
         deletePathInfoItemChannel.trySend(
@@ -680,6 +684,8 @@ class PathsMenuViewModel(
                 outerPathsInfoListState = OuterPathsInfoListState.EMPTY_LIST
             )
         }
+        selectedPathIdsInMenuList.remove(tempPathId)
+        checkStillInSelectedMode(PathsMenuType.OUTER_PATHS)
     }
 
     private fun deleteSelectedOuterPathsFromList() {
@@ -699,6 +705,8 @@ class PathsMenuViewModel(
                 outerPathsInfoListState = OuterPathsInfoListState.EMPTY_LIST
             )
         }
+        selectedPathIdsInMenuList.removeAll(selectedPathIds)
+        checkStillInSelectedMode(PathsMenuType.OUTER_PATHS)
     }
 
     private suspend fun checkMyPathsListNotEmptyNow() {
@@ -709,6 +717,15 @@ class PathsMenuViewModel(
                 showPathsFilterButtonState = ShowPathsFilterButtonState.GONE,
                 inSelectMode = false
             )
+        }
+    }
+
+    private fun checkStillInSelectedMode(pathsMenuType: PathsMenuType) {
+        if (selectedPathIdsInMenuList.isEmpty()) {
+            when (pathsMenuType) {
+                PathsMenuType.MY_PATHS -> updateMyPathsMenuState(inSelectMode = false)
+                PathsMenuType.OUTER_PATHS -> updateOuterPathsMenuState(inSelectMode = false)
+            }
         }
     }
 
