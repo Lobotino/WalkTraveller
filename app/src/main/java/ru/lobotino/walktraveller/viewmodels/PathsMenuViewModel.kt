@@ -4,6 +4,7 @@ import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import java.io.IOException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
@@ -18,7 +19,6 @@ import ru.lobotino.walktraveller.model.map.MapRatingPath
 import ru.lobotino.walktraveller.repositories.interfaces.IPathsSaverRepository
 import ru.lobotino.walktraveller.ui.model.BottomMenuState
 import ru.lobotino.walktraveller.ui.model.ConfirmDialogInfo
-import ru.lobotino.walktraveller.ui.model.ConfirmDialogType
 import ru.lobotino.walktraveller.ui.model.DeletePathInfoItemEvent
 import ru.lobotino.walktraveller.ui.model.MapEvent
 import ru.lobotino.walktraveller.ui.model.MyPathsInfoListState
@@ -39,7 +39,6 @@ import ru.lobotino.walktraveller.usecases.interfaces.IMapPathsInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IOuterPathsInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IPathRedactor
 import ru.lobotino.walktraveller.usecases.interfaces.IPermissionsUseCase
-import java.io.IOException
 
 class PathsMenuViewModel(
     private val pathsSaverRepository: IPathsSaverRepository,
@@ -537,10 +536,7 @@ class PathsMenuViewModel(
 
             PathItemButtonType.Delete -> {
                 newConfirmDialogChannel.trySend(
-                    ConfirmDialogInfo(
-                        ConfirmDialogType.DELETE_PATH,
-                        pathId
-                    )
+                    ConfirmDialogInfo.DeletePath(pathId)
                 )
             }
 
@@ -819,10 +815,7 @@ class PathsMenuViewModel(
         when (pathsMenuType) {
             PathsMenuType.MY_PATHS -> {
                 newConfirmDialogChannel.trySend(
-                    ConfirmDialogInfo(
-                        ConfirmDialogType.DELETE_MULTIPLE_PATHS,
-                        selectedPathIdsInMenuList
-                    )
+                    ConfirmDialogInfo.DeleteMultiplePaths(selectedPathIdsInMenuList)
                 )
             }
 

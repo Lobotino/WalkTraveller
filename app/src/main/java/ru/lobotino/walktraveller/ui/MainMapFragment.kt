@@ -38,6 +38,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.gms.location.LocationServices
 import com.google.android.material.progressindicator.CircularProgressIndicator
+import kotlin.properties.Delegates
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -92,9 +93,6 @@ import ru.lobotino.walktraveller.services.LocationUpdatesService.Companion.EXTRA
 import ru.lobotino.walktraveller.services.VolumeKeysDetectorService
 import ru.lobotino.walktraveller.ui.model.BottomMenuState
 import ru.lobotino.walktraveller.ui.model.ConfirmDialogInfo
-import ru.lobotino.walktraveller.ui.model.ConfirmDialogType.DELETE_MULTIPLE_PATHS
-import ru.lobotino.walktraveller.ui.model.ConfirmDialogType.DELETE_PATH
-import ru.lobotino.walktraveller.ui.model.ConfirmDialogType.GEO_LOCATION_PERMISSION_REQUIRED
 import ru.lobotino.walktraveller.ui.model.MapEvent
 import ru.lobotino.walktraveller.ui.model.MapUiState
 import ru.lobotino.walktraveller.ui.model.PathsMenuButton
@@ -117,7 +115,6 @@ import ru.lobotino.walktraveller.utils.ext.toGeoPoint
 import ru.lobotino.walktraveller.utils.ext.toMapPoint
 import ru.lobotino.walktraveller.viewmodels.MapViewModel
 import ru.lobotino.walktraveller.viewmodels.PathsMenuViewModel
-import kotlin.properties.Delegates
 
 class MainMapFragment : Fragment() {
 
@@ -676,28 +673,26 @@ class MainMapFragment : Fragment() {
 
     private fun showConfirmDialog(confirmDialogInfo: ConfirmDialogInfo) {
         context?.let { context ->
-            when (confirmDialogInfo.dialogType) {
-                DELETE_PATH -> {
+            when (confirmDialogInfo) {
+                is ConfirmDialogInfo.DeletePath -> {
                     DeleteConfirmDialog(
                         context = context,
-                        onConfirm = { menuViewModel.onConfirmMyPathDelete(confirmDialogInfo.additionalInfo as Long) }
+                        onConfirm = { menuViewModel.onConfirmMyPathDelete(confirmDialogInfo.pathId) }
                     ).show()
                 }
 
-                GEO_LOCATION_PERMISSION_REQUIRED -> {
+                is ConfirmDialogInfo.DeleteMultiplePaths -> {
+                    DeleteMultiplePathsConfirmDialog(
+                        countDeletedPaths = confirmDialogInfo.pathsIds.size,
+                        context = context,
+                        onConfirm = { menuViewModel.onConfirmMyPathListDelete(confirmDialogInfo.pathsIds) }
+                    ).show()
+                }
+
+                ConfirmDialogInfo.GeoLocationPermissionRequired -> {
                     GeoLocationRequiredDialog(
                         context = context,
                         onConfirm = { mapViewModel.onLocationPermissionDialogConfirmed() }
-                    ).show()
-                }
-
-                DELETE_MULTIPLE_PATHS -> {
-                    DeleteConfirmDialog(
-                        context = context,
-                        onConfirm = {
-                            @Suppress("UNCHECKED_CAST")
-                            menuViewModel.onConfirmMyPathListDelete(confirmDialogInfo.additionalInfo as List<Long>)
-                        }
                     ).show()
                 }
             }

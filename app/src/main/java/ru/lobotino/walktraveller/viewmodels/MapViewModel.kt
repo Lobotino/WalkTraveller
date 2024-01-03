@@ -24,7 +24,6 @@ import ru.lobotino.walktraveller.repositories.interfaces.IUserRotationRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IWritingPathStatesRepository
 import ru.lobotino.walktraveller.ui.model.BottomMenuState
 import ru.lobotino.walktraveller.ui.model.ConfirmDialogInfo
-import ru.lobotino.walktraveller.ui.model.ConfirmDialogType
 import ru.lobotino.walktraveller.ui.model.FindMyLocationButtonState
 import ru.lobotino.walktraveller.ui.model.MapUiState
 import ru.lobotino.walktraveller.ui.model.PathsToAction
@@ -112,10 +111,7 @@ class MapViewModel(
                 updateCurrentMapCenterToUserLocation()
             } else {
                 newConfirmDialogChannel.trySend(
-                    ConfirmDialogInfo(
-                        ConfirmDialogType.GEO_LOCATION_PERMISSION_REQUIRED,
-                        null
-                    )
+                    ConfirmDialogInfo.GeoLocationPermissionRequired
                 )
             }
         }
