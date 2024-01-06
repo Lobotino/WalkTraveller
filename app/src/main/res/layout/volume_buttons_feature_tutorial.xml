@@ -2,133 +2,96 @@
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
     android:orientation="vertical">
 
-    <LinearLayout
-        android:id="@+id/how_it_works_button"
+    <TextView
+        android:id="@+id/tutorial_main"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        tools:ignore="UseCompoundDrawables">
+        android:text="@string/volume_buttons_feature_tutorial_1"
+        android:textColor="@color/black"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        />
+
+    <GridLayout
+        android:id="@+id/tutorial_buttons_table"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="4dp"
+        android:columnCount="2"
+        android:rowCount="4"
+        android:useDefaultMargins="true">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
-            android:text="@string/how_it_works_button_title"/>
+            android:text="@string/volume_feature_tutorial_2_times_up_perfect"
+            android:textColor="@color/black"
+            />
 
-        <ImageView
-            android:id="@+id/dropdown_list_icon"
+        <include
+            layout="@layout/rating_button_perfect"
+            android:layout_width="34dp"
+            android:layout_height="34dp"
+            android:layout_margin="4dp"
+            />
+
+        <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:contentDescription="@string/content_desc_dropdown_list_button"
-            android:src="@drawable/ic_drop_down_arrow"/>
-    </LinearLayout>
+            android:layout_gravity="center_vertical"
+            android:text="@string/volume_feature_tutorial_1_time_up_good"
+            android:textColor="@color/black"
+            />
 
-    <LinearLayout
-        android:id="@+id/how_it_works_layout"
+        <include
+            layout="@layout/rating_button_good"
+            android:layout_width="34dp"
+            android:layout_height="34dp"
+            android:layout_margin="4dp"
+            />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:text="@string/volume_feature_tutorial_1_time_down_normal"
+            android:textColor="@color/black"
+            />
+
+        <include
+            layout="@layout/rating_button_normal"
+            android:layout_width="34dp"
+            android:layout_height="34dp"
+            android:layout_margin="4dp"
+            />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:text="@string/volume_feature_tutorial_2_times_down_bad"
+            android:textColor="@color/black"
+            />
+
+        <include
+            layout="@layout/rating_button_badly"
+            android:layout_width="34dp"
+            android:layout_height="34dp"
+            android:layout_margin="4dp"
+            />
+    </GridLayout>
+
+    <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
-
-        <TextView
-            android:id="@+id/tutorial_main"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/volume_buttons_feature_tutorial_1"
-            android:textColor="@color/black"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            />
-
-        <GridLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginTop="4dp"
-            android:layout_marginBottom="4dp"
-            android:columnCount="2"
-            android:rowCount="4"
-            android:useDefaultMargins="true">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
-                android:text="@string/volume_feature_tutorial_2_times_up_perfect"
-                android:textColor="@color/black"
-                app:layout_constraintBottom_toBottomOf="@id/rating_button_perfect"
-                app:layout_constraintEnd_toStartOf="@id/rating_button_perfect"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/tutorial_main"
-                app:layout_constraintTop_toTopOf="@id/rating_button_perfect"
-                />
-
-            <include
-                android:id="@+id/rating_button_perfect"
-                layout="@layout/rating_button_perfect"
-                android:layout_width="34dp"
-                android:layout_height="34dp"
-                android:layout_margin="4dp"
-                />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
-                android:text="@string/volume_feature_tutorial_1_time_up_good"
-                android:textColor="@color/black"
-                />
-
-            <include
-                android:id="@+id/rating_button_good"
-                layout="@layout/rating_button_good"
-                android:layout_width="34dp"
-                android:layout_height="34dp"
-                android:layout_margin="4dp"
-                />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
-                android:text="@string/volume_feature_tutorial_1_time_down_normal"
-                android:textColor="@color/black"
-                />
-
-            <include
-                android:id="@+id/rating_button_normal"
-                layout="@layout/rating_button_normal"
-                android:layout_width="34dp"
-                android:layout_height="34dp"
-                android:layout_margin="4dp"
-                />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
-                android:text="@string/volume_feature_tutorial_2_times_down_bad"
-                android:textColor="@color/black"
-                />
-
-            <include
-                android:id="@+id/rating_button_badly"
-                layout="@layout/rating_button_badly"
-                android:layout_width="34dp"
-                android:layout_height="34dp"
-                android:layout_margin="4dp"
-                />
-        </GridLayout>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/volume_buttons_feature_tutorial_2"
-            android:textColor="@color/black"
-            />
-    </LinearLayout>
+        android:text="@string/volume_buttons_feature_tutorial_2"
+        android:textColor="@color/black"
+        />
 </LinearLayout>
