@@ -1,4 +1,4 @@
-package ru.lobotino.walktraveller.ui
+package ru.lobotino.walktraveller.ui.dialog
 
 import android.app.Dialog
 import android.content.Context
@@ -8,8 +8,9 @@ import android.widget.Button
 import android.widget.TextView
 import ru.lobotino.walktraveller.R
 
-class DeleteConfirmDialog(
+class DeleteMultiplePathsConfirmDialog(
     context: Context,
+    private val countDeletedPaths: Int,
     private val onCancel: (() -> Unit)? = null,
     private val onConfirm: (() -> Unit)?
 ) : Dialog(context) {
@@ -45,11 +46,14 @@ class DeleteConfirmDialog(
 
     private fun setupTitle() {
         findViewById<TextView>(R.id.delete_confirm_title).text =
-            context.getString(R.string.delete_path_confirm_title)
+            context.getString(R.string.delete_multiple_paths_confirm_title)
     }
 
     private fun setupDescription() {
         findViewById<TextView>(R.id.delete_confirm_description).text =
-            context.getString(R.string.delete_path_confirm_description)
+            String.format(
+                context.getString(R.string.delete_multiple_paths_confirm_description),
+                countDeletedPaths
+            )
     }
 }

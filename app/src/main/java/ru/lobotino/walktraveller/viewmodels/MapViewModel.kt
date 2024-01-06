@@ -462,11 +462,13 @@ class MapViewModel(
     }
 
     fun onVolumeFeaturePermissionsInfoConfirm() {
-        volumeKeysListenerPermissionsUseCase.requestPermissions(allGranted = {
-            startPathTracking()
-        }, someDenied = {
-            startPathTracking()
-            //TODO show toast error
-        })
+        volumeKeysListenerPermissionsUseCase.requestPermissions(
+            allGranted = {
+                startPathTracking()
+            }, someDenied = {
+                startPathTracking()
+                //TODO show toast error
+            }
+        )
     }
 }

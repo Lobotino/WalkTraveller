@@ -1,4 +1,4 @@
-package ru.lobotino.walktraveller.ui
+package ru.lobotino.walktraveller.ui.dialog
 
 import android.app.Dialog
 import android.content.Context
@@ -8,33 +8,24 @@ import android.widget.Button
 import android.widget.TextView
 import ru.lobotino.walktraveller.R
 
-open class ConfirmInfoDialog(
+class DeleteConfirmDialog(
     context: Context,
-    private val title: String,
-    private val description: String,
+    private val onCancel: (() -> Unit)? = null,
     private val onConfirm: (() -> Unit)?
 ) : Dialog(context) {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setupWindowSettings()
-        setContentView(R.layout.confirm_info_dialog)
+        setContentView(R.layout.delete_confirm_dialog)
+        setupCallbacks()
         setupTitle()
         setupDescription()
-        setupCallbacks()
     }
 
     private fun setupWindowSettings() {
         window?.setBackgroundDrawableResource(android.R.color.transparent)
         requestWindowFeature(Window.FEATURE_NO_TITLE)
-    }
-
-    private fun setupTitle() {
-        findViewById<TextView>(R.id.dialog_title).text = title
-    }
-
-    private fun setupDescription() {
-        findViewById<TextView>(R.id.dialog_text).text = description
     }
 
     private fun setupCallbacks() {
@@ -44,5 +35,21 @@ open class ConfirmInfoDialog(
                 dismiss()
             }
         }
+        findViewById<Button>(R.id.cancel_button).apply {
+            setOnClickListener {
+                onCancel?.invoke()
+                dismiss()
+            }
+        }
+    }
+
+    private fun setupTitle() {
+        findViewById<TextView>(R.id.delete_confirm_title).text =
+            context.getString(R.string.delete_path_confirm_title)
+    }
+
+    private fun setupDescription() {
+        findViewById<TextView>(R.id.delete_confirm_description).text =
+            context.getString(R.string.delete_path_confirm_description)
     }
 }

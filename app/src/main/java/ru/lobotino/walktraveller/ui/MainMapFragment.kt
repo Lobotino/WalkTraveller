@@ -93,6 +93,11 @@ import ru.lobotino.walktraveller.services.LocationUpdatesService
 import ru.lobotino.walktraveller.services.LocationUpdatesService.Companion.ACTION_START_LOCATION_UPDATES
 import ru.lobotino.walktraveller.services.LocationUpdatesService.Companion.EXTRA_LOCATION
 import ru.lobotino.walktraveller.services.VolumeKeysDetectorService
+import ru.lobotino.walktraveller.ui.dialog.DeleteConfirmDialog
+import ru.lobotino.walktraveller.ui.dialog.DeleteMultiplePathsConfirmDialog
+import ru.lobotino.walktraveller.ui.dialog.GeoLocationRequiredDialog
+import ru.lobotino.walktraveller.ui.dialog.VolumeButtonsFeatureSuggestDialog
+import ru.lobotino.walktraveller.ui.dialog.VolumeButtonsPermissionsInfoDialog
 import ru.lobotino.walktraveller.ui.model.BottomMenuState
 import ru.lobotino.walktraveller.ui.model.ConfirmDialogType
 import ru.lobotino.walktraveller.ui.model.MapEvent

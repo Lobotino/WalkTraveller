@@ -1,4 +1,4 @@
-package ru.lobotino.walktraveller.ui
+package ru.lobotino.walktraveller.ui.dialog
 
 import android.content.Context
 import ru.lobotino.walktraveller.R

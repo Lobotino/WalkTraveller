@@ -1,8 +1,7 @@
-package ru.lobotino.walktraveller.ui
+package ru.lobotino.walktraveller.ui.dialog
 
 import android.app.Dialog
 import android.content.Context
-import android.os.Build
 import android.os.Bundle
 import android.text.Html
 import android.text.method.LinkMovementMethod

@@ -23,6 +23,8 @@ import ru.lobotino.walktraveller.App
 import ru.lobotino.walktraveller.R
 import ru.lobotino.walktraveller.repositories.UserInfoRepository
 import ru.lobotino.walktraveller.repositories.interfaces.AppScreen
+import ru.lobotino.walktraveller.ui.dialog.PrivacyPolicyDialog
+import ru.lobotino.walktraveller.ui.dialog.TermsOfUseDialog
 import ru.lobotino.walktraveller.ui.model.WelcomeContinueButtonState
 import ru.lobotino.walktraveller.utils.ext.navigateTo
 import ru.lobotino.walktraveller.viewmodels.FirstWelcomeViewModel
