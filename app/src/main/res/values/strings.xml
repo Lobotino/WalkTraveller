@@ -72,4 +72,12 @@
     <string name="volume_buttons_feature_info_desc">To access information about volume button presses, an app needs Device Accessibility permission. The application guarantees that it will not collect any additional information other than pressing the volume buttons while recording a track.</string>
     <string name="yes_dialog_button">Yes</string>
     <string name="no_dialog_button">No</string>
+    <string name="content_desc_dropdown_list_button">Dropdown list button</string>
+    <string name="how_it_works_button_title">How it works?</string>
+    <string name="volume_buttons_feature_tutorial_1">The application was conceived as a tool for marking arbitrarily small sections of the path with certain rating colors. Doing this by going to the application every time is not very convenient.\n\nYou can use the volume buttons to set a rating:</string>
+    <string name="volume_buttons_feature_tutorial_2">Easy to remember: higher is better, lower is worse</string>
+    <string name="volume_feature_tutorial_2_times_up_perfect">2 times up - perfect</string>
+    <string name="volume_feature_tutorial_1_time_up_good">1 time up - good</string>
+    <string name="volume_feature_tutorial_1_time_down_normal">1 time down - normal</string>
+    <string name="volume_feature_tutorial_2_times_down_bad">2 times down - bad</string>
 </resources>

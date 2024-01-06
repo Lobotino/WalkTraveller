@@ -1,0 +1,26 @@
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/rating_perfect"
+    android:layout_width="34dp"
+    android:layout_height="34dp"
+    android:layout_marginStart="4dp"
+    android:layout_marginTop="4dp"
+    android:layout_marginEnd="5dp"
+    android:layout_marginBottom="4dp"
+    app:cardBackgroundColor="@color/white"
+    app:cardCornerRadius="17dp"
+    app:cardElevation="2dp">
+
+    <ImageView
+        android:id="@+id/rating_perfect_star"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_gravity="center"
+        android:clickable="true"
+        android:focusable="true"
+        android:contentDescription="@string/content_desc_rating_perfect"
+        android:src="@drawable/ic_baseline_star_24"
+        app:tint="@color/rating_perfect"/>
+
+</androidx.cardview.widget.CardView>

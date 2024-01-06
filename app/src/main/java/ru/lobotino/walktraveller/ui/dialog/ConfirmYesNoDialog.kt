@@ -17,7 +17,6 @@ open class ConfirmYesNoDialog(
 ) : Dialog(context) {
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
         setupWindowSettings()
         setContentView(R.layout.yes_no_confirm_dialog)
         setupTitle()
@@ -25,20 +24,20 @@ open class ConfirmYesNoDialog(
         setupCallbacks()
     }
 
-    private fun setupWindowSettings() {
+    protected fun setupWindowSettings() {
         window?.setBackgroundDrawableResource(android.R.color.transparent)
         requestWindowFeature(Window.FEATURE_NO_TITLE)
     }
 
-    private fun setupTitle() {
+    protected fun setupTitle() {
         findViewById<TextView>(R.id.dialog_title).text = title
     }
 
-    private fun setupDescription() {
+    protected fun setupDescription() {
         findViewById<TextView>(R.id.dialog_description).text = description
     }
 
-    private fun setupCallbacks() {
+    protected open fun setupCallbacks() {
         findViewById<Button>(R.id.yes_button).apply {
             setOnClickListener {
                 onYesClicked?.invoke()
