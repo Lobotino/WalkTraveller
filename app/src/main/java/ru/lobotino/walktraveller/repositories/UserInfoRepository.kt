@@ -11,6 +11,7 @@ class UserInfoRepository(private val sharedPreferences: SharedPreferences) : IUs
         private const val USER_NAME_PREFERENCE = "user_name"
         private const val WELCOME_TUTORIAL_STEP_PREFERENCE = "welcome_tutorial_step"
         private const val IS_WELCOME_TUTORIAL_FINISHED_PREFERENCE = "is_welcome_tutorial_finished"
+        private const val NEED_TO_SUGGEST_VOLUME_BUTTONS_FEATURE = "need_to_suggest_volume_buttons_feature"
     }
 
     override fun saveUserId(id: String) {
@@ -60,5 +61,16 @@ class UserInfoRepository(private val sharedPreferences: SharedPreferences) : IUs
                 WelcomeTutorialStep.PRIVACY_POLICY.ordinal
             )
         ]
+    }
+
+    override fun setNeedToSuggestVolumeFeature(needToSuggest: Boolean) {
+        sharedPreferences.edit().apply {
+            putBoolean(NEED_TO_SUGGEST_VOLUME_BUTTONS_FEATURE, needToSuggest)
+            apply()
+        }
+    }
+
+    override fun needToSuggestVolumeFeature(): Boolean {
+        return sharedPreferences.getBoolean(NEED_TO_SUGGEST_VOLUME_BUTTONS_FEATURE, true)
     }
 }

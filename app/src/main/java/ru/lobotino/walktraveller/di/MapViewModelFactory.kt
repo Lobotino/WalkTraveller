@@ -6,6 +6,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.savedstate.SavedStateRegistryOwner
 import ru.lobotino.walktraveller.repositories.interfaces.IPathRatingRepository
+import ru.lobotino.walktraveller.repositories.interfaces.IUserInfoRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IUserRotationRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IWritingPathStatesRepository
 import ru.lobotino.walktraveller.usecases.IUserLocationInteractor
@@ -25,6 +26,7 @@ class MapViewModelFactory(
     private val writingPathStatesRepository: IWritingPathStatesRepository,
     private val pathRatingRepository: IPathRatingRepository,
     private val userRotationRepository: IUserRotationRepository,
+    private val userInfoRepository: IUserInfoRepository,
     owner: SavedStateRegistryOwner,
     bundle: Bundle?
 ) : AbstractSavedStateViewModelFactory(owner, bundle) {
@@ -41,7 +43,8 @@ class MapViewModelFactory(
                 mapStateInteractor,
                 writingPathStatesRepository,
                 pathRatingRepository,
-                userRotationRepository
+                userRotationRepository,
+                userInfoRepository
             ) as T
 
             else -> throw IllegalArgumentException("Unknown ViewModel class")

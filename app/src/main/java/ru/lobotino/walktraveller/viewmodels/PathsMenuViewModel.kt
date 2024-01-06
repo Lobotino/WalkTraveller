@@ -18,7 +18,7 @@ import ru.lobotino.walktraveller.model.map.MapCommonPath
 import ru.lobotino.walktraveller.model.map.MapRatingPath
 import ru.lobotino.walktraveller.repositories.interfaces.IPathsSaverRepository
 import ru.lobotino.walktraveller.ui.model.BottomMenuState
-import ru.lobotino.walktraveller.ui.model.ConfirmDialogInfo
+import ru.lobotino.walktraveller.ui.model.ConfirmDialogType
 import ru.lobotino.walktraveller.ui.model.DeletePathInfoItemEvent
 import ru.lobotino.walktraveller.ui.model.MapEvent
 import ru.lobotino.walktraveller.ui.model.MyPathsInfoListState
@@ -67,12 +67,12 @@ class PathsMenuViewModel(
 
     private val shareFileChannel = Channel<Uri>()
     private val deletePathInfoItemChannel = Channel<DeletePathInfoItemEvent>()
-    private val newConfirmDialogChannel = Channel<ConfirmDialogInfo>()
+    private val newConfirmDialogChannel = Channel<ConfirmDialogType>()
     private val newMapEventChannel = Channel<MapEvent>()
 
     val observeShareFileChannel = shareFileChannel.consumeAsFlow()
     val observeDeletePathInfoItemChannel = deletePathInfoItemChannel.consumeAsFlow()
-    val observeNewConfirmDialog: Flow<ConfirmDialogInfo> = newConfirmDialogChannel.consumeAsFlow()
+    val observeNewConfirmDialog: Flow<ConfirmDialogType> = newConfirmDialogChannel.consumeAsFlow()
     val observeNewMapEvent: Flow<MapEvent> = newMapEventChannel.consumeAsFlow()
     val observeNewPathInfoListItemState: Flow<NewPathInfoItemState> = newPathInfoListItemStateFlow
     val observeMyPathsMenuUiState: Flow<MyPathsUiState> = myPathsMenuUiStateFlow
@@ -536,7 +536,7 @@ class PathsMenuViewModel(
 
             PathItemButtonType.Delete -> {
                 newConfirmDialogChannel.trySend(
-                    ConfirmDialogInfo.DeletePath(pathId)
+                    ConfirmDialogType.DeletePath(pathId)
                 )
             }
 
@@ -832,7 +832,7 @@ class PathsMenuViewModel(
         when (pathsMenuType) {
             PathsMenuType.MY_PATHS -> {
                 newConfirmDialogChannel.trySend(
-                    ConfirmDialogInfo.DeleteMultiplePaths(selectedPathIdsInMenuList)
+                    ConfirmDialogType.DeleteMultiplePaths(selectedPathIdsInMenuList)
                 )
             }
 

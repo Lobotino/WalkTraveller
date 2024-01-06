@@ -66,4 +66,10 @@
     <string name="content_desc_show_selected_paths_button">Show selected paths button</string>
     <string name="content_desc_share_path_button">Share path button</string>
     <string name="content_desc_delete_selected_paths_button">Delete selected paths button</string>
+    <string name="volume_buttons_feature_request_desc">The application supports the ability to control the rating of a route section using the phone volume buttons without taking your phone out of your pocket. Want to try?\n\n(This feature can be switched at any time in the application settings)</string>
+    <string name="volume_buttons_feature_request_title">Rating management</string>
+    <string name="volume_buttons_feature_info_title">Need confirmation</string>
+    <string name="volume_buttons_feature_info_desc">To access information about volume button presses, an app needs Device Accessibility permission. The application guarantees that it will not collect any additional information other than pressing the volume buttons while recording a track.</string>
+    <string name="yes_dialog_button">Yes</string>
+    <string name="no_dialog_button">No</string>
 </resources>

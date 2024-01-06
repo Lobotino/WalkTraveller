@@ -82,6 +82,7 @@ import ru.lobotino.walktraveller.repositories.PathDistancesInMetersRepository
 import ru.lobotino.walktraveller.repositories.PathRatingRepository
 import ru.lobotino.walktraveller.repositories.PathsLoaderRepositoryV1
 import ru.lobotino.walktraveller.repositories.PathsLoaderVersionHelper
+import ru.lobotino.walktraveller.repositories.UserInfoRepository
 import ru.lobotino.walktraveller.repositories.UserRotationRepository
 import ru.lobotino.walktraveller.repositories.WritingPathStatesRepository
 import ru.lobotino.walktraveller.repositories.permissions.AccessibilityPermissionRepository
@@ -93,7 +94,7 @@ import ru.lobotino.walktraveller.services.LocationUpdatesService.Companion.ACTIO
 import ru.lobotino.walktraveller.services.LocationUpdatesService.Companion.EXTRA_LOCATION
 import ru.lobotino.walktraveller.services.VolumeKeysDetectorService
 import ru.lobotino.walktraveller.ui.model.BottomMenuState
-import ru.lobotino.walktraveller.ui.model.ConfirmDialogInfo
+import ru.lobotino.walktraveller.ui.model.ConfirmDialogType
 import ru.lobotino.walktraveller.ui.model.MapEvent
 import ru.lobotino.walktraveller.ui.model.MapUiState
 import ru.lobotino.walktraveller.ui.model.PathsMenuButton
@@ -581,6 +582,7 @@ class MainMapFragment : Fragment() {
                             ) as SensorManager,
                             lifecycleScope
                         ),
+                        userInfoRepository = UserInfoRepository(sharedPreferences),
                         owner = this,
                         bundle = bundle
                     )
@@ -673,28 +675,43 @@ class MainMapFragment : Fragment() {
         }
     }
 
-    private fun showConfirmDialog(confirmDialogInfo: ConfirmDialogInfo) {
+    private fun showConfirmDialog(confirmDialogType: ConfirmDialogType) {
         context?.let { context ->
-            when (confirmDialogInfo) {
-                is ConfirmDialogInfo.DeletePath -> {
+            when (confirmDialogType) {
+                is ConfirmDialogType.DeletePath -> {
                     DeleteConfirmDialog(
                         context = context,
-                        onConfirm = { menuViewModel.onConfirmMyPathDelete(confirmDialogInfo.pathId) }
+                        onConfirm = { menuViewModel.onConfirmMyPathDelete(confirmDialogType.pathId) }
                     ).show()
                 }
 
-                is ConfirmDialogInfo.DeleteMultiplePaths -> {
+                is ConfirmDialogType.DeleteMultiplePaths -> {
                     DeleteMultiplePathsConfirmDialog(
-                        countDeletedPaths = confirmDialogInfo.pathsIds.size,
+                        countDeletedPaths = confirmDialogType.pathsIds.size,
                         context = context,
-                        onConfirm = { menuViewModel.onConfirmMyPathListDelete(confirmDialogInfo.pathsIds) }
+                        onConfirm = { menuViewModel.onConfirmMyPathListDelete(confirmDialogType.pathsIds) }
                     ).show()
                 }
 
-                ConfirmDialogInfo.GeoLocationPermissionRequired -> {
+                ConfirmDialogType.GeoLocationPermissionRequired -> {
                     GeoLocationRequiredDialog(
                         context = context,
                         onConfirm = { mapViewModel.onLocationPermissionDialogConfirmed() }
+                    ).show()
+                }
+
+                ConfirmDialogType.VolumeButtonsFeatureRequest -> {
+                    VolumeButtonsFeatureSuggestDialog(
+                        context = context,
+                        onYesClicked = { mapViewModel.onVolumeFeatureSuggestAccepted() },
+                        onNoClicked = { mapViewModel.onVolumeFeatureSuggestDecline() }
+                    ).show()
+                }
+
+                ConfirmDialogType.VolumeButtonsFeatureInfo -> {
+                    VolumeButtonsPermissionsInfoDialog(
+                        context = context,
+                        onConfirm = { mapViewModel.onVolumeFeaturePermissionsInfoConfirm() }
                     ).show()
                 }
             }

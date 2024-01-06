@@ -19,4 +19,8 @@ interface IUserInfoRepository {
     fun setWelcomeTutorialFinished(isFinished: Boolean)
 
     fun isWelcomeTutorialFinished(): Boolean
+
+    fun setNeedToSuggestVolumeFeature(needToSuggest: Boolean)
+
+    fun needToSuggestVolumeFeature(): Boolean
 }

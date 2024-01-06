@@ -29,4 +29,5 @@
     <color name="cancel_button_color">#e5e5e5</color>
     <color name="cancel_button_text_color">#878787</color>
     <color name="delete_button_color">@color/rating_badly</color>
+    <color name="yes_button_color">@color/primary_green</color>
 </resources>
