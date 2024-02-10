@@ -123,6 +123,7 @@ class DatabasePathRepository(
             pathSegmentsDao.insertPathSegments(
                 listOf(
                     EntityPathSegment(
+                        pathId = pathId,
                         startPointId = pathFinishPoint.id,
                         finishPointId = newPointId,
                         rating = segmentRating.ordinal,

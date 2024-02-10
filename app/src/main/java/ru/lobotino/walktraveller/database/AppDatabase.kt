@@ -20,8 +20,8 @@ import ru.lobotino.walktraveller.database.model.EntityPoint
  * Added path length value
  */
 val MIGRATION_1_2 = object : Migration(1, 2) {
-    override fun migrate(database: SupportSQLiteDatabase) {
-        database.execSQL("ALTER TABLE paths ADD COLUMN length FLOAT DEFAULT 0 NOT NULL")
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE paths ADD COLUMN length FLOAT DEFAULT 0 NOT NULL")
     }
 }
 
@@ -29,9 +29,9 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
  * Added path most common rating value
  */
 val MIGRATION_2_3 = object : Migration(2, 3) {
-    override fun migrate(database: SupportSQLiteDatabase) {
+    override fun migrate(db: SupportSQLiteDatabase) {
         // Default value 5 because it's ordinal of UNKNOWN state in MostCommonRating model
-        database.execSQL("ALTER TABLE paths ADD COLUMN most_common_rating INTEGER DEFAULT 5 NOT NULL")
+        db.execSQL("ALTER TABLE paths ADD COLUMN most_common_rating INTEGER DEFAULT 5 NOT NULL")
     }
 }
 
@@ -39,14 +39,23 @@ val MIGRATION_2_3 = object : Migration(2, 3) {
  * Added shared outer paths. Need to divide my path from outer
  */
 val MIGRATION_3_4 = object : Migration(3, 4) {
-    override fun migrate(database: SupportSQLiteDatabase) {
-        database.execSQL("ALTER TABLE paths ADD COLUMN is_outer_path INTEGER DEFAULT 0 NOT NULL")
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE paths ADD COLUMN is_outer_path INTEGER DEFAULT 0 NOT NULL")
+    }
+}
+
+/**
+ * Added path id to paths segments. Need for select optimization
+ */
+val MIGRATION_4_5 = object : Migration(4, 5) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE path_segments ADD COLUMN id_path INTEGER DEFAULT 0 NOT NULL")
     }
 }
 
 @Database(
     entities = [EntityPoint::class, EntityPath::class, EntityPathPointRelation::class, EntityPathSegment::class],
-    version = 4
+    version = 5
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun getPathSegmentRelationsDao(): PathSegmentRelationsDao
@@ -63,5 +72,6 @@ fun provideDatabase(applicationContext: Context): AppDatabase {
     ).addMigrations(MIGRATION_1_2)
         .addMigrations(MIGRATION_2_3)
         .addMigrations(MIGRATION_3_4)
+        .addMigrations(MIGRATION_4_5)
         .build()
 }

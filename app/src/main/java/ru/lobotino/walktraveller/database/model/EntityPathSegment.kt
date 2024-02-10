@@ -22,6 +22,7 @@ import androidx.room.ForeignKey
     ]
 )
 data class EntityPathSegment(
+    @ColumnInfo(name = "id_path") val pathId: Long,
     @ColumnInfo(name = "id_start_point") val startPointId: Long,
     @ColumnInfo(name = "id_finish_point") val finishPointId: Long,
     val rating: Int,
