@@ -77,8 +77,8 @@ class DatabasePathRepositoryTests {
         thirdPoint = EntityPoint(3, 3.0, 3.0)
         firstPath = EntityPath(1, 1, 0.0f, MostCommonRating.UNKNOWN.ordinal, false)
         secondPath = EntityPath(2, 2, 0.0f, MostCommonRating.UNKNOWN.ordinal, false)
-        firstPathSegment = EntityPathSegment(firstPoint.id, secondPoint.id, SegmentRating.NORMAL.ordinal, 0)
-        secondPathSegment = EntityPathSegment(secondPoint.id, thirdPoint.id, SegmentRating.NORMAL.ordinal, 0)
+        firstPathSegment = EntityPathSegment(1, firstPoint.id, secondPoint.id, SegmentRating.NORMAL.ordinal, 0)
+        secondPathSegment = EntityPathSegment(1, secondPoint.id, thirdPoint.id, SegmentRating.NORMAL.ordinal, 0)
     }
 
     @After
@@ -241,12 +241,18 @@ class DatabasePathRepositoryTests {
                 resultPathId,
                 secondPoint.toMapPoint(),
                 SegmentRating.NORMAL,
-                timestamp = 0
+                timestamp = 1
+            )
+            databasePathRepository.addNewPathPoint(
+                resultPathId,
+                thirdPoint.toMapPoint(),
+                SegmentRating.NORMAL,
+                timestamp = 2
             )
 
             val actualAllPathSegments = databasePathRepository.getAllPathSegments(resultPathId)
 
-            assertThat(actualAllPathSegments.size, equalTo(1))
+            assertThat(actualAllPathSegments.size, equalTo(2))
 
             val actualFirstPathSegment = actualAllPathSegments[0]
 
@@ -261,6 +267,20 @@ class DatabasePathRepositoryTests {
             )
 
             assertThat(actualFirstPathSegment.rating, equalTo(SegmentRating.NORMAL.ordinal))
+
+            val actualSecondPathSegment = actualAllPathSegments[1]
+
+            assertThat(
+                listOf(
+                    actualSecondPathSegment.startPointId,
+                    actualSecondPathSegment.finishPointId
+                ),
+                equalTo(
+                    listOf(secondPath.id, thirdPoint.id)
+                )
+            )
+
+            assertThat(actualSecondPathSegment.rating, equalTo(SegmentRating.NORMAL.ordinal))
         }
     }
 

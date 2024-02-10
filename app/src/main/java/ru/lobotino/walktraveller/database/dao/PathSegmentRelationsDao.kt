@@ -12,6 +12,9 @@ interface PathSegmentRelationsDao {
     @Query("SELECT * FROM path_segments")
     suspend fun getAllPathSegments(): List<EntityPathSegment>
 
+    @Query("SELECT * FROM path_segments WHERE id_path = :pathId")
+    suspend fun getAllPathsSegments(pathId: Long): List<EntityPathSegment>
+
     @Query(
         "SELECT * FROM points, path_segments WHERE path_segments.id_start_point = :pointId and points.id = path_segments.id_finish_point"
     )
@@ -22,4 +25,7 @@ interface PathSegmentRelationsDao {
 
     @Insert
     suspend fun insertPathSegments(segments: List<EntityPathSegment>)
+
+    @Query("UPDATE path_segments SET id_path = :pathId WHERE id_start_point = :startPointId AND id_finish_point = :finishPointId")
+    suspend fun updatePathSegmentPathId(startPointId: Long, finishPointId: Long, pathId: Long)
 }

@@ -41,6 +41,7 @@ class PathSegmentRelationsDatabaseTests {
         pathSegmentRelationsDao = db.getPathSegmentRelationsDao()
         pointsDao = db.getPointsDao()
         expectedSegment = EntityPathSegment(
+            pathId = 1,
             startPointId = 1,
             finishPointId = 2,
             rating = SegmentRating.NORMAL.ordinal,
