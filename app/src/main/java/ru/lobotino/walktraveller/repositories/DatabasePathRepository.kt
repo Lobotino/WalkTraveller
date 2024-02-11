@@ -31,9 +31,10 @@ class DatabasePathRepository(
 
     override suspend fun createNewPath(
         startPoint: MapPoint,
-        isOuterPath: Boolean
+        isOuterPath: Boolean,
+        timestamp: Long
     ): Long {
-        insertNewPoint(startPoint).let { insertedPointId ->
+        insertNewPoint(startPoint, timestamp).let { insertedPointId ->
             pathsDao.insertPaths(
                 listOf(
                     EntityPath(
@@ -62,7 +63,7 @@ class DatabasePathRepository(
     ): Long? {
         if (pathsSegments.isEmpty()) return null
 
-        val pathId = createNewPath(pathsSegments[0].startPoint, isOuterPath)
+        val pathId = createNewPath(pathsSegments[0].startPoint, isOuterPath, timestamp)
 
         for (segment in pathsSegments) {
             addNewPathPoint(pathId, segment.finishPoint, segment.rating, timestamp)
@@ -84,7 +85,7 @@ class DatabasePathRepository(
         segmentRating: SegmentRating,
         timestamp: Long
     ): Long {
-        insertNewPoint(point).let { insertedPointId ->
+        insertNewPoint(point, timestamp).let { insertedPointId ->
             Log.i(TAG, "addNewPathPoint $insertedPointId to pathId $pathId")
             insertNewPathPointRelation(pathId, insertedPointId)
             insertNewPathSegment(pathId, insertedPointId, segmentRating, timestamp)
@@ -92,12 +93,13 @@ class DatabasePathRepository(
         }
     }
 
-    private suspend fun insertNewPoint(mapPoint: MapPoint): Long {
+    private suspend fun insertNewPoint(mapPoint: MapPoint, timestamp: Long): Long {
         return pointsDao.insertPoints(
             listOf(
                 EntityPoint(
                     latitude = mapPoint.latitude,
-                    longitude = mapPoint.longitude
+                    longitude = mapPoint.longitude,
+                    timestamp = timestamp
                 )
             )
         )[0]

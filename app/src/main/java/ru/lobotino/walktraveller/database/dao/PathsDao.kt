@@ -16,7 +16,7 @@ interface PathsDao {
     suspend fun getPathById(pathId: Long): EntityPath?
 
     @Query(
-        "SELECT points.id, latitude, longitude FROM points, paths WHERE paths.id = :pathId and points.id = start_point_id"
+        "SELECT * FROM points, paths WHERE paths.id = :pathId and points.id = start_point_id"
     )
     suspend fun getPathStartPoint(pathId: Long): EntityPoint?
 

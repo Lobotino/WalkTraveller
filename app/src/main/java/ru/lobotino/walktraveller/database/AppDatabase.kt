@@ -53,9 +53,19 @@ val MIGRATION_4_5 = object : Migration(4, 5) {
     }
 }
 
+/**
+ * Added point timestamp column
+ */
+val MIGRATION_5_6 = object : Migration(5, 6) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE points ADD COLUMN timestamp INTEGER DEFAULT 0 NOT NULL")
+        db.execSQL("UPDATE points SET timestamp = id")
+    }
+}
+
 @Database(
     entities = [EntityPoint::class, EntityPath::class, EntityPathPointRelation::class, EntityPathSegment::class],
-    version = 5
+    version = 6
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun getPathSegmentRelationsDao(): PathSegmentRelationsDao
@@ -73,5 +83,6 @@ fun provideDatabase(applicationContext: Context): AppDatabase {
         .addMigrations(MIGRATION_2_3)
         .addMigrations(MIGRATION_3_4)
         .addMigrations(MIGRATION_4_5)
+        .addMigrations(MIGRATION_5_6)
         .build()
 }

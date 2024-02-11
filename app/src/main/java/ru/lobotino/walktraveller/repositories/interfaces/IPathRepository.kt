@@ -12,7 +12,8 @@ interface IPathRepository {
 
     suspend fun createNewPath(
         startPoint: MapPoint,
-        isOuterPath: Boolean
+        isOuterPath: Boolean,
+        timestamp: Long
     ): Long
 
     suspend fun createNewPath(
