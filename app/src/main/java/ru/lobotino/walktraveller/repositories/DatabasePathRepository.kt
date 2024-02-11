@@ -48,7 +48,7 @@ class DatabasePathRepository(
                 val insertedPathId = insertedPathsIds[0]
                 lastCreatedPathIdRepository.setLastCreatedPathId(insertedPathId)
                 insertNewPathPointRelation(insertedPathId, insertedPointId)
-                Log.i(TAG, "createNewPath pathId:$insertedPathId startPoint:$startPoint")
+                Log.i(TAG, "createNewPath pathId:$insertedPathId startPointId:$insertedPointId startPoint:$startPoint")
                 return insertedPathId
             }
         }
@@ -150,6 +150,7 @@ class DatabasePathRepository(
                 pathFinishPoint = nextPoint
             }
         }
+        Log.d(TAG, "getPathFinishPoint pathId:$pathId, result:$pathFinishPoint")
         return pathFinishPoint
     }
 
@@ -158,7 +159,7 @@ class DatabasePathRepository(
     }
 
     override suspend fun getAllPathPoints(pathId: Long): List<EntityPoint> {
-        return pathsPointsRelationsDao.getAllPathPoints(pathId)
+        return pathsPointsRelationsDao.getAllPathPoints(pathId).sortedBy { it.timestamp }
     }
 
     override suspend fun getLastPathInfo(): EntityPath? {
