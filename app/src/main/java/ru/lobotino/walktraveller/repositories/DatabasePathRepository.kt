@@ -156,13 +156,7 @@ class DatabasePathRepository(
     }
 
     override suspend fun getAllPathPoints(pathId: Long): List<EntityPoint> {
-        return ArrayList<EntityPoint>().apply {
-            var nextPoint: EntityPoint? = pathsDao.getPathStartPoint(pathId)
-            while (nextPoint != null) {
-                add(nextPoint)
-                nextPoint = pathSegmentsDao.getNextPathPoint(nextPoint.id)
-            }
-        }
+        return pathsPointsRelationsDao.getAllPathPoints(pathId)
     }
 
     override suspend fun getLastPathInfo(): EntityPath? {
