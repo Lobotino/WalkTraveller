@@ -6,15 +6,15 @@ import ru.lobotino.walktraveller.model.map.MapRatingPath
 
 interface ICachePathsRepository {
 
-    fun saveRatingPath(ratingPath: MapRatingPath)
+    fun saveRatingPath(ratingPath: MapRatingPath, approximationValue: Float = 1f)
 
-    fun saveCommonPath(commonPath: MapCommonPath)
+    fun saveCommonPath(commonPath: MapCommonPath, approximationValue: Float = 1f)
 
-    fun savePathInfo(pathInfo: MapPathInfo)
+    fun savePathInfo(pathInfo: MapPathInfo, approximationValue: Float = 1f)
 
-    fun getRatingPath(pathId: Long): MapRatingPath?
+    fun getRatingPath(pathId: Long, approximationValue: Float = 1f): MapRatingPath?
 
-    fun getCommonPath(pathId: Long): MapCommonPath?
+    fun getCommonPath(pathId: Long, approximationValue: Float = 1f): MapCommonPath?
 
     fun getMapPathInfo(pathId: Long): MapPathInfo?
 }

@@ -12,6 +12,7 @@ import ru.lobotino.walktraveller.model.SegmentRating
 import ru.lobotino.walktraveller.model.map.MapCommonPath
 import ru.lobotino.walktraveller.model.map.MapPathInfo
 import ru.lobotino.walktraveller.model.map.MapPathSegment
+import ru.lobotino.walktraveller.model.map.MapPoint
 import ru.lobotino.walktraveller.model.map.MapRatingPath
 import ru.lobotino.walktraveller.repositories.PathApproximationHelper
 import ru.lobotino.walktraveller.repositories.interfaces.ICachePathsRepository
@@ -38,37 +39,10 @@ class LocalMapPathsInteractor(
     }
 
     override suspend fun getAllSavedPathsAsCommon(): List<MapCommonPath> {
-        return coroutineScope {
-            ArrayList<MapCommonPath>().apply {
-                for (path in withContext(defaultDispatcher) { databasePathRepository.getAllPathsInfo() }) {
-                    val cachedPath = cachePathRepository.getCommonPath(path.id)
-                    if (cachedPath != null) {
-                        add(cachedPath)
-                        continue
-                    }
-
-                    val getStartPoint =
-                        async(defaultDispatcher) { databasePathRepository.getPointInfo(path.startPointId) }
-
-                    val getAllPoints =
-                        async(defaultDispatcher) { databasePathRepository.getAllPathPoints(path.id) }
-
-                    val startPoint = getStartPoint.await() ?: continue
-
-                    val pathPoints = getAllPoints.await()
-                    if (pathPoints.isEmpty()) continue
-
-                    add(
-                        MapCommonPath(
-                            path.id,
-                            startPoint.toMapPoint(),
-                            pathPoints.map { it.toMapPoint() }
-                        )
-                            .also { ratingPath ->
-                                cachePathRepository.saveCommonPath(ratingPath)
-                            }
-                    )
-                }
+        return ArrayList<MapCommonPath>().apply {
+            for (path in withContext(defaultDispatcher) { databasePathRepository.getAllPathsInfo() }) {
+                val commonPath = getSavedCommonPath(pathId = path.id, isOptimized = true) ?: continue
+                add(commonPath)
             }
         }
     }
@@ -130,7 +104,7 @@ class LocalMapPathsInteractor(
                     var cachedMapPathInfo = cachePathRepository.getMapPathInfo(path.id)
                     if (cachedMapPathInfo != null) {
                         if (cachedMapPathInfo.length == 0f) {
-                            val savedCommonPath = getSavedCommonPath(path.id)
+                            val savedCommonPath = getSavedCommonPath(path.id, false)
                             if (savedCommonPath != null) {
                                 cachedMapPathInfo = cachedMapPathInfo.copy(
                                     length = pathRedactor.updatePathLength(savedCommonPath)
@@ -161,7 +135,7 @@ class LocalMapPathsInteractor(
 
                     var pathLength = path.length
                     if (pathLength == 0f) {
-                        val savedCommonPath = getSavedCommonPath(path.id)
+                        val savedCommonPath = getSavedCommonPath(path.id, false)
                         if (savedCommonPath != null) {
                             pathLength = pathRedactor.updatePathLength(savedCommonPath)
                         }
@@ -222,28 +196,36 @@ class LocalMapPathsInteractor(
         }
     }
 
-    override suspend fun getSavedCommonPath(pathId: Long): MapCommonPath? {
+    override suspend fun getSavedCommonPath(pathId: Long, isOptimized: Boolean): MapCommonPath? {
         return coroutineScope {
-            cachePathRepository.getCommonPath(pathId)?.let { return@coroutineScope it }
+            val approximationValue = optimizePathsSettingsRepository.getOptimizePathsApproximationDistance() ?: 1f
 
-            val pathPoints = withContext(defaultDispatcher) {
+            cachePathRepository.getCommonPath(pathId, approximationValue)?.let { return@coroutineScope it }
+
+            var pathPoints = withContext(defaultDispatcher) {
                 databasePathRepository.getAllPathPoints(pathId)
                     .map { entityPoint -> entityPoint.toMapPoint() }
             }
 
-            if (pathPoints.isEmpty()) return@coroutineScope null
+            if (isOptimized) {
+                pathPoints = optimizePath(pathPoints, approximationValue)
+            }
 
-            val optimizedPathPoints = PathApproximationHelper.approximatePathPoints(
-                pathPoints,
-                optimizePathsSettingsRepository.getOptimizePathsApproximationDistance() ?: 1f
-            ) // TODO change approximation logic to mapZoom depends
+            if (pathPoints.isEmpty()) return@coroutineScope null
 
             MapCommonPath(
                 pathId,
-                optimizedPathPoints[0],
-                optimizedPathPoints
-            ).also { commonPath -> cachePathRepository.saveCommonPath(commonPath) }
+                pathPoints.first(),
+                pathPoints
+            ).also { commonPath -> cachePathRepository.saveCommonPath(commonPath, approximationValue) }
         }
+    }
+
+    private fun optimizePath(pathPoints: List<MapPoint>, approximationValue: Float): List<MapPoint> {
+        return PathApproximationHelper.approximatePathPoints(
+            pathPoints,
+            approximationValue
+        )
     }
 
     private suspend fun EntityPathSegment.toMapPathSegment(): MapPathSegment? {

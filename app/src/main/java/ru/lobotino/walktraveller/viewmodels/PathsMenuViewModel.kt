@@ -343,7 +343,7 @@ class PathsMenuViewModel(
             loadPathsJob = viewModelScope.launch {
                 val loadedPaths = ArrayList<MapCommonPath>()
                 for (pathId in selectedPathsIds) {
-                    val commonPath = mapPathsInteractor.getSavedCommonPath(pathId)
+                    val commonPath = mapPathsInteractor.getSavedCommonPath(pathId, true)
                     if (commonPath != null) {
                         loadedPaths.add(commonPath)
                     }

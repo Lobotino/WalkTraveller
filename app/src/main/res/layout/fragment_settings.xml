@@ -48,10 +48,10 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:stepSize="0.5"
-                android:valueTo="10"
-                android:valueFrom="0"
-                android:value="5"
+                android:stepSize="1"
+                android:valueTo="500"
+                android:valueFrom="300"
+                android:value="50"
                 android:layout_marginHorizontal="8dp"
                 android:layout_weight="1" />
 
