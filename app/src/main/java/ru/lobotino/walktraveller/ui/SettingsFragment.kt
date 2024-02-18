@@ -57,7 +57,11 @@ class SettingsFragment : Fragment() {
         )[SettingsViewModel::class.java].apply {
             observeSettingsUiState
                 .onEach { uiState ->
-                    optimizePathsSlider.value = uiState.optimizePathsValue
+                    optimizePathsSlider.value = if (uiState.optimizePathsValue in optimizePathsSlider.valueFrom..optimizePathsSlider.valueTo) {
+                        uiState.optimizePathsValue
+                    } else {
+                        optimizePathsSlider.valueFrom
+                    }
                 }
                 .launchIn(viewLifecycleOwner.lifecycleScope)
         }
