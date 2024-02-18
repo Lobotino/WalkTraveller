@@ -30,12 +30,11 @@ class OuterPathsInteractor(
         cachedOuterPaths.let { cachedOuterPaths ->
             for (path in cachedOuterPaths.elements()) {
                 withContext(Dispatchers.IO) {
-                    pathRepository.createNewPath(
+                    pathRepository.createOuterNewPath(
                         path.pathSegments,
                         path.pathInfo.length,
                         path.pathInfo.mostCommonRating,
-                        path.pathInfo.timestamp,
-                        true
+                        path.pathInfo.timestamp
                     )
                 }
             }

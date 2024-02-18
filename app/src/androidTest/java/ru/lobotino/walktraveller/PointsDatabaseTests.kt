@@ -5,6 +5,7 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.matcher.ViewMatchers.assertThat
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import java.io.IOException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.hamcrest.CoreMatchers.equalTo
@@ -15,7 +16,6 @@ import org.junit.runner.RunWith
 import ru.lobotino.walktraveller.database.AppDatabase
 import ru.lobotino.walktraveller.database.dao.PointsDao
 import ru.lobotino.walktraveller.database.model.EntityPoint
-import java.io.IOException
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
@@ -34,9 +34,9 @@ class PointsDatabaseTests {
             context, AppDatabase::class.java
         ).build()
         pointsDao = db.getPointsDao()
-        firstPoint = EntityPoint(1, 1.0, 1.0)
-        secondPoint = EntityPoint(2, 2.0, 2.0)
-        thirdPoint = EntityPoint(3, 3.0, 3.0)
+        firstPoint = EntityPoint(1, 1.0, 1.0, 0)
+        secondPoint = EntityPoint(2, 2.0, 2.0, 1)
+        thirdPoint = EntityPoint(3, 3.0, 3.0, 2)
     }
 
     @After

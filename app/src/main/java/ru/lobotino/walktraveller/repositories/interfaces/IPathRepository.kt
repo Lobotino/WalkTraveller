@@ -16,12 +16,11 @@ interface IPathRepository {
         timestamp: Long
     ): Long
 
-    suspend fun createNewPath(
+    suspend fun createOuterNewPath(
         pathsSegments: List<MapPathSegment>,
         pathLength: Float? = null,
         mostCommonRating: MostCommonRating? = null,
-        timestamp: Long,
-        isOuterPath: Boolean
+        timestamp: Long
     ): Long?
 
     suspend fun addNewPathPoint(

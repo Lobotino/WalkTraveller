@@ -5,6 +5,7 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.matcher.ViewMatchers.assertThat
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import java.io.IOException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.hamcrest.CoreMatchers.equalTo
@@ -20,7 +21,6 @@ import ru.lobotino.walktraveller.database.model.EntityPath
 import ru.lobotino.walktraveller.database.model.EntityPathPointRelation
 import ru.lobotino.walktraveller.database.model.EntityPoint
 import ru.lobotino.walktraveller.model.MostCommonRating
-import java.io.IOException
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
@@ -51,9 +51,9 @@ class PathPointRelationDatabaseTests {
         pathsDao = db.getPathsDao()
         firstPath = EntityPath(1, 1, 1f, MostCommonRating.UNKNOWN.ordinal, false)
         secondPath = EntityPath(2, 2, 2f, MostCommonRating.UNKNOWN.ordinal, false)
-        firstPoint = EntityPoint(1, 1.0, 1.0)
-        secondPoint = EntityPoint(2, 2.0, 2.0)
-        thirdPoint = EntityPoint(3, 3.0, 3.0)
+        firstPoint = EntityPoint(1, 1.0, 1.0, 0)
+        secondPoint = EntityPoint(2, 2.0, 2.0, 1)
+        thirdPoint = EntityPoint(3, 3.0, 3.0, 2)
         firstPathPointRelation = EntityPathPointRelation(1, 1)
         secondPathPointRelation = EntityPathPointRelation(2, 2)
     }

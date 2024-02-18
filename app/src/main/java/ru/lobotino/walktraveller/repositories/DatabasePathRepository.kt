@@ -54,19 +54,21 @@ class DatabasePathRepository(
         }
     }
 
-    override suspend fun createNewPath(
+    override suspend fun createOuterNewPath(
         pathsSegments: List<MapPathSegment>,
         pathLength: Float?,
         mostCommonRating: MostCommonRating?,
-        timestamp: Long,
-        isOuterPath: Boolean
+        timestamp: Long
     ): Long? {
         if (pathsSegments.isEmpty()) return null
 
-        val pathId = createNewPath(pathsSegments[0].startPoint, isOuterPath, timestamp)
+        var pointTimestamp: Long = timestamp
+
+        val pathId = createNewPath(pathsSegments[0].startPoint, true, pointTimestamp)
 
         for (segment in pathsSegments) {
-            addNewPathPoint(pathId, segment.finishPoint, segment.rating, timestamp)
+            pointTimestamp++
+            addNewPathPoint(pathId, segment.finishPoint, segment.rating, pointTimestamp)
         }
 
         if (pathLength != null) {
