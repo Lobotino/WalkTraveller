@@ -1,14 +1,19 @@
 package ru.lobotino.walktraveller.repositories
 
-import ru.lobotino.walktraveller.model.map.CoordinatePoint
-import ru.lobotino.walktraveller.model.map.MapPoint
-import ru.lobotino.walktraveller.utils.ext.toCoordinatePoint
+import android.util.Log
 import kotlin.math.abs
 import kotlin.math.pow
 import kotlin.math.sqrt
+import ru.lobotino.walktraveller.model.map.CoordinatePoint
+import ru.lobotino.walktraveller.model.map.MapPoint
+import ru.lobotino.walktraveller.utils.ext.toCoordinatePoint
 
 object PathApproximationHelper {
 
+    /**
+     * @param pathPoints - all path points to approximate
+     * @param approximationDistance - minimum distance between points to delete one of them
+     */
     fun approximatePathPoints(
         pathPoints: List<MapPoint>,
         approximationDistance: Float
@@ -66,12 +71,15 @@ object PathApproximationHelper {
         startPathPoint: CoordinatePoint,
         finishPathPoint: CoordinatePoint
     ): LineEquation {
-        return LineEquation(
-            finishPathPoint.y - startPathPoint.y,
-            -1 * (finishPathPoint.x - startPathPoint.x),
-            -1 * startPathPoint.x * (finishPathPoint.y - startPathPoint.y) +
-                startPathPoint.y * (finishPathPoint.x - startPathPoint.x)
-        )
+        return if (startPathPoint == finishPathPoint) {
+            LineEquation(1.0, 1.0, 1.0)
+        } else
+            LineEquation(
+                finishPathPoint.y - startPathPoint.y,
+                -1 * (finishPathPoint.x - startPathPoint.x),
+                -1 * startPathPoint.x * (finishPathPoint.y - startPathPoint.y) +
+                    startPathPoint.y * (finishPathPoint.x - startPathPoint.x)
+            )
     }
 
     private fun calculateDistanceToLine(
