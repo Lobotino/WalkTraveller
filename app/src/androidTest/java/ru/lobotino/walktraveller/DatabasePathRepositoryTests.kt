@@ -26,6 +26,7 @@ import ru.lobotino.walktraveller.database.model.EntityPathSegment
 import ru.lobotino.walktraveller.database.model.EntityPoint
 import ru.lobotino.walktraveller.model.MostCommonRating
 import ru.lobotino.walktraveller.model.SegmentRating
+import ru.lobotino.walktraveller.model.interop.PointWithRating
 import ru.lobotino.walktraveller.model.map.MapPathSegment
 import ru.lobotino.walktraveller.repositories.DatabasePathRepository
 import ru.lobotino.walktraveller.repositories.LastCreatedPathIdRepository
@@ -175,9 +176,9 @@ class DatabasePathRepositoryTests {
                 MapPathSegment(firstPoint.toMapPoint(), secondPoint.toMapPoint(), SegmentRating.values()[firstPathSegment.rating]),
                 MapPathSegment(secondPoint.toMapPoint(), thirdPoint.toMapPoint(), SegmentRating.values()[secondPathSegment.rating])
             ),
+            firstPoint.timestamp,
             1f,
-            MostCommonRating.NORMAL,
-            firstPoint.timestamp
+            MostCommonRating.NORMAL
         )
         assertNotNull(pathId)
 
@@ -363,6 +364,110 @@ class DatabasePathRepositoryTests {
 
             assertThat(databasePathRepository.getPointInfo(firstPoint.id), equalTo(firstPoint))
             assertThat(databasePathRepository.getPointInfo(secondPoint.id), equalTo(secondPoint))
+        }
+    }
+
+    @Test
+    fun addNew3PointsCheckPointsCount() = runTest {
+        databasePathRepository.createNewPath(firstPoint.toMapPoint(), false, firstPoint.timestamp).let { resultPathId ->
+            databasePathRepository.addNewPathPoints(
+                resultPathId,
+                listOf(
+                    PointWithRating(
+                        secondPoint.latitude,
+                        secondPoint.longitude,
+                        secondPoint.timestamp,
+                        SegmentRating.NORMAL
+                    ),
+                    PointWithRating(
+                        thirdPoint.latitude,
+                        thirdPoint.longitude,
+                        thirdPoint.timestamp,
+                        SegmentRating.NORMAL
+                    )
+                )
+            )
+
+            val actualPathPoints = databasePathRepository.getAllPathPoints(resultPathId)
+            assertThat(actualPathPoints.size, equalTo(3))
+        }
+    }
+
+    @Test
+    fun addNew3PointsCheckPoints() = runTest {
+        databasePathRepository.createNewPath(firstPoint.toMapPoint(), false, firstPoint.timestamp).let { resultPathId ->
+            databasePathRepository.addNewPathPoints(
+                resultPathId,
+                listOf(
+                    PointWithRating(
+                        secondPoint.latitude,
+                        secondPoint.longitude,
+                        secondPoint.timestamp,
+                        SegmentRating.NORMAL
+                    ),
+                    PointWithRating(
+                        thirdPoint.latitude,
+                        thirdPoint.longitude,
+                        thirdPoint.timestamp,
+                        SegmentRating.NORMAL
+                    )
+                )
+            )
+
+            val actualPathPoints = databasePathRepository.getAllPathPoints(resultPathId)
+            assertThat(actualPathPoints, equalTo(listOf(firstPoint, secondPoint, thirdPoint)))
+        }
+    }
+
+    @Test
+    fun addNew3PointsCheckSegmentsCount() = runTest {
+        databasePathRepository.createNewPath(firstPoint.toMapPoint(), false, firstPoint.timestamp).let { resultPathId ->
+            databasePathRepository.addNewPathPoints(
+                resultPathId,
+                listOf(
+                    PointWithRating(
+                        secondPoint.latitude,
+                        secondPoint.longitude,
+                        secondPoint.timestamp,
+                        SegmentRating.NORMAL
+                    ),
+                    PointWithRating(
+                        thirdPoint.latitude,
+                        thirdPoint.longitude,
+                        thirdPoint.timestamp,
+                        SegmentRating.NORMAL
+                    )
+                )
+            )
+
+            val actualPathSegments = databasePathRepository.getAllPathSegments(resultPathId)
+            assertThat(actualPathSegments.size, equalTo(2))
+        }
+    }
+
+    @Test
+    fun addNew3PointsCheckSegments() = runTest {
+        databasePathRepository.createNewPath(firstPoint.toMapPoint(), false, firstPoint.timestamp).let { resultPathId ->
+            databasePathRepository.addNewPathPoints(
+                resultPathId,
+                listOf(
+                    PointWithRating(
+                        secondPoint.latitude,
+                        secondPoint.longitude,
+                        secondPoint.timestamp,
+                        SegmentRating.NORMAL
+                    ),
+                    PointWithRating(
+                        thirdPoint.latitude,
+                        thirdPoint.longitude,
+                        thirdPoint.timestamp,
+                        SegmentRating.NORMAL
+                    )
+                )
+            )
+
+            val actualPathSegments = databasePathRepository.getAllPathSegments(resultPathId)
+            assertThat(actualPathSegments, equalTo(listOf(firstPathSegment, secondPathSegment)))
         }
     }
 }

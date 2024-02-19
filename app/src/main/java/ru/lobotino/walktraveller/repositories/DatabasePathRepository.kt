@@ -10,6 +10,7 @@ import ru.lobotino.walktraveller.database.model.EntityPathSegment
 import ru.lobotino.walktraveller.database.model.EntityPoint
 import ru.lobotino.walktraveller.model.MostCommonRating
 import ru.lobotino.walktraveller.model.SegmentRating
+import ru.lobotino.walktraveller.model.interop.PointWithRating
 import ru.lobotino.walktraveller.model.map.MapPathSegment
 import ru.lobotino.walktraveller.model.map.MapPoint
 import ru.lobotino.walktraveller.repositories.interfaces.ILastCreatedPathIdRepository
@@ -32,15 +33,17 @@ class DatabasePathRepository(
     override suspend fun createNewPath(
         startPoint: MapPoint,
         isOuterPath: Boolean,
-        timestamp: Long
+        timestamp: Long,
+        pathLength: Float,
+        mostCommonRating: MostCommonRating
     ): Long {
         insertNewPoint(startPoint, timestamp).let { insertedPointId ->
             pathsDao.insertPaths(
                 listOf(
                     EntityPath(
                         startPointId = insertedPointId,
-                        length = 0f,
-                        mostCommonRating = MostCommonRating.UNKNOWN.ordinal,
+                        length = pathLength,
+                        mostCommonRating = mostCommonRating.ordinal,
                         isOuterPath = isOuterPath
                     )
                 )
@@ -56,28 +59,28 @@ class DatabasePathRepository(
 
     override suspend fun createOuterNewPath(
         pathsSegments: List<MapPathSegment>,
-        pathLength: Float?,
-        mostCommonRating: MostCommonRating?,
-        timestamp: Long
+        timestamp: Long,
+        pathLength: Float,
+        mostCommonRating: MostCommonRating
     ): Long? {
         if (pathsSegments.isEmpty()) return null
 
         var pointTimestamp: Long = timestamp
 
-        val pathId = createNewPath(pathsSegments[0].startPoint, true, pointTimestamp)
+        val pathId = createNewPath(pathsSegments[0].startPoint, true, pointTimestamp, pathLength, mostCommonRating)
 
-        for (segment in pathsSegments) {
+        addNewPathPoints(pathId, pathsSegments.map { segment ->
             pointTimestamp++
-            addNewPathPoint(pathId, segment.finishPoint, segment.rating, pointTimestamp)
-        }
 
-        if (pathLength != null) {
-            updatePathLength(pathId, pathLength)
-        }
+            val finishPoint = segment.finishPoint
+            PointWithRating(
+                latitude = finishPoint.latitude,
+                longitude = finishPoint.longitude,
+                timestamp = pointTimestamp,
+                rating = segment.rating
+            )
+        })
 
-        if (mostCommonRating != null) {
-            updatePathMostCommonRating(pathId, mostCommonRating)
-        }
         return pathId
     }
 
@@ -95,6 +98,19 @@ class DatabasePathRepository(
         }
     }
 
+    override suspend fun addNewPathPoints(
+        pathId: Long,
+        points: List<PointWithRating>
+    ): List<Long> {
+        insertNewPoints(points).let { insertedPointsIds ->
+            if (points.size != insertedPointsIds.size) throw RuntimeException("Trying to add path segments, but not all points are success inserted!")
+            Log.i(TAG, "addNewPathPoints $insertedPointsIds to pathId $pathId")
+            insertNewPathPointRelations(pathId, insertedPointsIds)
+            insertNewPathSegments(pathId, insertedPointsIds.zip(points))
+            return insertedPointsIds
+        }
+    }
+
     private suspend fun insertNewPoint(mapPoint: MapPoint, timestamp: Long): Long {
         return pointsDao.insertPoints(
             listOf(
@@ -107,6 +123,18 @@ class DatabasePathRepository(
         )[0]
     }
 
+    private suspend fun insertNewPoints(points: List<PointWithRating>): List<Long> {
+        return pointsDao.insertPoints(
+            points.map {
+                EntityPoint(
+                    latitude = it.latitude,
+                    longitude = it.longitude,
+                    timestamp = it.timestamp
+                )
+            }
+        )
+    }
+
     private suspend fun insertNewPathPointRelation(pathId: Long, pointId: Long) {
         pathsPointsRelationsDao.insertPathPointsRelations(
             listOf(
@@ -116,6 +144,10 @@ class DatabasePathRepository(
                 )
             )
         )
+    }
+
+    private suspend fun insertNewPathPointRelations(pathId: Long, pointsIds: List<Long>) {
+        pathsPointsRelationsDao.insertPathPointsRelations(pointsIds.map { EntityPathPointRelation(pathId, it) })
     }
 
     private suspend fun insertNewPathSegment(
@@ -141,6 +173,32 @@ class DatabasePathRepository(
         } else {
             throw RuntimeException("Trying to add next point to path without start point!")
         }
+    }
+
+    private suspend fun insertNewPathSegments(
+        pathId: Long,
+        newPoints: List<Pair<Long, PointWithRating>>
+    ) {
+        val pathFinishPoint = getPathFinishPoint(pathId) ?: throw RuntimeException("Trying to add next point to path without start point!")
+        var lastSegmentPoint = pathFinishPoint.id
+
+        pathSegmentsDao.insertPathSegments(
+            newPoints.map { point ->
+                val pointId = point.first
+                val pointWithRating = point.second
+
+                EntityPathSegment(
+                    pathId = pathId,
+                    startPointId = lastSegmentPoint,
+                    finishPointId = pointId,
+                    rating = pointWithRating.rating.ordinal,
+                    timestamp = pointWithRating.timestamp
+                ).also {
+                    lastSegmentPoint = pointId
+                }
+            }
+        )
+        Log.i(TAG, "insertNewPathSegments with start point id: ${pathFinishPoint.id}. Segments inserted: ${newPoints.size}")
     }
 
     private suspend fun getPathFinishPoint(pathId: Long): EntityPoint? {
@@ -199,7 +257,7 @@ class DatabasePathRepository(
                         }
                     }
                 }
-                Log.d(TAG, "return getAllPathSegments with legacy method")
+                Log.d(TAG, "return getAllPathSegments with legacy method for path $path")
                 return legacyPathSegments
             } else {
                 return allPathSegmentsUnsorted.sortedBy { it.timestamp }

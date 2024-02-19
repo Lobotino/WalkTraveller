@@ -1,5 +1,6 @@
 package ru.lobotino.walktraveller.usecases
 
+import android.util.Log
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -35,6 +36,7 @@ class LocalMapPathsInteractor(
 ) : IMapPathsInteractor {
 
     companion object {
+        private val TAG = LocalMapPathsInteractor::class.java.canonicalName
         private val ratingList = SegmentRating.values()
     }
 
@@ -104,6 +106,7 @@ class LocalMapPathsInteractor(
                     var cachedMapPathInfo = cachePathRepository.getMapPathInfo(path.id)
                     if (cachedMapPathInfo != null) {
                         if (cachedMapPathInfo.length == 0f) {
+                            Log.d(TAG, "Cached path $path has length = 0, calculate it for first time")
                             val savedCommonPath = getSavedCommonPath(path.id, false)
                             if (savedCommonPath != null) {
                                 cachedMapPathInfo = cachedMapPathInfo.copy(
@@ -114,6 +117,7 @@ class LocalMapPathsInteractor(
                         }
 
                         if (cachedMapPathInfo.mostCommonRating == MostCommonRating.UNKNOWN && cachedMapPathInfo.length > 0f) {
+                            Log.d(TAG, "Cached path $path has UNKNOWN mostCommonRating, calculate it for first time")
                             val savedRatingPath = getSavedRatingPath(path.id, false)
                             if (savedRatingPath != null) {
                                 cachedMapPathInfo = cachedMapPathInfo.copy(
@@ -143,6 +147,7 @@ class LocalMapPathsInteractor(
 
                     var pathMostCommonRating = MostCommonRating.values()[path.mostCommonRating]
                     if (pathMostCommonRating == MostCommonRating.UNKNOWN && pathLength > 0f) {
+                        Log.d(TAG, "Database path $path has UNKNOWN mostCommonRating, calculate it for first time")
                         val savedRatingPath = getSavedRatingPath(path.id, false)
                         if (savedRatingPath != null) {
                             pathMostCommonRating =

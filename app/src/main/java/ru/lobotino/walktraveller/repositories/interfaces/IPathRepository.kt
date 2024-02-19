@@ -5,6 +5,7 @@ import ru.lobotino.walktraveller.database.model.EntityPathSegment
 import ru.lobotino.walktraveller.database.model.EntityPoint
 import ru.lobotino.walktraveller.model.MostCommonRating
 import ru.lobotino.walktraveller.model.SegmentRating
+import ru.lobotino.walktraveller.model.interop.PointWithRating
 import ru.lobotino.walktraveller.model.map.MapPathSegment
 import ru.lobotino.walktraveller.model.map.MapPoint
 
@@ -13,14 +14,16 @@ interface IPathRepository {
     suspend fun createNewPath(
         startPoint: MapPoint,
         isOuterPath: Boolean,
-        timestamp: Long
+        timestamp: Long,
+        pathLength: Float = 0f,
+        mostCommonRating: MostCommonRating = MostCommonRating.UNKNOWN,
     ): Long
 
     suspend fun createOuterNewPath(
         pathsSegments: List<MapPathSegment>,
-        pathLength: Float? = null,
-        mostCommonRating: MostCommonRating? = null,
-        timestamp: Long
+        timestamp: Long,
+        pathLength: Float = 0f,
+        mostCommonRating: MostCommonRating = MostCommonRating.UNKNOWN,
     ): Long?
 
     suspend fun addNewPathPoint(
@@ -29,6 +32,11 @@ interface IPathRepository {
         segmentRating: SegmentRating = SegmentRating.NORMAL,
         timestamp: Long
     ): Long
+
+    suspend fun addNewPathPoints(
+        pathId: Long,
+        points: List<PointWithRating>
+    ): List<Long>
 
     suspend fun getAllPathsInfo(): List<EntityPath>
 
