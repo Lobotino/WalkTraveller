@@ -78,7 +78,6 @@ dependencies {
     implementation "androidx.room:room-ktx:2.6.1"
     kapt "androidx.room:room-compiler:2.6.1"
 
-    implementation 'com.facebook.stetho:stetho:1.6.0'
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3"
 
     testImplementation 'junit:junit:4.13.2'
