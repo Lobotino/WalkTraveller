@@ -658,9 +658,8 @@ class PathsMenuViewModel(
 
     fun onConfirmMyPathListDelete(pathIds: List<Long>) {
         viewModelScope.launch {
-            for (pathId in pathIds) {
-                pathRedactor.deletePath(pathId)
-            }
+            pathRedactor.deletePaths(pathIds)
+
             checkMyPathsListNotEmptyNow()
             selectedPathIdsInMenuList.removeAll(pathIds)
             checkStillInSelectedMode(PathsMenuType.MY_PATHS)

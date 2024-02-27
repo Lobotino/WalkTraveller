@@ -313,6 +313,13 @@ class DatabasePathRepository(
         Log.d(TAG, "Finish delete path $pathId")
     }
 
+    override suspend fun deletePaths(pathIds: List<Long>) {
+        Log.d(TAG, "Start delete paths $pathIds")
+        pointsDao.deletePointsByPathIds(pathIds)
+        pathsDao.deletePathsByIds(pathIds)
+        Log.d(TAG, "Finish delete paths $pathIds")
+    }
+
     override suspend fun updatePathLength(pathId: Long, length: Float) {
         pathsDao.updatePathLength(pathId, length)
     }

@@ -25,6 +25,14 @@ class LocalPathRedactor(
         }
     }
 
+    override suspend fun deletePaths(pathIds: List<Long>) {
+        return coroutineScope {
+            withContext(defaultDispatcher) {
+                databasePathRepository.deletePaths(pathIds)
+            }
+        }
+    }
+
     override suspend fun updatePathLength(path: MapCommonPath): Float {
         return coroutineScope {
             val resultLength =

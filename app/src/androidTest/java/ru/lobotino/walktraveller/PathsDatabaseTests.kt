@@ -96,13 +96,43 @@ class PathsDatabaseTests {
 
     @Test
     @Throws(Exception::class)
-    fun deletePathsAndGetAll() = runTest {
+    fun deletePathsByIdAndGetAll() = runTest {
         pointsDao.insertPoints(listOf(firstPoint, secondPoint))
 
         val insertedPaths = listOf(firstPath, secondPath)
         pathsDao.insertPaths(insertedPaths)
 
         pathsDao.deletePathById(firstPath.id)
+
+        assertThat(
+            pathsDao.getAllPaths(),
+            equalTo(listOf(secondPath))
+        )
+    }
+
+    @Test
+    @Throws(Exception::class)
+    fun deleteAllPathsByIdsList() = runTest {
+        pointsDao.insertPoints(listOf(firstPoint, secondPoint))
+
+        pathsDao.insertPaths(listOf(firstPath, secondPath))
+
+        pathsDao.deletePathsByIds(listOf(firstPath.id, secondPath.id))
+
+        assertThat(
+            pathsDao.getAllPaths(),
+            equalTo(emptyList())
+        )
+    }
+
+    @Test
+    @Throws(Exception::class)
+    fun deleteOnePathByIdsList() = runTest {
+        pointsDao.insertPoints(listOf(firstPoint, secondPoint))
+
+        pathsDao.insertPaths(listOf(firstPath, secondPath))
+
+        pathsDao.deletePathsByIds(listOf(firstPath.id))
 
         assertThat(
             pathsDao.getAllPaths(),
