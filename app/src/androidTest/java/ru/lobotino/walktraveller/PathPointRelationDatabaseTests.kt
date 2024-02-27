@@ -119,7 +119,7 @@ class PathPointRelationDatabaseTests {
             listOf(
                 firstPathPointRelation,
                 EntityPathPointRelation(1, 2),
-                EntityPathPointRelation(2, 2)
+                EntityPathPointRelation(2, 3)
             )
         )
         pointsDao.deletePointById(2)
@@ -127,5 +127,23 @@ class PathPointRelationDatabaseTests {
             pathsPointsRelationsDao.getAllPathPointRelations(),
             equalTo(listOf(firstPathPointRelation))
         )
+    }
+
+    @Test
+    fun deletePointsByPathId() = runTest {
+        pathsDao.insertPaths(listOf(firstPath))
+        pointsDao.insertPoints(listOf(firstPoint, secondPoint))
+        assertThat(pointsDao.getAllPoints(), equalTo(listOf(firstPoint, secondPoint)))
+
+        pathsPointsRelationsDao.insertPathPointsRelations(
+            listOf(
+                EntityPathPointRelation(firstPath.id, firstPoint.id),
+                EntityPathPointRelation(firstPath.id, secondPoint.id)
+            )
+        )
+
+        pointsDao.deletePointsByPathId(firstPath.id)
+
+        assertThat(pointsDao.getAllPoints(), equalTo(emptyList()))
     }
 }
