@@ -307,10 +307,10 @@ class DatabasePathRepository(
     }
 
     override suspend fun deletePath(pathId: Long) {
-        pathsPointsRelationsDao.getAllPathPointsIds(pathId).forEach { pointId ->
-            pointsDao.deletePointById(pointId)
-        }
+        Log.d(TAG, "Start delete path $pathId")
+        pointsDao.deletePointsByPathId(pathId)
         pathsDao.deletePathById(pathId)
+        Log.d(TAG, "Finish delete path $pathId")
     }
 
     override suspend fun updatePathLength(pathId: Long, length: Float) {
