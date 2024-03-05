@@ -650,7 +650,7 @@ class PathsMenuViewModel(
     }
 
     fun onConfirmMyPathDelete(pathId: Long) {
-        viewModelScope.launch {
+        MainScope().launch {
             pathRedactor.deletePath(pathId)
             checkMyPathsListNotEmptyNow()
         }
