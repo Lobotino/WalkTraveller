@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import ru.lobotino.walktraveller.model.map.MapCommonPath
+import ru.lobotino.walktraveller.model.map.MapPathInfo
 import ru.lobotino.walktraveller.model.map.MapRatingPath
 import ru.lobotino.walktraveller.repositories.interfaces.IPathsSaverRepository
 import ru.lobotino.walktraveller.ui.model.BottomMenuState
@@ -445,7 +446,8 @@ class PathsMenuViewModel(
         updateMyPathsMenuState(inSelectMode = false, pathsInfoListState = MyPathsInfoListState.LOADING)
 
         downloadAllPathsInfoJob = viewModelScope.launch {
-            val allSavedPathsList = mapPathsInteractor.getAllSavedPathsInfo()
+            val allSavedPathsList = removeDeletingNowPathsFromList(mapPathsInteractor.getAllSavedPathsInfo())
+
             if (allSavedPathsList.isNotEmpty()) {
                 newPathsInfoListFlow.tryEmit(NewPathInfoListEvent(PathsMenuType.MY_PATHS, allSavedPathsList))
                 updateMyPathsMenuState(
@@ -462,6 +464,11 @@ class PathsMenuViewModel(
                 )
             }
         }
+    }
+
+    private fun removeDeletingNowPathsFromList(pathsList: List<MapPathInfo>): List<MapPathInfo> {
+        val deletingPaths = pathRedactor.getDeletingNowPathsIds()
+        return pathsList.filter { path -> !deletingPaths.contains(path.pathId) }
     }
 
     fun onPathsMenuBackButtonClicked() {
@@ -663,7 +670,6 @@ class PathsMenuViewModel(
     fun onConfirmMyPathListDelete(pathIds: List<Long>) {
         MainScope().launch {
             pathRedactor.deletePaths(pathIds)
-
             checkMyPathsListNotEmptyNow()
             selectedPathIdsInMenuList.removeAll(pathIds)
             checkStillInSelectedMode(PathsMenuType.MY_PATHS)
