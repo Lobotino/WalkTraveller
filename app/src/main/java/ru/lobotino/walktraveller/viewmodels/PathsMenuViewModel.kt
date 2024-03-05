@@ -659,25 +659,27 @@ class PathsMenuViewModel(
     fun onConfirmMyPathDelete(pathId: Long) {
         MainScope().launch {
             pathRedactor.deletePath(pathId)
-            checkMyPathsListNotEmptyNow()
+            checkSavedPathsListNotEmptyNow()
         }
         newMapEventChannel.trySend(MapEvent.HidePath(PathsToAction.Single(pathId)))
         deletePathInfoItemChannel.trySend(DeletePathInfoItemEvent(PathsMenuType.MY_PATHS, PathsToAction.Single(pathId)))
         selectedPathIdsInMenuList.remove(pathId)
         checkStillInSelectedMode(PathsMenuType.MY_PATHS)
+        viewModelScope.launch { checkSavedPathsListNotEmptyNow(listOf(pathId)) }
     }
 
     fun onConfirmMyPathListDelete(pathIds: List<Long>) {
         MainScope().launch {
             pathRedactor.deletePaths(pathIds)
-            checkMyPathsListNotEmptyNow()
-            selectedPathIdsInMenuList.removeAll(pathIds)
-            checkStillInSelectedMode(PathsMenuType.MY_PATHS)
+            checkSavedPathsListNotEmptyNow()
         }
         newMapEventChannel.trySend(MapEvent.HidePath(PathsToAction.Multiple(pathIds)))
         deletePathInfoItemChannel.trySend(
             DeletePathInfoItemEvent(PathsMenuType.MY_PATHS, PathsToAction.Multiple(pathIds))
         )
+        selectedPathIdsInMenuList.removeAll(pathIds)
+        checkStillInSelectedMode(PathsMenuType.MY_PATHS)
+        viewModelScope.launch { checkSavedPathsListNotEmptyNow(pathIds) }
     }
 
     private fun deleteOuterPathFromList(tempPathId: Long) {
@@ -718,8 +720,20 @@ class PathsMenuViewModel(
         checkStillInSelectedMode(PathsMenuType.OUTER_PATHS)
     }
 
-    private suspend fun checkMyPathsListNotEmptyNow() {
+    private suspend fun checkSavedPathsListNotEmptyNow() {
         if (mapPathsInteractor.getAllSavedPathsInfo().isEmpty()) {
+            updateMyPathsMenuState(
+                pathsInfoListState = MyPathsInfoListState.EMPTY_LIST,
+                showPathsButtonState = ShowPathsButtonState.GONE,
+                showPathsFilterButtonState = ShowPathsFilterButtonState.GONE,
+                inSelectMode = false
+            )
+        }
+    }
+
+    private suspend fun checkSavedPathsListNotEmptyNow(deletingPathsIds: List<Long>) {
+        val allMapPathsInfo = mapPathsInteractor.getAllSavedPathsInfo()
+        if (allMapPathsInfo.isEmpty() || allMapPathsInfo.map { it.pathId } == deletingPathsIds) {
             updateMyPathsMenuState(
                 pathsInfoListState = MyPathsInfoListState.EMPTY_LIST,
                 showPathsButtonState = ShowPathsButtonState.GONE,
