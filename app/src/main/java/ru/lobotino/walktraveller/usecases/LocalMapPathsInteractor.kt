@@ -55,27 +55,22 @@ class LocalMapPathsInteractor(
             mapRatingPath(
                 withContext(defaultDispatcher) { databasePathRepository.getLastPathInfo() }
             )?.also { ratingPath ->
-                tryCacheRatingPath(ratingPath)
+                val approximationValue = optimizePathsSettingsRepository.getOptimizePathsApproximationDistance() ?: 1f
+                tryCacheRatingPath(ratingPath, approximationValue)
             }
         }
     }
 
     override suspend fun getAllSavedRatingPaths(withRatingOnly: Boolean): List<MapRatingPath> {
         return coroutineScope {
-            ArrayList<MapRatingPath>().apply {
-                for (path in withContext(defaultDispatcher) { databasePathRepository.getAllPathsInfo() }) {
-                    val cachedPath = cachePathRepository.getRatingPath(path.id)
-                    if (cachedPath != null) {
-                        add(if (withRatingOnly) cachedPath.toRatingOnlyPath() else cachedPath)
-                        continue
-                    }
-
-                    mapRatingPath(path)?.let { ratingPath ->
-                        tryCacheRatingPath(ratingPath)
-                        add(if (withRatingOnly) ratingPath.toRatingOnlyPath() else ratingPath)
-                    }
+            val resultList = ArrayList<MapRatingPath>()
+            for (pathInfo in withContext(defaultDispatcher) { databasePathRepository.getAllPathsInfo() }) {
+                val ratingPath = getSavedRatingPath(pathId = pathInfo.id, withRatingOnly = withRatingOnly, isOptimized = true)
+                if (ratingPath != null) {
+                    resultList.add(ratingPath)
                 }
             }
+            return@coroutineScope resultList
         }
     }
 
@@ -115,7 +110,7 @@ class LocalMapPathsInteractor(
 
                         if (cachedMapPathInfo.mostCommonRating == MostCommonRating.UNKNOWN && cachedMapPathInfo.length > 0f) {
                             Log.d(TAG, "Cached path $path has UNKNOWN mostCommonRating, calculate it for first time")
-                            val savedRatingPath = getSavedRatingPath(path.id, false)
+                            val savedRatingPath = getSavedRatingPath(path.id, withRatingOnly = false, isOptimized = true)
                             if (savedRatingPath != null) {
                                 cachedMapPathInfo = cachedMapPathInfo.copy(
                                     mostCommonRating = pathRedactor.updatePathMostCommonRating(
@@ -145,7 +140,7 @@ class LocalMapPathsInteractor(
                     var pathMostCommonRating = MostCommonRating.values()[path.mostCommonRating]
                     if (pathMostCommonRating == MostCommonRating.UNKNOWN && pathLength > 0f) {
                         Log.d(TAG, "Database path $path has UNKNOWN mostCommonRating, calculate it for first time")
-                        val savedRatingPath = getSavedRatingPath(path.id, false)
+                        val savedRatingPath = getSavedRatingPath(path.id, withRatingOnly = false, isOptimized = false)
                         if (savedRatingPath != null) {
                             pathMostCommonRating =
                                 pathRedactor.updatePathMostCommonRating(savedRatingPath)
@@ -167,30 +162,34 @@ class LocalMapPathsInteractor(
         }
     }
 
-    override suspend fun getSavedRatingPath(pathId: Long, withRatingOnly: Boolean): MapRatingPath? {
+    override suspend fun getSavedRatingPath(pathId: Long, withRatingOnly: Boolean, isOptimized: Boolean): MapRatingPath? {
         return coroutineScope {
-            cachePathRepository.getRatingPath(pathId)
+            val approximationValue = optimizePathsSettingsRepository.getOptimizePathsApproximationDistance() ?: 1f
+
+            cachePathRepository.getRatingPath(pathId, approximationValue)
                 ?.let { cachedPath -> return@coroutineScope if (withRatingOnly) cachedPath.toRatingOnlyPath() else cachedPath }
 
-            val pathSegments = withContext(defaultDispatcher) {
+            var pathSegments = withContext(defaultDispatcher) {
                 databasePathRepository.getAllPathSegments(pathId)
+                    .map { it.toMapPathSegment() }
+            }
+
+            if (isOptimized) {
+                pathSegments = optimizeRatedPath(pathSegments, approximationValue)
             }
 
             if (pathSegments.isEmpty()) return@coroutineScope null
 
-            val resultPathSegments = ArrayList<MapPathSegment>()
-            for (segment in pathSegments) {
-                if (withRatingOnly && segment.rating != SegmentRating.NONE.ordinal || !withRatingOnly) {
-                    resultPathSegments.add(segment.toMapPathSegment())
-                }
+            if (withRatingOnly) {
+                pathSegments = pathSegments.filter { it.rating != SegmentRating.NONE }
             }
 
-            if (resultPathSegments.isNotEmpty()) {
+            if (pathSegments.isNotEmpty()) {
                 MapRatingPath(
                     pathId,
-                    resultPathSegments
+                    pathSegments
                 ).also { ratingPath ->
-                    tryCacheRatingPath(ratingPath)
+                    tryCacheRatingPath(ratingPath, approximationValue)
                 }
             } else {
                 null
@@ -210,7 +209,7 @@ class LocalMapPathsInteractor(
             }
 
             if (isOptimized) {
-                pathPoints = optimizePath(pathPoints, approximationValue)
+                pathPoints = optimizeCommonPath(pathPoints, approximationValue)
             }
 
             if (pathPoints.isEmpty()) return@coroutineScope null
@@ -223,11 +222,41 @@ class LocalMapPathsInteractor(
         }
     }
 
-    private fun optimizePath(pathPoints: List<MapPoint>, approximationValue: Float): List<MapPoint> {
+    private fun optimizeCommonPath(pathPoints: List<MapPoint>, approximationValue: Float): List<MapPoint> {
         return PathApproximationHelper.approximatePathPoints(
             pathPoints,
             approximationValue
         )
+    }
+
+    private fun optimizeRatedPath(pathSegments: List<MapPathSegment>, approximationValue: Float): List<MapPathSegment> {
+        val optimizedResultPaths = ArrayList<MapPathSegment>()
+        var currentLine = ArrayList<MapPathSegment>()
+        var lastSegmentRating: SegmentRating? = null
+        for (segment in pathSegments) {
+            if (lastSegmentRating != null && segment.rating != lastSegmentRating) {
+                val currentLinePoints = mutableListOf(
+                    currentLine[0].startPoint
+                ).apply {
+                    addAll(currentLine.map { it.finishPoint })
+                }
+                val optimizedPoints = optimizeCommonPath(currentLinePoints, approximationValue)
+                val optimizedSegments = ArrayList<MapPathSegment>()
+
+                if (optimizedPoints.size >= 2) {
+                    var lastPoint = optimizedPoints[0]
+                    for (index in 1 until optimizedPoints.size) {
+                        optimizedSegments.add(MapPathSegment(lastPoint, optimizedPoints[index], lastSegmentRating))
+                        lastPoint = optimizedPoints[index]
+                    }
+                    optimizedResultPaths.addAll(optimizedSegments)
+                }
+                currentLine = ArrayList()
+            }
+            currentLine.add(segment)
+            lastSegmentRating = segment.rating
+        }
+        return optimizedResultPaths
     }
 
     private suspend fun EntityPathSegment.toMapPathSegment(): MapPathSegment? {
@@ -253,13 +282,13 @@ class LocalMapPathsInteractor(
         }
     }
 
-    private fun tryCacheRatingPath(ratingPath: MapRatingPath) {
+    private fun tryCacheRatingPath(ratingPath: MapRatingPath, approximationValue: Float) {
         if (writingPathStatesRepository.isWritingPathNow()) {
             if (ratingPath.pathId != lastCreatedPathIdRepository.getLastCreatedPathId()) {
-                cachePathRepository.saveRatingPath(ratingPath)
+                cachePathRepository.saveRatingPath(ratingPath, approximationValue)
             }
         } else {
-            cachePathRepository.saveRatingPath(ratingPath)
+            cachePathRepository.saveRatingPath(ratingPath, approximationValue)
         }
     }
 

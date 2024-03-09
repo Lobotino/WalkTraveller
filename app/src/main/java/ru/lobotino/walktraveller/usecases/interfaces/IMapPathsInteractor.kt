@@ -16,5 +16,5 @@ interface IMapPathsInteractor {
 
     suspend fun getAllSavedPathsInfo(): List<MapPathInfo>
 
-    suspend fun getSavedRatingPath(pathId: Long, withRatingOnly: Boolean): MapRatingPath?
+    suspend fun getSavedRatingPath(pathId: Long, withRatingOnly: Boolean, isOptimized: Boolean): MapRatingPath?
 }

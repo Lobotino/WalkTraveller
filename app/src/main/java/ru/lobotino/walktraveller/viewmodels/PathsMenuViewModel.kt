@@ -145,7 +145,7 @@ class PathsMenuViewModel(
         )
 
         viewModelScope.launch {
-            val path = mapPathsInteractor.getSavedRatingPath(pathId, false)
+            val path = mapPathsInteractor.getSavedRatingPath(pathId, withRatingOnly = false, isOptimized = false)
             if (path != null) {
                 try {
                     shareFileChannel.trySend(pathsSaverRepository.saveRatingPath(path))
@@ -315,7 +315,7 @@ class PathsMenuViewModel(
             loadPathsJob = viewModelScope.launch {
                 val loadedPaths = ArrayList<MapRatingPath>()
                 for (pathId in selectedPathsIds) {
-                    val ratingPath = mapPathsInteractor.getSavedRatingPath(pathId, true)
+                    val ratingPath = mapPathsInteractor.getSavedRatingPath(pathId, withRatingOnly = true, isOptimized = true)
                     if (ratingPath != null) {
                         loadedPaths.add(ratingPath)
                     }
@@ -525,7 +525,7 @@ class PathsMenuViewModel(
                             )
                         )
                         viewModelScope.launch {
-                            val savedRatingPath = mapPathsInteractor.getSavedRatingPath(pathId, false)
+                            val savedRatingPath = mapPathsInteractor.getSavedRatingPath(pathId, withRatingOnly = false, isOptimized = true)
                             if (savedRatingPath != null) {
                                 newMapEventChannel.trySend(MapEvent.ShowRatingPath(savedRatingPath))
                                 newPathInfoListItemStateFlow.tryEmit(
@@ -822,7 +822,7 @@ class PathsMenuViewModel(
             val selectedPaths = ArrayList<MapRatingPath>()
 
             for (pathId in selectedPathIds) {
-                val path = mapPathsInteractor.getSavedRatingPath(pathId, false)
+                val path = mapPathsInteractor.getSavedRatingPath(pathId, withRatingOnly = false, isOptimized = false)
                 if (path != null) {
                     selectedPaths.add(path)
                 }
