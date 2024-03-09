@@ -23,6 +23,7 @@ import ru.lobotino.walktraveller.repositories.interfaces.IPathRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IWritingPathStatesRepository
 import ru.lobotino.walktraveller.usecases.interfaces.IMapPathsInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IPathRedactor
+import ru.lobotino.walktraveller.utils.ext.toMapPathSegment
 import ru.lobotino.walktraveller.utils.ext.toMapPoint
 
 class LocalMapPathsInteractor(
@@ -80,22 +81,18 @@ class LocalMapPathsInteractor(
 
     private suspend fun mapRatingPath(path: EntityPath?): MapRatingPath? {
         return coroutineScope {
-            if (path != null) {
-                MapRatingPath(
-                    path.id,
-                    ArrayList<MapPathSegment>().apply {
-                        for (entityPathSegment in withContext(defaultDispatcher) {
-                            databasePathRepository.getAllPathSegments(
-                                path.id
-                            )
-                        }) {
-                            add(entityPathSegment.toMapPathSegment() ?: continue)
-                        }
+            if (path == null) return@coroutineScope null
+            return@coroutineScope MapRatingPath(
+                path.id,
+                ArrayList<MapPathSegment>().apply {
+                    val pathSegments = withContext(defaultDispatcher) {
+                        databasePathRepository.getAllPathSegments(path.id)
                     }
-                )
-            } else {
-                null
-            }
+                    for (entityPathSegment in pathSegments) {
+                        add(entityPathSegment.toMapPathSegment())
+                    }
+                }
+            )
         }
     }
 
@@ -182,9 +179,9 @@ class LocalMapPathsInteractor(
             if (pathSegments.isEmpty()) return@coroutineScope null
 
             val resultPathSegments = ArrayList<MapPathSegment>()
-            for (path in pathSegments) {
-                if (withRatingOnly && path.rating != SegmentRating.NONE.ordinal || !withRatingOnly) {
-                    resultPathSegments.add(path.toMapPathSegment() ?: continue)
+            for (segment in pathSegments) {
+                if (withRatingOnly && segment.rating != SegmentRating.NONE.ordinal || !withRatingOnly) {
+                    resultPathSegments.add(segment.toMapPathSegment())
                 }
             }
 

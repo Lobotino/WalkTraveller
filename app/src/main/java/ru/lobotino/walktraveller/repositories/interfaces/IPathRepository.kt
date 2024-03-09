@@ -1,5 +1,6 @@
 package ru.lobotino.walktraveller.repositories.interfaces
 
+import ru.lobotino.walktraveller.database.model.EntityMapPathSegment
 import ru.lobotino.walktraveller.database.model.EntityPath
 import ru.lobotino.walktraveller.database.model.EntityPathSegment
 import ru.lobotino.walktraveller.database.model.EntityPoint
@@ -42,13 +43,11 @@ interface IPathRepository {
 
     suspend fun getAllPathPoints(pathId: Long): List<EntityPoint>
 
-    suspend fun getAllPathSegments(pathId: Long): List<EntityPathSegment>
+    suspend fun getAllPathSegments(pathId: Long): List<EntityMapPathSegment>
 
     suspend fun getPathStartSegment(pathId: Long): EntityPathSegment?
 
     suspend fun getLastPathInfo(): EntityPath?
-
-    suspend fun getLastPathSegments(): List<EntityPathSegment>
 
     suspend fun getPointInfo(pointId: Long): EntityPoint?
 

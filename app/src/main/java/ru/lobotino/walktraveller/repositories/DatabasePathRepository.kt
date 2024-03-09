@@ -1,9 +1,8 @@
 package ru.lobotino.walktraveller.repositories
 
 import android.util.Log
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import ru.lobotino.walktraveller.database.AppDatabase
+import ru.lobotino.walktraveller.database.model.EntityMapPathSegment
 import ru.lobotino.walktraveller.database.model.EntityPath
 import ru.lobotino.walktraveller.database.model.EntityPathPointRelation
 import ru.lobotino.walktraveller.database.model.EntityPathSegment
@@ -227,69 +226,12 @@ class DatabasePathRepository(
         return if (pathId != null) pathsDao.getPathById(pathId) else null
     }
 
-    override suspend fun getLastPathSegments(): List<EntityPathSegment> {
-        return ArrayList<EntityPathSegment>().apply {
-            val pathId = lastCreatedPathIdRepository.getLastCreatedPathId()
-            if (pathId != null) {
-                addAll(getAllPathSegments(pathId))
-            }
-        }
-    }
-
     override suspend fun getPointInfo(pointId: Long): EntityPoint? {
         return pointsDao.getPointById(pointId)
     }
 
-    override suspend fun getAllPathSegments(
-        pathId: Long
-    ): List<EntityPathSegment> {
-        val path = pathsDao.getPathById(pathId)
-        return if (path == null) {
-            emptyList()
-        } else {
-            val allPathSegmentsUnsorted = pathSegmentsDao.getAllPathsSegments(pathId)
-            if (allPathSegmentsUnsorted.isEmpty()) {
-                val legacyPathSegments = getAllPathSegmentsLegacy(path.startPointId)
-                coroutineScope {
-                    launch {
-                        for (segment in legacyPathSegments) {
-                            pathSegmentsDao.updatePathSegmentPathId(segment.startPointId, segment.finishPointId, pathId)
-                        }
-                    }
-                }
-                Log.d(TAG, "return getAllPathSegments with legacy method for path $path")
-                return legacyPathSegments
-            } else {
-                return allPathSegmentsUnsorted.sortedBy { it.timestamp }
-            }
-        }
-    }
-
-    /**
-     * Legacy because first db version has not pathId and were very unoptimized
-     * Called just once - when pathId did not set yet (only on db update)
-     */
-    private suspend fun getAllPathSegmentsLegacy(startPointId: Long): List<EntityPathSegment> {
-        return ArrayList<EntityPathSegment>().apply {
-            var currentPoint = pointsDao.getPointById(startPointId)
-            if (currentPoint != null) {
-                var nextPoint = pathSegmentsDao.getNextPathPoint(currentPoint.id)
-                while (nextPoint != null) {
-                    val nextPathSegment =
-                        pathSegmentsDao.getPathSegmentByPoints(currentPoint!!.id, nextPoint.id)
-                    if (nextPathSegment != null) {
-                        add(nextPathSegment)
-                    } else {
-                        Log.w(
-                            TAG,
-                            "Path segment with points ids: ${currentPoint.id}, ${nextPoint.id} is null!"
-                        )
-                    }
-                    currentPoint = nextPoint
-                    nextPoint = pathSegmentsDao.getNextPathPoint(nextPoint.id)
-                }
-            }
-        }
+    override suspend fun getAllPathSegments(pathId: Long): List<EntityMapPathSegment> {
+        return pathSegmentsDao.getAllMapPathsSegments(pathId)
     }
 
     override suspend fun getPathStartSegment(pathId: Long): EntityPathSegment? {

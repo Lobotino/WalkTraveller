@@ -118,11 +118,10 @@ class PathPointRelationDatabaseTests {
         pathsPointsRelationsDao.insertPathPointsRelations(
             listOf(
                 firstPathPointRelation,
-                EntityPathPointRelation(1, 2),
-                EntityPathPointRelation(2, 3)
+                secondPathPointRelation
             )
         )
-        pointsDao.deletePointById(2)
+        pointsDao.deletePointById(secondPoint.id)
         assertThat(
             pathsPointsRelationsDao.getAllPathPointRelations(),
             equalTo(listOf(firstPathPointRelation))

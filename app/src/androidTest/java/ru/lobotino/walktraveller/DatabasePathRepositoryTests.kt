@@ -20,9 +20,9 @@ import ru.lobotino.walktraveller.database.dao.PathPointsRelationsDao
 import ru.lobotino.walktraveller.database.dao.PathSegmentRelationsDao
 import ru.lobotino.walktraveller.database.dao.PathsDao
 import ru.lobotino.walktraveller.database.dao.PointsDao
+import ru.lobotino.walktraveller.database.model.EntityMapPathSegment
 import ru.lobotino.walktraveller.database.model.EntityPath
 import ru.lobotino.walktraveller.database.model.EntityPathPointRelation
-import ru.lobotino.walktraveller.database.model.EntityPathSegment
 import ru.lobotino.walktraveller.database.model.EntityPoint
 import ru.lobotino.walktraveller.model.MostCommonRating
 import ru.lobotino.walktraveller.model.SegmentRating
@@ -52,8 +52,8 @@ class DatabasePathRepositoryTests {
     private lateinit var firstPath: EntityPath
     private lateinit var secondPath: EntityPath
 
-    private lateinit var firstPathSegment: EntityPathSegment
-    private lateinit var secondPathSegment: EntityPathSegment
+    private lateinit var firstPathSegment: EntityMapPathSegment
+    private lateinit var secondPathSegment: EntityMapPathSegment
 
     @Before
     fun prepare() {
@@ -78,8 +78,18 @@ class DatabasePathRepositoryTests {
         thirdPoint = EntityPoint(3, 3.0, 3.0, 2)
         firstPath = EntityPath(1, 1, 0.0f, MostCommonRating.UNKNOWN.ordinal, false)
         secondPath = EntityPath(2, 2, 0.0f, MostCommonRating.UNKNOWN.ordinal, false)
-        firstPathSegment = EntityPathSegment(1, firstPoint.id, secondPoint.id, SegmentRating.NORMAL.ordinal, secondPoint.timestamp)
-        secondPathSegment = EntityPathSegment(1, secondPoint.id, thirdPoint.id, SegmentRating.NORMAL.ordinal, thirdPoint.timestamp)
+        firstPathSegment = EntityMapPathSegment(
+            startPoint = firstPoint,
+            finishPoint = secondPoint,
+            rating = SegmentRating.NORMAL.ordinal,
+            timestamp = secondPoint.timestamp
+        )
+        secondPathSegment = EntityMapPathSegment(
+            startPoint = secondPoint,
+            finishPoint = thirdPoint,
+            rating = SegmentRating.NORMAL.ordinal,
+            timestamp = thirdPoint.timestamp
+        )
     }
 
     @After
@@ -165,7 +175,7 @@ class DatabasePathRepositoryTests {
         assertThat(pointsDao.getAllPoints(), equalTo(emptyList()))
         assertThat(pathsDao.getAllPaths(), equalTo(emptyList()))
         assertThat(pathPointsRelationsDao.getAllPathPointRelations(), equalTo(emptyList()))
-        assertThat(pathSegmentRelationsDao.getAllPathSegments(), equalTo(emptyList()))
+        assertThat(pathSegmentRelationsDao.getAllMapPathSegments(), equalTo(emptyList()))
     }
 
     @Test
@@ -213,7 +223,7 @@ class DatabasePathRepositoryTests {
             )
 
             assertThat(
-                pathSegmentRelationsDao.getAllPathSegments(),
+                pathSegmentRelationsDao.getAllMapPathSegments(),
                 equalTo(listOf(firstPathSegment, secondPathSegment))
             )
 
@@ -222,7 +232,7 @@ class DatabasePathRepositoryTests {
         assertThat(pointsDao.getAllPoints(), equalTo(emptyList()))
         assertThat(pathsDao.getAllPaths(), equalTo(emptyList()))
         assertThat(pathPointsRelationsDao.getAllPathPointRelations(), equalTo(emptyList()))
-        assertThat(pathSegmentRelationsDao.getAllPathSegments(), equalTo(emptyList()))
+        assertThat(pathSegmentRelationsDao.getAllMapPathSegments(), equalTo(emptyList()))
     }
 
     @Test
@@ -258,11 +268,11 @@ class DatabasePathRepositoryTests {
 
             assertThat(
                 listOf(
-                    actualFirstPathSegment.startPointId,
-                    actualFirstPathSegment.finishPointId
+                    actualFirstPathSegment.startPoint,
+                    actualFirstPathSegment.finishPoint
                 ),
                 equalTo(
-                    listOf(firstPoint.id, secondPoint.id)
+                    listOf(firstPoint, secondPoint)
                 )
             )
 
@@ -272,11 +282,11 @@ class DatabasePathRepositoryTests {
 
             assertThat(
                 listOf(
-                    actualSecondPathSegment.startPointId,
-                    actualSecondPathSegment.finishPointId
+                    actualSecondPathSegment.startPoint,
+                    actualSecondPathSegment.finishPoint
                 ),
                 equalTo(
-                    listOf(secondPath.id, thirdPoint.id)
+                    listOf(secondPoint, thirdPoint)
                 )
             )
 
@@ -318,37 +328,6 @@ class DatabasePathRepositoryTests {
     fun getLastPathInfo() = runTest {
         databasePathRepository.createNewPath(firstPoint.toMapPoint(), false, firstPoint.timestamp)
         assertThat(databasePathRepository.getLastPathInfo(), equalTo(firstPath))
-    }
-
-    @Test
-    @Throws(Exception::class)
-    fun getLastPathSegments() = runTest {
-        databasePathRepository.createNewPath(firstPoint.toMapPoint(), false, firstPoint.timestamp).let { resultPathId ->
-            databasePathRepository.addNewPathPoint(
-                resultPathId,
-                secondPoint.toMapPoint(),
-                SegmentRating.NORMAL,
-                timestamp = secondPoint.timestamp
-            )
-
-            val actualLastPathSegments = databasePathRepository.getLastPathSegments()
-
-            assertThat(actualLastPathSegments.size, equalTo(1))
-
-            val actualFirstPathSegment = actualLastPathSegments[0]
-
-            assertThat(
-                listOf(
-                    actualFirstPathSegment.startPointId,
-                    actualFirstPathSegment.finishPointId
-                ),
-                equalTo(
-                    listOf(firstPoint.id, secondPoint.id)
-                )
-            )
-
-            assertThat(actualFirstPathSegment.rating, equalTo(SegmentRating.NORMAL.ordinal))
-        }
     }
 
     @Test
