@@ -49,9 +49,9 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:stepSize="1"
-                android:valueTo="300"
-                android:valueFrom="10"
-                android:value="50"
+                android:valueTo="20"
+                android:valueFrom="2"
+                android:value="2"
                 android:layout_marginHorizontal="8dp"
                 android:layout_weight="1" />
 
