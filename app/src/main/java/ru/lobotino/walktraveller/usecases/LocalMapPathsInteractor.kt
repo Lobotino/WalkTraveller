@@ -51,12 +51,7 @@ class LocalMapPathsInteractor(
 
     override suspend fun getLastSavedRatingPath(): MapRatingPath? {
         val pathId = lastCreatedPathIdRepository.getLastCreatedPathId() ?: return null
-        return MapRatingPath(
-            pathId,
-            withContext(defaultDispatcher) {
-                databasePathRepository.getAllPathSegments(pathId)
-            }.map { it.toMapPathSegment() }
-        )
+        return getSavedRatingPath(pathId = pathId, withRatingOnly = false, isOptimized = false)
     }
 
     override suspend fun getAllSavedRatingPaths(withRatingOnly: Boolean): List<MapRatingPath> {

@@ -596,8 +596,8 @@ class MainMapFragment : Fragment() {
                         showPermissionsDeniedError()
                     }.launchIn(lifecycleScope)
 
-                    observeNewPathSegment.onEach { pathSegment ->
-                        paintNewCurrentPathSegment(pathSegment)
+                    observeNewCurrentPathSegments.onEach { pathSegments ->
+                        paintNewCurrentPathSegments(pathSegments)
                     }.launchIn(lifecycleScope)
 
                     observeNewCommonPath.onEach { pathList ->
@@ -958,21 +958,32 @@ class MainMapFragment : Fragment() {
         }
     }
 
-    private fun paintNewCurrentPathSegment(pathSegment: MapPathSegment) {
-        if (currentPathPolyline == null) {
-            currentPathPolyline = createRatingSegmentPolyline(pathSegment)
-            lastCurrentPathRating = pathSegment.rating
-            mapView.overlays.add(currentPathPolyline)
-            currentPathPolylines.add(currentPathPolyline!!)
-        } else {
-            if (pathSegment.rating == lastCurrentPathRating) {
-                currentPathPolyline!!.addPoint(pathSegment.finishPoint.toGeoPoint())
+    private fun paintNewCurrentPathSegments(pathSegments: List<MapPathSegment>) {
+        val polylinesToAdd = ArrayList<Polyline>()
+        var currentPathPolyline = currentPathPolyline
+        var lastCurrentPathRating = lastCurrentPathRating
+        for (segment in pathSegments) {
+            if (currentPathPolyline == null) {
+                currentPathPolyline = createRatingSegmentPolyline(segment)
+                lastCurrentPathRating = segment.rating
+                polylinesToAdd.add(currentPathPolyline)
             } else {
-                currentPathPolyline = createRatingSegmentPolyline(pathSegment)
-                lastCurrentPathRating = pathSegment.rating
-                mapView.overlays.add(currentPathPolyline)
-                currentPathPolylines.add(currentPathPolyline!!)
+                if (segment.rating == lastCurrentPathRating) {
+                    currentPathPolyline.addPoint(segment.finishPoint.toGeoPoint())
+                } else {
+                    currentPathPolyline = createRatingSegmentPolyline(segment)
+                    lastCurrentPathRating = segment.rating
+                    polylinesToAdd.add(currentPathPolyline)
+                }
             }
+        }
+
+        this.currentPathPolyline = currentPathPolyline
+        this.lastCurrentPathRating = lastCurrentPathRating
+
+        if (polylinesToAdd.isNotEmpty()) {
+            mapView.overlays.addAll(polylinesToAdd)
+            currentPathPolylines.addAll(polylinesToAdd)
         }
 
         refreshMapNow()

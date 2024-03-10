@@ -66,8 +66,8 @@ class MapViewModel(
         MutableSharedFlow<List<String>>(1, 0, BufferOverflow.DROP_OLDEST)
     private val hidePathFlow =
         MutableSharedFlow<PathsToAction>(1, 0, BufferOverflow.DROP_OLDEST)
-    private val newPathSegmentFlow =
-        MutableSharedFlow<MapPathSegment>(1, 0, BufferOverflow.DROP_OLDEST)
+    private val newCurrentPathSegmentsFlow =
+        MutableSharedFlow<List<MapPathSegment>>(1, 0, BufferOverflow.DROP_OLDEST)
     private val newCommonPathFlow =
         MutableSharedFlow<List<MapCommonPath>>(1, 0, BufferOverflow.DROP_OLDEST)
     private val newRatingPathFlow =
@@ -80,7 +80,7 @@ class MapViewModel(
     private val newConfirmDialogChannel = Channel<ConfirmDialogType>()
 
     val observePermissionsDeniedResult: Flow<List<String>> = permissionsDeniedSharedFlow
-    val observeNewPathSegment: Flow<MapPathSegment> = newPathSegmentFlow
+    val observeNewCurrentPathSegments: Flow<List<MapPathSegment>> = newCurrentPathSegmentsFlow
     val observeNewCommonPath: Flow<List<MapCommonPath>> = newCommonPathFlow
     val observeNewRatingPath: Flow<List<MapRatingPath>> = newRatingPathFlow
     val observeMapUiState: Flow<MapUiState> = mapUiStateFlow
@@ -249,8 +249,7 @@ class MapViewModel(
                 updateCurrentSavedPath = viewModelScope.launch {
                     mapPathsInteractor.getLastSavedRatingPath()?.let { lastSavedPath ->
                         if (lastSavedPath.pathSegments.isNotEmpty()) {
-                            clearMap()
-                            redrawAllPathSegments(lastSavedPath.pathSegments)
+                            redrawAllPathSegments(lastSavedPath)
                             newCurrentUserLocationFlow.tryEmit(lastSavedPath.pathSegments.last().finishPoint)
                         }
                         updatingYetUnpaintedPaths = false
@@ -263,19 +262,19 @@ class MapViewModel(
     }
 
     private fun drawNewSegmentToPoint(newPoint: MapPoint, segmentRating: SegmentRating) {
+        val lastPaintedPoint = lastPaintedPoint
         if (lastPaintedPoint != null) {
-            newPathSegmentFlow.tryEmit(
-                MapPathSegment(lastPaintedPoint!!, newPoint, segmentRating)
+            newCurrentPathSegmentsFlow.tryEmit(
+                listOf(MapPathSegment(lastPaintedPoint, newPoint, segmentRating))
             )
         }
-        lastPaintedPoint = newPoint
+        this.lastPaintedPoint = newPoint
     }
 
-    private fun redrawAllPathSegments(allPathSegment: List<MapPathSegment>) {
-        lastPaintedPoint = allPathSegment.last().finishPoint
-        for (segment in allPathSegment) {
-            newPathSegmentFlow.tryEmit(segment)
-        }
+    private fun redrawAllPathSegments(path: MapRatingPath) {
+        clearMap()
+        lastPaintedPoint = path.pathSegments.last().finishPoint
+        newCurrentPathSegmentsFlow.tryEmit(path.pathSegments)
     }
 
     fun showRatingPathOnMap(ratingPath: MapRatingPath) {
