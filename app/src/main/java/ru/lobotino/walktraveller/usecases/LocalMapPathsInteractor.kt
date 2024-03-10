@@ -256,6 +256,9 @@ class LocalMapPathsInteractor(
             currentLine.add(segment)
             lastSegmentRating = segment.rating
         }
+        if (currentLine.isNotEmpty()) {
+            optimizedResultPaths.addAll(currentLine)
+        }
         return optimizedResultPaths
     }
 
