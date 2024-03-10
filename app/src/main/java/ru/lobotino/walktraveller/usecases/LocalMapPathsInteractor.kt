@@ -6,7 +6,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
-import ru.lobotino.walktraveller.database.model.EntityPath
 import ru.lobotino.walktraveller.database.model.EntityPathSegment
 import ru.lobotino.walktraveller.model.MostCommonRating
 import ru.lobotino.walktraveller.model.SegmentRating
@@ -51,14 +50,13 @@ class LocalMapPathsInteractor(
     }
 
     override suspend fun getLastSavedRatingPath(): MapRatingPath? {
-        return coroutineScope {
-            mapRatingPath(
-                withContext(defaultDispatcher) { databasePathRepository.getLastPathInfo() }
-            )?.also { ratingPath ->
-                val approximationValue = optimizePathsSettingsRepository.getOptimizePathsApproximationDistance() ?: 1f
-                tryCacheRatingPath(ratingPath, approximationValue)
-            }
-        }
+        val pathId = lastCreatedPathIdRepository.getLastCreatedPathId() ?: return null
+        return MapRatingPath(
+            pathId,
+            withContext(defaultDispatcher) {
+                databasePathRepository.getAllPathSegments(pathId)
+            }.map { it.toMapPathSegment() }
+        )
     }
 
     override suspend fun getAllSavedRatingPaths(withRatingOnly: Boolean): List<MapRatingPath> {
@@ -71,23 +69,6 @@ class LocalMapPathsInteractor(
                 }
             }
             return@coroutineScope resultList
-        }
-    }
-
-    private suspend fun mapRatingPath(path: EntityPath?): MapRatingPath? {
-        return coroutineScope {
-            if (path == null) return@coroutineScope null
-            return@coroutineScope MapRatingPath(
-                path.id,
-                ArrayList<MapPathSegment>().apply {
-                    val pathSegments = withContext(defaultDispatcher) {
-                        databasePathRepository.getAllPathSegments(path.id)
-                    }
-                    for (entityPathSegment in pathSegments) {
-                        add(entityPathSegment.toMapPathSegment())
-                    }
-                }
-            )
         }
     }
 

@@ -248,7 +248,6 @@ class MapViewModel(
                 updateCurrentSavedPath?.cancel()
                 updateCurrentSavedPath = viewModelScope.launch {
                     mapPathsInteractor.getLastSavedRatingPath()?.let { lastSavedPath ->
-
                         if (lastSavedPath.pathSegments.isNotEmpty()) {
                             clearMap()
                             redrawAllPathSegments(lastSavedPath.pathSegments)
