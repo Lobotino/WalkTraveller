@@ -876,6 +876,8 @@ class MainMapFragment : Fragment() {
     }
 
     private fun clearMap() {
+        currentPathPolyline = null
+        currentPathPolylines.clear()
         mapView.overlays.clear()
         showingPathsPolylines.clear()
         addUserLocationTracker()
