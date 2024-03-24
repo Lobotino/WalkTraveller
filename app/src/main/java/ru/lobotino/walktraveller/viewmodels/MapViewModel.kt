@@ -93,7 +93,7 @@ class MapViewModel(
 
     private var isInitialized = false
     private var updatingYetUnpaintedPaths = false
-    private var updateCurrentSavedPath: Job? = null
+    private var updateCurrentSavedPathJob: Job? = null
     private var backgroundCachingRatingPathsJob: Job? = null
     private var backgroundCachingCommonPathsJob: Job? = null
     private var backgroundCachingPathsInfoJob: Job? = null
@@ -245,13 +245,15 @@ class MapViewModel(
                     writingPathNowState.tryEmit(true)
                 }
 
-                updateCurrentSavedPath?.cancel()
-                updateCurrentSavedPath = viewModelScope.launch {
-                    mapPathsInteractor.getLastSavedRatingPath()?.let { lastSavedPath ->
-                        if (lastSavedPath.pathSegments.isNotEmpty()) {
-                            redrawAllPathSegments(lastSavedPath)
-                            newCurrentUserLocationFlow.tryEmit(lastSavedPath.pathSegments.last().finishPoint)
-                        }
+                updateCurrentSavedPathJob?.cancel()
+                updateCurrentSavedPathJob = viewModelScope.launch {
+                    val lastSavedPath = mapPathsInteractor.getLastSavedRatingPath()
+                    if (lastSavedPath != null && lastSavedPath.pathSegments.isNotEmpty()) {
+                        redrawAllPathSegments(lastSavedPath)
+                        newCurrentUserLocationFlow.tryEmit(lastSavedPath.pathSegments.last().finishPoint)
+                    }
+                }.also {
+                    it.invokeOnCompletion {
                         updatingYetUnpaintedPaths = false
                     }
                 }
