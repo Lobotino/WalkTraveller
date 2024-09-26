@@ -6,13 +6,13 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import ru.lobotino.walktraveller.model.map.MapPoint
-import ru.lobotino.walktraveller.repositories.interfaces.IPathRatingRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IPathRepository
 import ru.lobotino.walktraveller.usecases.interfaces.ICurrentPathInteractor
+import ru.lobotino.walktraveller.usecases.interfaces.IPathRatingUseCase
 
 class CurrentPathInteractor(
     private val databasePathRepository: IPathRepository,
-    private val pathRatingRepository: IPathRatingRepository,
+    private val pathRatingUseCase: IPathRatingUseCase,
     private val defaultDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ICurrentPathInteractor {
 
@@ -25,7 +25,7 @@ class CurrentPathInteractor(
                 databasePathRepository.addNewPathPoint(
                     currentPathId!!,
                     point,
-                    pathRatingRepository.getCurrentRating(),
+                    pathRatingUseCase.getCurrentRating(),
                     timestamp
                 )
             }

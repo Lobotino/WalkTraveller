@@ -19,7 +19,6 @@ import ru.lobotino.walktraveller.model.map.MapCommonPath
 import ru.lobotino.walktraveller.model.map.MapPathSegment
 import ru.lobotino.walktraveller.model.map.MapPoint
 import ru.lobotino.walktraveller.model.map.MapRatingPath
-import ru.lobotino.walktraveller.repositories.interfaces.IPathRatingRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IUserInfoRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IUserRotationRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IWritingPathStatesRepository
@@ -31,6 +30,7 @@ import ru.lobotino.walktraveller.ui.model.PathsToAction
 import ru.lobotino.walktraveller.usecases.IUserLocationInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IMapPathsInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IMapStateInteractor
+import ru.lobotino.walktraveller.usecases.interfaces.IPathRatingUseCase
 import ru.lobotino.walktraveller.usecases.interfaces.IPermissionsUseCase
 import ru.lobotino.walktraveller.usecases.permissions.GeoPermissionsUseCase
 import ru.lobotino.walktraveller.utils.ext.toMapPoint
@@ -43,7 +43,7 @@ class MapViewModel(
     private val mapPathsInteractor: IMapPathsInteractor,
     private val mapStateInteractor: IMapStateInteractor,
     private val writingPathStatesRepository: IWritingPathStatesRepository,
-    private val pathRatingRepository: IPathRatingRepository,
+    private val pathRatingUseCase: IPathRatingUseCase,
     private val userRotationRepository: IUserRotationRepository,
     private val userInfoRepository: IUserInfoRepository
 ) : ViewModel() {
@@ -156,7 +156,7 @@ class MapViewModel(
                 }
             }
         }
-        pathRatingRepository.getCurrentRating().let { currentRating ->
+        pathRatingUseCase.getCurrentRating().let { currentRating ->
             if (currentRating != mapUiStateFlow.value.newRating) {
                 mapUiStateFlow.update { mapUiState -> mapUiState.copy(newRating = currentRating) }
             }
@@ -188,14 +188,14 @@ class MapViewModel(
         if (writingPathStatesRepository.isWritingPathNow() && !updatingYetUnpaintedPaths) {
             drawNewSegmentToPoint(
                 MapPoint(location.latitude, location.longitude),
-                pathRatingRepository.getCurrentRating()
+                pathRatingUseCase.getCurrentRating()
             )
         }
     }
 
     fun onNewRatingReceive() {
         mapUiStateFlow.update { uiState ->
-            uiState.copy(newRating = pathRatingRepository.getCurrentRating())
+            uiState.copy(newRating = pathRatingUseCase.getCurrentRating())
         }
     }
 
@@ -214,7 +214,7 @@ class MapViewModel(
         mapUiStateFlow.update { uiState ->
             uiState.copy(
                 isPathFinished = false,
-                newRating = pathRatingRepository.getCurrentRating()
+                newRating = pathRatingUseCase.getCurrentRating()
             )
         }
     }
@@ -231,7 +231,7 @@ class MapViewModel(
     }
 
     fun onRatingButtonClicked(ratingGiven: SegmentRating) {
-        pathRatingRepository.setCurrentRating(ratingGiven)
+        pathRatingUseCase.setCurrentRating(ratingGiven)
         mapUiStateFlow.update { uiState ->
             uiState.copy(newRating = ratingGiven)
         }

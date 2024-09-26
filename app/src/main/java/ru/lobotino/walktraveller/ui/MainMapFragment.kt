@@ -84,6 +84,7 @@ import ru.lobotino.walktraveller.repositories.PathsLoaderRepositoryV1
 import ru.lobotino.walktraveller.repositories.PathsLoaderVersionHelper
 import ru.lobotino.walktraveller.repositories.UserInfoRepository
 import ru.lobotino.walktraveller.repositories.UserRotationRepository
+import ru.lobotino.walktraveller.repositories.VibrationRepository
 import ru.lobotino.walktraveller.repositories.WritingPathStatesRepository
 import ru.lobotino.walktraveller.repositories.permissions.AccessibilityPermissionRepository
 import ru.lobotino.walktraveller.repositories.permissions.ExternalStoragePermissionsRepository
@@ -112,6 +113,7 @@ import ru.lobotino.walktraveller.usecases.LocalMapPathsInteractor
 import ru.lobotino.walktraveller.usecases.LocalPathRedactor
 import ru.lobotino.walktraveller.usecases.MapStateInteractor
 import ru.lobotino.walktraveller.usecases.OuterPathsInteractor
+import ru.lobotino.walktraveller.usecases.PathRatingUseCase
 import ru.lobotino.walktraveller.usecases.UserLocationInteractor
 import ru.lobotino.walktraveller.usecases.permissions.ExternalStoragePermissionsUseCase
 import ru.lobotino.walktraveller.usecases.permissions.GeoPermissionsUseCase
@@ -580,7 +582,10 @@ class MainMapFragment : Fragment() {
                             )
                         ),
                         writingPathStatesRepository = writingPathStatesRepository,
-                        pathRatingRepository = PathRatingRepository(sharedPreferences),
+                        pathRatingUseCase = PathRatingUseCase(
+                            PathRatingRepository(sharedPreferences),
+                            VibrationRepository(requireContext().applicationContext)
+                        ),
                         userRotationRepository = UserRotationRepository(
                             requireActivity().getSystemService(
                                 SENSOR_SERVICE

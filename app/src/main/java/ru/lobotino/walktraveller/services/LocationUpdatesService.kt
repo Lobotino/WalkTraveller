@@ -28,11 +28,13 @@ import ru.lobotino.walktraveller.repositories.LastCreatedPathIdRepository
 import ru.lobotino.walktraveller.repositories.LocationUpdatesRepository
 import ru.lobotino.walktraveller.repositories.PathRatingRepository
 import ru.lobotino.walktraveller.repositories.PathWritingNowNotificationRepository
+import ru.lobotino.walktraveller.repositories.VibrationRepository
 import ru.lobotino.walktraveller.repositories.WritingPathStatesRepository
 import ru.lobotino.walktraveller.repositories.interfaces.ILocationUpdatesRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IWritingPathStatesRepository
 import ru.lobotino.walktraveller.usecases.CurrentPathInteractor
 import ru.lobotino.walktraveller.usecases.LocationMediator
+import ru.lobotino.walktraveller.usecases.PathRatingUseCase
 import ru.lobotino.walktraveller.usecases.PathWritingNowNotificationInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.ICurrentPathInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.ILocationMediator
@@ -86,7 +88,10 @@ class LocationUpdatesService : Service() {
                 provideDatabase(applicationContext),
                 LastCreatedPathIdRepository(sharedPreferences)
             ),
-            PathRatingRepository(sharedPreferences)
+            PathRatingUseCase(
+                PathRatingRepository(sharedPreferences),
+                VibrationRepository(applicationContext)
+            )
         )
     }
 

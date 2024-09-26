@@ -13,6 +13,9 @@ import kotlinx.coroutines.*
 import ru.lobotino.walktraveller.App
 import ru.lobotino.walktraveller.model.SegmentRating
 import ru.lobotino.walktraveller.repositories.PathRatingRepository
+import ru.lobotino.walktraveller.repositories.VibrationRepository
+import ru.lobotino.walktraveller.usecases.PathRatingUseCase
+import ru.lobotino.walktraveller.usecases.interfaces.IPathRatingUseCase
 
 class VolumeKeysDetectorService : AccessibilityService() {
 
@@ -26,15 +29,18 @@ class VolumeKeysDetectorService : AccessibilityService() {
     private var downRatingJob: Job? = null
     private var upRatingJob: Job? = null
 
-    private var pathRatingRepository: PathRatingRepository? = null
+    private var pathRatingUseCase: IPathRatingUseCase? = null
 
     override fun onCreate() {
         super.onCreate()
-        pathRatingRepository = PathRatingRepository(
-            getSharedPreferences(
-                App.SHARED_PREFS_TAG,
-                AppCompatActivity.MODE_PRIVATE
-            )
+        pathRatingUseCase = PathRatingUseCase(
+            PathRatingRepository(
+                getSharedPreferences(
+                    App.SHARED_PREFS_TAG,
+                    AppCompatActivity.MODE_PRIVATE
+                )
+            ),
+            VibrationRepository(applicationContext)
         )
     }
 
@@ -49,13 +55,13 @@ class VolumeKeysDetectorService : AccessibilityService() {
                     upRatingJob?.cancel()
                     if (downRatingJob?.isActive == true) {
                         downRatingJob?.cancel()
-                        pathRatingRepository?.setCurrentRating(SegmentRating.BADLY)
+                        pathRatingUseCase?.setCurrentRating(SegmentRating.BADLY)
                         broadcastRatingChanged()
                         Log.d(TAG, "Set current rating to BADLY")
                     } else {
                         downRatingJob = CoroutineScope(Dispatchers.Default).launch {
                             delay(BEFORE_CHANGE_RATING_DELAY)
-                            pathRatingRepository?.setCurrentRating(SegmentRating.NORMAL)
+                            pathRatingUseCase?.setCurrentRating(SegmentRating.NORMAL)
                             downRatingJob = null
                             broadcastRatingChanged()
                             Log.d(TAG, "Set current rating to NORMAL")
@@ -66,13 +72,13 @@ class VolumeKeysDetectorService : AccessibilityService() {
                     downRatingJob?.cancel()
                     if (upRatingJob?.isActive == true) {
                         upRatingJob?.cancel()
-                        pathRatingRepository?.setCurrentRating(SegmentRating.PERFECT)
+                        pathRatingUseCase?.setCurrentRating(SegmentRating.PERFECT)
                         broadcastRatingChanged()
                         Log.d(TAG, "Set current rating to PERFECT")
                     } else {
                         upRatingJob = CoroutineScope(Dispatchers.Default).launch {
                             delay(BEFORE_CHANGE_RATING_DELAY)
-                            pathRatingRepository?.setCurrentRating(SegmentRating.GOOD)
+                            pathRatingUseCase?.setCurrentRating(SegmentRating.GOOD)
                             upRatingJob = null
                             broadcastRatingChanged()
                             Log.d(TAG, "Set current rating to GOOD")
