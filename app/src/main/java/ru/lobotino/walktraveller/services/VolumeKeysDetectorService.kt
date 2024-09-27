@@ -63,6 +63,7 @@ class VolumeKeysDetectorService : AccessibilityService() {
                         pathRatingUseCase?.setCurrentRating(SegmentRating.BADLY)
                         broadcastRatingChanged()
                         Log.d(TAG, "Set current rating to BADLY")
+                        return true
                     } else {
                         downRatingJob = CoroutineScope(Dispatchers.Default).launch {
                             delay(BEFORE_CHANGE_RATING_DELAY)
@@ -71,6 +72,7 @@ class VolumeKeysDetectorService : AccessibilityService() {
                             broadcastRatingChanged()
                             Log.d(TAG, "Set current rating to NORMAL")
                         }
+                        return true
                     }
                 }
 
@@ -81,6 +83,7 @@ class VolumeKeysDetectorService : AccessibilityService() {
                         pathRatingUseCase?.setCurrentRating(SegmentRating.PERFECT)
                         broadcastRatingChanged()
                         Log.d(TAG, "Set current rating to PERFECT")
+                        return true
                     } else {
                         upRatingJob = CoroutineScope(Dispatchers.Default).launch {
                             delay(BEFORE_CHANGE_RATING_DELAY)
@@ -89,11 +92,12 @@ class VolumeKeysDetectorService : AccessibilityService() {
                             broadcastRatingChanged()
                             Log.d(TAG, "Set current rating to GOOD")
                         }
+                        return true
                     }
                 }
             }
         }
-        return true
+        return false
     }
 
     private fun broadcastRatingChanged() {
