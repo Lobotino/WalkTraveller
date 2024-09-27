@@ -14,6 +14,8 @@ import ru.lobotino.walktraveller.App
 import ru.lobotino.walktraveller.model.SegmentRating
 import ru.lobotino.walktraveller.repositories.PathRatingRepository
 import ru.lobotino.walktraveller.repositories.VibrationRepository
+import ru.lobotino.walktraveller.repositories.WritingPathStatesRepository
+import ru.lobotino.walktraveller.repositories.interfaces.IWritingPathStatesRepository
 import ru.lobotino.walktraveller.usecases.PathRatingUseCase
 import ru.lobotino.walktraveller.usecases.interfaces.IPathRatingUseCase
 
@@ -30,18 +32,19 @@ class VolumeKeysDetectorService : AccessibilityService() {
     private var upRatingJob: Job? = null
 
     private var pathRatingUseCase: IPathRatingUseCase? = null
+    private var writingPathStatesRepository: IWritingPathStatesRepository? = null
 
     override fun onCreate() {
         super.onCreate()
+        val sharedPreferences = getSharedPreferences(
+            App.SHARED_PREFS_TAG,
+            AppCompatActivity.MODE_PRIVATE
+        )
         pathRatingUseCase = PathRatingUseCase(
-            PathRatingRepository(
-                getSharedPreferences(
-                    App.SHARED_PREFS_TAG,
-                    AppCompatActivity.MODE_PRIVATE
-                )
-            ),
+            PathRatingRepository(sharedPreferences),
             VibrationRepository(applicationContext)
         )
+        writingPathStatesRepository = WritingPathStatesRepository(sharedPreferences)
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {}
@@ -49,6 +52,8 @@ class VolumeKeysDetectorService : AccessibilityService() {
     override fun onInterrupt() {}
 
     override fun onKeyEvent(event: KeyEvent): Boolean {
+        if (writingPathStatesRepository?.isWritingPathNow() != true) return false
+
         if (event.action == ACTION_DOWN) {
             when (event.keyCode) {
                 KeyEvent.KEYCODE_VOLUME_DOWN -> {
@@ -68,6 +73,7 @@ class VolumeKeysDetectorService : AccessibilityService() {
                         }
                     }
                 }
+
                 KeyEvent.KEYCODE_VOLUME_UP -> {
                     downRatingJob?.cancel()
                     if (upRatingJob?.isActive == true) {
@@ -87,7 +93,7 @@ class VolumeKeysDetectorService : AccessibilityService() {
                 }
             }
         }
-        return super.onKeyEvent(event)
+        return true
     }
 
     private fun broadcastRatingChanged() {
