@@ -31,6 +31,6 @@ class PathRatingUseCase(
 
     companion object {
         private const val VIBRATION_DURATION_IN_MILLIS = 100L
-        private const val DEFAULT_AMPLITUDE = 120
+        private const val DEFAULT_AMPLITUDE = -1
     }
 }
