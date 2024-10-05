@@ -246,4 +246,5 @@
     <string name="volume_feature_tutorial_1_time_up_good">1 раз вверх - хорошо</string>
     <string name="volume_feature_tutorial_1_time_down_normal">1 раз вниз - нормально</string>
     <string name="volume_feature_tutorial_2_times_down_bad">2 раза вниз - плохо</string>
+    <string name="error_message_not_allow_access_to_volume_buttons">Доступ к специальным возможностям не предоставлен. Для использования кнопок громкости вернитесь в настройки</string>
 </resources>

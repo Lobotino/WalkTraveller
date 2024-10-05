@@ -14,6 +14,7 @@ import ru.lobotino.walktraveller.usecases.interfaces.IMapStateInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IPathRatingUseCase
 import ru.lobotino.walktraveller.usecases.interfaces.IPermissionsUseCase
 import ru.lobotino.walktraveller.usecases.permissions.GeoPermissionsUseCase
+import ru.lobotino.walktraveller.utils.IResourceManager
 import ru.lobotino.walktraveller.viewmodels.MapViewModel
 
 class MapViewModelFactory(
@@ -27,6 +28,7 @@ class MapViewModelFactory(
     private val pathRatingUseCase: IPathRatingUseCase,
     private val userRotationRepository: IUserRotationRepository,
     private val userInfoRepository: IUserInfoRepository,
+    private val resourceManager: IResourceManager,
     owner: SavedStateRegistryOwner,
     bundle: Bundle?
 ) : AbstractSavedStateViewModelFactory(owner, bundle) {
@@ -44,7 +46,9 @@ class MapViewModelFactory(
                 writingPathStatesRepository,
                 pathRatingUseCase,
                 userRotationRepository,
-                userInfoRepository
+                userInfoRepository,
+                resourceManager,
+                handle
             ) as T
 
             else -> throw IllegalArgumentException("Unknown ViewModel class")

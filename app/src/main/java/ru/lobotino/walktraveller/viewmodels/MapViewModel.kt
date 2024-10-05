@@ -2,6 +2,7 @@ package ru.lobotino.walktraveller.viewmodels
 
 import android.location.Location
 import android.util.Log
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
@@ -14,6 +15,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import ru.lobotino.walktraveller.R
 import ru.lobotino.walktraveller.model.SegmentRating
 import ru.lobotino.walktraveller.model.map.MapCommonPath
 import ru.lobotino.walktraveller.model.map.MapPathSegment
@@ -33,6 +35,7 @@ import ru.lobotino.walktraveller.usecases.interfaces.IMapStateInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IPathRatingUseCase
 import ru.lobotino.walktraveller.usecases.interfaces.IPermissionsUseCase
 import ru.lobotino.walktraveller.usecases.permissions.GeoPermissionsUseCase
+import ru.lobotino.walktraveller.utils.IResourceManager
 import ru.lobotino.walktraveller.utils.ext.toMapPoint
 
 class MapViewModel(
@@ -45,11 +48,14 @@ class MapViewModel(
     private val writingPathStatesRepository: IWritingPathStatesRepository,
     private val pathRatingUseCase: IPathRatingUseCase,
     private val userRotationRepository: IUserRotationRepository,
-    private val userInfoRepository: IUserInfoRepository
+    private val userInfoRepository: IUserInfoRepository,
+    private val resourceManager: IResourceManager,
+    private val handle: SavedStateHandle,
 ) : ViewModel() {
 
     companion object {
         private val TAG = MapViewModel::class.java.canonicalName
+        private const val START_REQUEST_VOLUME_KEYS_PERMISSION_KEY = "START_REQUEST_VOLUME_KEYS_PERMISSION"
     }
 
     private val mapUiStateFlow =
@@ -78,6 +84,7 @@ class MapViewModel(
         MutableSharedFlow<MapPoint>(1, 0, BufferOverflow.DROP_OLDEST)
 
     private val newConfirmDialogChannel = Channel<ConfirmDialogType>()
+    private val userErrorChannel = Channel<String>()
 
     val observePermissionsDeniedResult: Flow<List<String>> = permissionsDeniedSharedFlow
     val observeNewCurrentPathSegments: Flow<List<MapPathSegment>> = newCurrentPathSegmentsFlow
@@ -90,6 +97,7 @@ class MapViewModel(
     val observeNewCurrentUserLocation: Flow<MapPoint> = newCurrentUserLocationFlow
     val observeWritingPathNow: Flow<Boolean> = writingPathNowState
     val observeNewConfirmDialog: Flow<ConfirmDialogType> = newConfirmDialogChannel.consumeAsFlow()
+    val observeNewUserError: Flow<String> = userErrorChannel.consumeAsFlow()
 
     private var isInitialized = false
     private var updatingYetUnpaintedPaths = false
@@ -169,6 +177,7 @@ class MapViewModel(
         }
 
         if (isInitialized) {
+            syncRequestPermissionsState()
             userRotationRepository.startTrackUserRotation()
             updateNewPointsIfNeeded()
         }
@@ -461,14 +470,33 @@ class MapViewModel(
         startPathTracking()
     }
 
+
+    /**
+     * @see syncRequestPermissionsState
+     */
     fun onVolumeFeaturePermissionsInfoConfirm() {
-        volumeKeysListenerPermissionsUseCase.requestPermissions(
-            allGranted = {
-                startPathTracking()
-            }, someDenied = {
-                startPathTracking()
-                //TODO show toast error
+        handle[START_REQUEST_VOLUME_KEYS_PERMISSION_KEY] = true
+        volumeKeysListenerPermissionsUseCase.requestPermissions()
+    }
+
+    /**
+     * @see onVolumeFeaturePermissionsInfoConfirm
+     */
+    private fun syncRequestPermissionsState() {
+        if (handle.get<Boolean>(START_REQUEST_VOLUME_KEYS_PERMISSION_KEY) == true) {
+            if (!volumeKeysListenerPermissionsUseCase.isPermissionsGranted()) {
+                showUserError(
+                    resourceManager.getString(R.string.error_message_not_allow_access_to_volume_buttons)
+                )
             }
-        )
+            if (!writingPathStatesRepository.isWritingPathNow()) {
+                startPathTracking()
+            }
+            handle[START_REQUEST_VOLUME_KEYS_PERMISSION_KEY] = false
+        }
+    }
+
+    private fun showUserError(message: String) {
+        userErrorChannel.trySend(message)
     }
 }
