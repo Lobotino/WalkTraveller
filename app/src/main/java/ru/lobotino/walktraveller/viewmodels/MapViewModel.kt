@@ -55,7 +55,8 @@ class MapViewModel(
 
     companion object {
         private val TAG = MapViewModel::class.java.canonicalName
-        private const val START_REQUEST_VOLUME_KEYS_PERMISSION_KEY = "START_REQUEST_VOLUME_KEYS_PERMISSION"
+        private const val START_REQUEST_VOLUME_KEYS_PERMISSION_KEY =
+            "START_REQUEST_VOLUME_KEYS_PERMISSION"
     }
 
     private val mapUiStateFlow =
@@ -68,8 +69,6 @@ class MapViewModel(
     private val writingPathNowState = MutableStateFlow(false)
     private val regularLocationUpdateStateFlow = MutableStateFlow(false)
 
-    private val permissionsDeniedSharedFlow =
-        MutableSharedFlow<List<String>>(1, 0, BufferOverflow.DROP_OLDEST)
     private val hidePathFlow =
         MutableSharedFlow<PathsToAction>(1, 0, BufferOverflow.DROP_OLDEST)
     private val newCurrentPathSegmentsFlow =
@@ -86,7 +85,6 @@ class MapViewModel(
     private val newConfirmDialogChannel = Channel<ConfirmDialogType>()
     private val userErrorChannel = Channel<String>()
 
-    val observePermissionsDeniedResult: Flow<List<String>> = permissionsDeniedSharedFlow
     val observeNewCurrentPathSegments: Flow<List<MapPathSegment>> = newCurrentPathSegmentsFlow
     val observeNewCommonPath: Flow<List<MapCommonPath>> = newCommonPathFlow
     val observeNewRatingPath: Flow<List<MapRatingPath>> = newRatingPathFlow
@@ -115,7 +113,7 @@ class MapViewModel(
 
         startBackgroundCachingPaths()
 
-        checkPermissions()
+        checkGeoPermissions()
 
         userRotationRepository.startTrackUserRotation()
 
@@ -126,7 +124,7 @@ class MapViewModel(
         isInitialized = true
     }
 
-    private fun checkPermissions() {
+    private fun checkGeoPermissions() {
         if (geoPermissionsUseCase.isGeneralGeoPermissionsGranted()) {
             regularLocationUpdateStateFlow.tryEmit(true)
             updateCurrentMapCenterToUserLocation()
@@ -139,10 +137,8 @@ class MapViewModel(
     }
 
     private fun checkNotificationPermissions() {
-        notificationsPermissionsUseCase.requestPermissions(someDenied = { deniedPermissions ->
-            permissionsDeniedSharedFlow.tryEmit(
-                deniedPermissions
-            )
+        notificationsPermissionsUseCase.requestPermissions(someDenied = {
+            showUserError(resourceManager.getString(R.string.error_permissions_denied))
         })
     }
 
@@ -217,6 +213,15 @@ class MapViewModel(
     }
 
     private fun startPathTracking() {
+        if (!geoPermissionsUseCase.isGeneralGeoPermissionsGranted() ||
+            !geoPermissionsUseCase.isBackgroundGeoPermissionsGranted()
+        ) {
+            newConfirmDialogChannel.trySend(
+                ConfirmDialogType.GeoLocationPermissionRequired
+            )
+            return
+        }
+
         clearMap()
         writingPathStatesRepository.setWritingPathNow(true)
         writingPathNowState.tryEmit(true)
@@ -353,18 +358,18 @@ class MapViewModel(
     }
 
     fun onFindMyLocationButtonClicked() {
-        geoPermissionsUseCase.let { geoPermissionsInteractor ->
-            if (geoPermissionsInteractor.isGeneralGeoPermissionsGranted()) {
+        geoPermissionsUseCase.let { geoPermissionsUseCase ->
+            if (geoPermissionsUseCase.isGeneralGeoPermissionsGranted()) {
                 updateCurrentMapCenterToUserLocation()
             } else {
-                geoPermissionsInteractor
+                geoPermissionsUseCase
                     .requestPermissions(
                         {
                             regularLocationUpdateStateFlow.tryEmit(true)
                             updateCurrentMapCenterToUserLocation()
                         },
                         {
-                            if (geoPermissionsInteractor.isGeneralGeoPermissionsGranted()) {
+                            if (geoPermissionsUseCase.isGeneralGeoPermissionsGranted()) {
                                 regularLocationUpdateStateFlow.tryEmit(true)
                                 updateCurrentMapCenterToUserLocation()
                             } else {
@@ -440,7 +445,7 @@ class MapViewModel(
         geoPermissionsUseCase.requestPermissions(allGranted = {
             regularLocationUpdateStateFlow.tryEmit(true)
             updateCurrentMapCenterToUserLocation()
-        }, someDenied = { deniedPermissions ->
+        }, someDenied = {
             if (geoPermissionsUseCase.isGeneralGeoPermissionsGranted()) {
                 regularLocationUpdateStateFlow.tryEmit(true)
                 updateCurrentMapCenterToUserLocation()
@@ -450,7 +455,7 @@ class MapViewModel(
                         findMyLocationButtonState = FindMyLocationButtonState.ERROR
                     )
                 }
-                permissionsDeniedSharedFlow.tryEmit(deniedPermissions)
+                showUserError(resourceManager.getString(R.string.error_permissions_denied))
             }
         })
         checkNotificationPermissions()
@@ -469,7 +474,6 @@ class MapViewModel(
         userInfoRepository.setNeedToSuggestVolumeFeature(false)
         startPathTracking()
     }
-
 
     /**
      * @see syncRequestPermissionsState

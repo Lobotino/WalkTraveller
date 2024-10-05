@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="permissions_denied">Некоторые разрешения отклонены. Проверьте настройки приложения.</string>
     <string name="paths_list_title">Список путей</string>
     <string name="outer_paths_list_title">Добавить пути</string>
     <string name="notification_path_tracking_info">Трек пути записывается в фоне</string>
@@ -246,5 +245,6 @@
     <string name="volume_feature_tutorial_1_time_up_good">1 раз вверх - хорошо</string>
     <string name="volume_feature_tutorial_1_time_down_normal">1 раз вниз - нормально</string>
     <string name="volume_feature_tutorial_2_times_down_bad">2 раза вниз - плохо</string>
-    <string name="error_message_not_allow_access_to_volume_buttons">Доступ к специальным возможностям не предоставлен. Для использования кнопок громкости вернитесь в настройки</string>
+    <string name="error_permissions_denied">Некоторые разрешения отклонены. Проверьте настройки приложения.</string>
+    <string name="error_message_not_allow_access_to_volume_buttons">Доступ к специальным возможностям не предоставлен. Проверьте настройки приложения.</string>
 </resources>

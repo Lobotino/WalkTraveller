@@ -26,7 +26,6 @@ import android.view.View.VISIBLE
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageView
-import android.widget.Toast
 import androidx.annotation.ColorInt
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
@@ -643,10 +642,6 @@ class MainMapFragment : Fragment() {
                         bundle = bundle
                     )
                 )[MapViewModel::class.java].apply {
-                    observePermissionsDeniedResult.onEach {
-                        showPermissionsDeniedError()
-                    }.launchIn(lifecycleScope)
-
                     observeNewCurrentPathSegments.onEach { pathSegments ->
                         paintNewCurrentPathSegments(pathSegments)
                     }.launchIn(lifecycleScope)
@@ -940,16 +935,6 @@ class MainMapFragment : Fragment() {
         mapView.overlays.clear()
         showingPathsPolylines.clear()
         addUserLocationTracker()
-    }
-
-    private fun showPermissionsDeniedError() {
-        if (context != null) {
-            Toast.makeText(
-                context,
-                getString(R.string.permissions_denied),
-                Toast.LENGTH_LONG
-            ).show()
-        }
     }
 
     private fun paintNewCommonPaths(pathList: List<MapCommonPath>, color: Int) {
