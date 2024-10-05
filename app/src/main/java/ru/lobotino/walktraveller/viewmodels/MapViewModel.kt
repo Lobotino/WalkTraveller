@@ -125,7 +125,7 @@ class MapViewModel(
     }
 
     private fun checkGeoPermissions() {
-        if (geoPermissionsUseCase.isGeneralGeoPermissionsGranted()) {
+        if (geoPermissionsUseCase.isGeoPermissionsGranted()) {
             regularLocationUpdateStateFlow.tryEmit(true)
             updateCurrentMapCenterToUserLocation()
             checkNotificationPermissions()
@@ -168,7 +168,7 @@ class MapViewModel(
     }
 
     fun onResume() {
-        if (geoPermissionsUseCase.isGeneralGeoPermissionsGranted()) {
+        if (geoPermissionsUseCase.isGeoPermissionsGranted()) {
             regularLocationUpdateStateFlow.tryEmit(true)
         }
 
@@ -213,9 +213,7 @@ class MapViewModel(
     }
 
     private fun startPathTracking() {
-        if (!geoPermissionsUseCase.isGeneralGeoPermissionsGranted() ||
-            !geoPermissionsUseCase.isBackgroundGeoPermissionsGranted()
-        ) {
+        if (!geoPermissionsUseCase.isGeoPermissionsGranted()) {
             newConfirmDialogChannel.trySend(
                 ConfirmDialogType.GeoLocationPermissionRequired
             )
@@ -359,7 +357,7 @@ class MapViewModel(
 
     fun onFindMyLocationButtonClicked() {
         geoPermissionsUseCase.let { geoPermissionsUseCase ->
-            if (geoPermissionsUseCase.isGeneralGeoPermissionsGranted()) {
+            if (geoPermissionsUseCase.isGeoPermissionsGranted()) {
                 updateCurrentMapCenterToUserLocation()
             } else {
                 geoPermissionsUseCase
@@ -369,7 +367,7 @@ class MapViewModel(
                             updateCurrentMapCenterToUserLocation()
                         },
                         {
-                            if (geoPermissionsUseCase.isGeneralGeoPermissionsGranted()) {
+                            if (geoPermissionsUseCase.isGeoPermissionsGranted()) {
                                 regularLocationUpdateStateFlow.tryEmit(true)
                                 updateCurrentMapCenterToUserLocation()
                             } else {
@@ -446,7 +444,7 @@ class MapViewModel(
             regularLocationUpdateStateFlow.tryEmit(true)
             updateCurrentMapCenterToUserLocation()
         }, someDenied = {
-            if (geoPermissionsUseCase.isGeneralGeoPermissionsGranted()) {
+            if (geoPermissionsUseCase.isGeoPermissionsGranted()) {
                 regularLocationUpdateStateFlow.tryEmit(true)
                 updateCurrentMapCenterToUserLocation()
             } else {

@@ -11,11 +11,7 @@ class GeoPermissionsUseCase(private val geoPermissionsRepository: GeoPermissions
         geoPermissionsRepository.requestPermissions(allGranted, someDenied)
     }
 
-    fun isGeneralGeoPermissionsGranted(): Boolean {
-        return geoPermissionsRepository.isGeneralGeoPermissionsGranted()
-    }
-
-    fun isBackgroundGeoPermissionsGranted(): Boolean {
-        return geoPermissionsRepository.isBackgroundGeoPermissionsGranted()
+    fun isGeoPermissionsGranted(): Boolean {
+        return geoPermissionsRepository.isGeoPermissionsGranted()
     }
 }
