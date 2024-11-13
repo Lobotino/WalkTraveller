@@ -30,6 +30,7 @@ import androidx.annotation.ColorInt
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
+import androidx.core.content.ContextCompat.startForegroundService
 import androidx.core.widget.ImageViewCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -38,7 +39,6 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.gms.location.LocationServices
 import com.google.android.material.progressindicator.CircularProgressIndicator
 import com.google.android.material.snackbar.Snackbar
-import kotlin.properties.Delegates
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -125,6 +125,8 @@ import ru.lobotino.walktraveller.utils.ext.toGeoPoint
 import ru.lobotino.walktraveller.utils.ext.toMapPoint
 import ru.lobotino.walktraveller.viewmodels.MapViewModel
 import ru.lobotino.walktraveller.viewmodels.PathsMenuViewModel
+import kotlin.properties.Delegates
+
 
 class MainMapFragment : Fragment() {
 
@@ -770,7 +772,7 @@ class MainMapFragment : Fragment() {
                 ConfirmDialogType.VolumeButtonsFeatureInfo -> {
                     VolumeButtonsPermissionsInfoDialog(
                         context = context,
-                        onConfirm = { mapViewModel.onVolumeFeaturePermissionsInfoConfirm() }
+                        onYesClicked = { mapViewModel.onVolumeFeaturePermissionsInfoConfirm() }
                     ).show()
                 }
             }
@@ -779,7 +781,8 @@ class MainMapFragment : Fragment() {
 
     private fun sendStartLocationUpdatesAction() {
         locationUpdatesService?.startLocationUpdates() ?: activity?.let { activity ->
-            activity.startService(
+            startForegroundService(
+                activity,
                 Intent(activity, LocationUpdatesService::class.java).apply {
                     action = ACTION_START_LOCATION_UPDATES
                 }

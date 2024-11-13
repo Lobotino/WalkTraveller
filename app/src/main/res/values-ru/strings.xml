@@ -231,7 +231,7 @@
     <string name="content_desc_show_selected_paths_button">Кнопка «показать выбранные пути»</string>
     <string name="content_desc_share_path_button">Кнопка «поделиться»</string>
     <string name="content_desc_delete_selected_paths_button">Кнопка «удалить выбранные пути»</string>
-    <string name="volume_buttons_feature_request_desc">Приложение поддерживает возможность управления рейтингом участка маршрута с помощью кнопок громкости телефона, не доставая телефон из кармана.\n\nХотите попробовать?\n\n(Эту функцию можно выключить в любой момент в настройках приложения)</string>
+    <string name="volume_buttons_feature_request_desc">Приложение поддерживает возможность управления рейтингом участка маршрута с помощью кнопок громкости телефона, не доставая телефон из кармана.\n\nХотите попробовать?</string>
     <string name="volume_buttons_feature_request_title">Оценка пути</string>
     <string name="volume_buttons_feature_info_title">Нужно подтверждение</string>
     <string name="volume_buttons_feature_info_desc">Чтобы получить доступ к информации о нажатиях кнопок громкости, приложению требуется доступ к специальным возможностям.\n\nПриложение гарантирует, что не будет собирать никакой дополнительной информации, которые предоставляются полученным доступом, кроме нажатия кнопок громкости во время записи трека</string>
