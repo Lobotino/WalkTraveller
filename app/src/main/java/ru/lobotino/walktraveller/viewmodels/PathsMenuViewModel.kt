@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import java.io.IOException
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -15,6 +16,7 @@ import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import ru.lobotino.walktraveller.model.map.MapCommonPath
+import ru.lobotino.walktraveller.model.map.MapPathInfo
 import ru.lobotino.walktraveller.model.map.MapRatingPath
 import ru.lobotino.walktraveller.repositories.interfaces.IPathsSaverRepository
 import ru.lobotino.walktraveller.ui.model.BottomMenuState
@@ -143,7 +145,7 @@ class PathsMenuViewModel(
         )
 
         viewModelScope.launch {
-            val path = mapPathsInteractor.getSavedRatingPath(pathId, false)
+            val path = mapPathsInteractor.getSavedRatingPath(pathId, withRatingOnly = false, isOptimized = false)
             if (path != null) {
                 try {
                     shareFileChannel.trySend(pathsSaverRepository.saveRatingPath(path))
@@ -190,7 +192,8 @@ class PathsMenuViewModel(
             }
 
             ShowPathsButtonState.DEFAULT -> {
-                if (selectedPathIdsInMenuList.isEmpty()) {
+                val selectedPathIds = selectedPathIdsInMenuList.toList()
+                if (selectedPathIds.isEmpty()) {
                     newMapEventChannel.trySend(MapEvent.ClearMap)
                 }
 
@@ -199,7 +202,7 @@ class PathsMenuViewModel(
                     NewPathInfoItemState(
                         PathsMenuType.MY_PATHS,
                         PathInfoItemState(
-                            PathsToAction.Multiple(selectedPathIdsInMenuList),
+                            PathsToAction.Multiple(selectedPathIds),
                             PathInfoItemShowButtonState.LOADING
                         )
                     )
@@ -229,10 +232,12 @@ class PathsMenuViewModel(
             PathsMenuType.OUTER_PATHS -> updateOuterPathsMenuState(showPathsButtonState = ShowPathsButtonState.DEFAULT)
         }
 
-        val pathsToHide = if (selectedPathIdsInMenuList.isEmpty()) {
+        val selectedPathIds = selectedPathIdsInMenuList.toList()
+
+        val pathsToHide = if (selectedPathIds.isEmpty()) {
             PathsToAction.All
         } else {
-            PathsToAction.Multiple(selectedPathIdsInMenuList)
+            PathsToAction.Multiple(selectedPathIds)
         }
 
         val hideMapEvent = if (pathsToHide == PathsToAction.All) {
@@ -302,7 +307,7 @@ class PathsMenuViewModel(
     }
 
     private fun loadAndShowSelectedRatedPaths() {
-        val selectedPathsIds = ArrayList(selectedPathIdsInMenuList)
+        val selectedPathsIds = selectedPathIdsInMenuList.toList()
         if (selectedPathsIds.isEmpty()) {
             loadAndShowAllRatedPaths()
         } else {
@@ -310,7 +315,7 @@ class PathsMenuViewModel(
             loadPathsJob = viewModelScope.launch {
                 val loadedPaths = ArrayList<MapRatingPath>()
                 for (pathId in selectedPathsIds) {
-                    val ratingPath = mapPathsInteractor.getSavedRatingPath(pathId, true)
+                    val ratingPath = mapPathsInteractor.getSavedRatingPath(pathId, withRatingOnly = true, isOptimized = true)
                     if (ratingPath != null) {
                         loadedPaths.add(ratingPath)
                     }
@@ -335,7 +340,7 @@ class PathsMenuViewModel(
     }
 
     private fun loadAndShowSelectedPathsAsCommon() {
-        val selectedPathsIds = ArrayList(selectedPathIdsInMenuList)
+        val selectedPathsIds = selectedPathIdsInMenuList.toList()
         if (selectedPathsIds.isEmpty()) {
             loadAndShowAllPathsAsCommon()
         } else {
@@ -441,7 +446,8 @@ class PathsMenuViewModel(
         updateMyPathsMenuState(inSelectMode = false, pathsInfoListState = MyPathsInfoListState.LOADING)
 
         downloadAllPathsInfoJob = viewModelScope.launch {
-            val allSavedPathsList = mapPathsInteractor.getAllSavedPathsInfo()
+            val allSavedPathsList = removeDeletingNowPathsFromList(mapPathsInteractor.getAllSavedPathsInfo())
+
             if (allSavedPathsList.isNotEmpty()) {
                 newPathsInfoListFlow.tryEmit(NewPathInfoListEvent(PathsMenuType.MY_PATHS, allSavedPathsList))
                 updateMyPathsMenuState(
@@ -458,6 +464,11 @@ class PathsMenuViewModel(
                 )
             }
         }
+    }
+
+    private fun removeDeletingNowPathsFromList(pathsList: List<MapPathInfo>): List<MapPathInfo> {
+        val deletingPaths = pathRedactor.getDeletingNowPathsIds()
+        return pathsList.filter { path -> !deletingPaths.contains(path.pathId) }
     }
 
     fun onPathsMenuBackButtonClicked() {
@@ -514,7 +525,7 @@ class PathsMenuViewModel(
                             )
                         )
                         viewModelScope.launch {
-                            val savedRatingPath = mapPathsInteractor.getSavedRatingPath(pathId, false)
+                            val savedRatingPath = mapPathsInteractor.getSavedRatingPath(pathId, withRatingOnly = false, isOptimized = true)
                             if (savedRatingPath != null) {
                                 newMapEventChannel.trySend(MapEvent.ShowRatingPath(savedRatingPath))
                                 newPathInfoListItemStateFlow.tryEmit(
@@ -646,29 +657,29 @@ class PathsMenuViewModel(
     }
 
     fun onConfirmMyPathDelete(pathId: Long) {
-        viewModelScope.launch {
+        MainScope().launch {
             pathRedactor.deletePath(pathId)
-            checkMyPathsListNotEmptyNow()
+            checkSavedPathsListNotEmptyNow()
         }
         newMapEventChannel.trySend(MapEvent.HidePath(PathsToAction.Single(pathId)))
         deletePathInfoItemChannel.trySend(DeletePathInfoItemEvent(PathsMenuType.MY_PATHS, PathsToAction.Single(pathId)))
         selectedPathIdsInMenuList.remove(pathId)
         checkStillInSelectedMode(PathsMenuType.MY_PATHS)
+        viewModelScope.launch { checkSavedPathsListNotEmptyNow(listOf(pathId)) }
     }
 
     fun onConfirmMyPathListDelete(pathIds: List<Long>) {
-        viewModelScope.launch {
-            for (pathId in pathIds) {
-                pathRedactor.deletePath(pathId)
-            }
-            checkMyPathsListNotEmptyNow()
-            selectedPathIdsInMenuList.removeAll(pathIds)
-            checkStillInSelectedMode(PathsMenuType.MY_PATHS)
+        MainScope().launch {
+            pathRedactor.deletePaths(pathIds)
+            checkSavedPathsListNotEmptyNow()
         }
         newMapEventChannel.trySend(MapEvent.HidePath(PathsToAction.Multiple(pathIds)))
         deletePathInfoItemChannel.trySend(
             DeletePathInfoItemEvent(PathsMenuType.MY_PATHS, PathsToAction.Multiple(pathIds))
         )
+        selectedPathIdsInMenuList.removeAll(pathIds)
+        checkStillInSelectedMode(PathsMenuType.MY_PATHS)
+        viewModelScope.launch { checkSavedPathsListNotEmptyNow(pathIds) }
     }
 
     private fun deleteOuterPathFromList(tempPathId: Long) {
@@ -689,7 +700,7 @@ class PathsMenuViewModel(
     }
 
     private fun deleteSelectedOuterPathsFromList() {
-        val selectedPathIds = ArrayList(selectedPathIdsInMenuList)
+        val selectedPathIds = selectedPathIdsInMenuList.toList()
 
         for (pathId in selectedPathIds) {
             outerPathsInteractor.removeCachedPath(pathId)
@@ -709,8 +720,20 @@ class PathsMenuViewModel(
         checkStillInSelectedMode(PathsMenuType.OUTER_PATHS)
     }
 
-    private suspend fun checkMyPathsListNotEmptyNow() {
+    private suspend fun checkSavedPathsListNotEmptyNow() {
         if (mapPathsInteractor.getAllSavedPathsInfo().isEmpty()) {
+            updateMyPathsMenuState(
+                pathsInfoListState = MyPathsInfoListState.EMPTY_LIST,
+                showPathsButtonState = ShowPathsButtonState.GONE,
+                showPathsFilterButtonState = ShowPathsFilterButtonState.GONE,
+                inSelectMode = false
+            )
+        }
+    }
+
+    private suspend fun checkSavedPathsListNotEmptyNow(deletingPathsIds: List<Long>) {
+        val allMapPathsInfo = mapPathsInteractor.getAllSavedPathsInfo()
+        if (allMapPathsInfo.isEmpty() || allMapPathsInfo.map { it.pathId } == deletingPathsIds) {
             updateMyPathsMenuState(
                 pathsInfoListState = MyPathsInfoListState.EMPTY_LIST,
                 showPathsButtonState = ShowPathsButtonState.GONE,
@@ -784,12 +807,12 @@ class PathsMenuViewModel(
     }
 
     fun onShareSelectedPathsButtonClicked(pathsMenuType: PathsMenuType) {
-        val selectedPathIdsInMenuList = ArrayList(selectedPathIdsInMenuList)
+        val selectedPathIds = selectedPathIdsInMenuList.toList()
         newPathInfoListItemStateFlow.tryEmit(
             NewPathInfoItemState(
                 pathsMenuType,
                 PathInfoItemState(
-                    PathsToAction.Multiple(selectedPathIdsInMenuList),
+                    PathsToAction.Multiple(selectedPathIds),
                     shareButtonState = PathInfoItemShareButtonState.LOADING
                 )
             )
@@ -798,8 +821,8 @@ class PathsMenuViewModel(
         viewModelScope.launch {
             val selectedPaths = ArrayList<MapRatingPath>()
 
-            for (pathId in selectedPathIdsInMenuList) {
-                val path = mapPathsInteractor.getSavedRatingPath(pathId, false)
+            for (pathId in selectedPathIds) {
+                val path = mapPathsInteractor.getSavedRatingPath(pathId, withRatingOnly = false, isOptimized = false)
                 if (path != null) {
                     selectedPaths.add(path)
                 }
@@ -820,7 +843,7 @@ class PathsMenuViewModel(
                 NewPathInfoItemState(
                     pathsMenuType,
                     PathInfoItemState(
-                        PathsToAction.Multiple(selectedPathIdsInMenuList),
+                        PathsToAction.Multiple(selectedPathIds),
                         shareButtonState = PathInfoItemShareButtonState.DEFAULT
                     )
                 )
@@ -832,7 +855,7 @@ class PathsMenuViewModel(
         when (pathsMenuType) {
             PathsMenuType.MY_PATHS -> {
                 newConfirmDialogChannel.trySend(
-                    ConfirmDialogType.DeleteMultiplePaths(selectedPathIdsInMenuList)
+                    ConfirmDialogType.DeleteMultiplePaths(selectedPathIdsInMenuList.toList())
                 )
             }
 

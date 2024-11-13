@@ -67,8 +67,8 @@ class PathSegmentRelationsDatabaseTests {
             listOf(expectedSegment)
         )
         assertThat(
-            listOf(expectedSegment),
-            equalTo(pathSegmentRelationsDao.getAllPathSegments())
+            pathSegmentRelationsDao.getAllPathSegments(),
+            equalTo(listOf(expectedSegment))
         )
     }
 

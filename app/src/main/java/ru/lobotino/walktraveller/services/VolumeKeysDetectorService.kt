@@ -13,6 +13,11 @@ import kotlinx.coroutines.*
 import ru.lobotino.walktraveller.App
 import ru.lobotino.walktraveller.model.SegmentRating
 import ru.lobotino.walktraveller.repositories.PathRatingRepository
+import ru.lobotino.walktraveller.repositories.VibrationRepository
+import ru.lobotino.walktraveller.repositories.WritingPathStatesRepository
+import ru.lobotino.walktraveller.repositories.interfaces.IWritingPathStatesRepository
+import ru.lobotino.walktraveller.usecases.PathRatingUseCase
+import ru.lobotino.walktraveller.usecases.interfaces.IPathRatingUseCase
 
 class VolumeKeysDetectorService : AccessibilityService() {
 
@@ -26,16 +31,20 @@ class VolumeKeysDetectorService : AccessibilityService() {
     private var downRatingJob: Job? = null
     private var upRatingJob: Job? = null
 
-    private var pathRatingRepository: PathRatingRepository? = null
+    private var pathRatingUseCase: IPathRatingUseCase? = null
+    private var writingPathStatesRepository: IWritingPathStatesRepository? = null
 
     override fun onCreate() {
         super.onCreate()
-        pathRatingRepository = PathRatingRepository(
-            getSharedPreferences(
-                App.SHARED_PREFS_TAG,
-                AppCompatActivity.MODE_PRIVATE
-            )
+        val sharedPreferences = getSharedPreferences(
+            App.SHARED_PREFS_TAG,
+            AppCompatActivity.MODE_PRIVATE
         )
+        pathRatingUseCase = PathRatingUseCase(
+            PathRatingRepository(sharedPreferences),
+            VibrationRepository(applicationContext)
+        )
+        writingPathStatesRepository = WritingPathStatesRepository(sharedPreferences)
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {}
@@ -43,45 +52,52 @@ class VolumeKeysDetectorService : AccessibilityService() {
     override fun onInterrupt() {}
 
     override fun onKeyEvent(event: KeyEvent): Boolean {
+        if (writingPathStatesRepository?.isWritingPathNow() != true) return false
+
         if (event.action == ACTION_DOWN) {
             when (event.keyCode) {
                 KeyEvent.KEYCODE_VOLUME_DOWN -> {
                     upRatingJob?.cancel()
                     if (downRatingJob?.isActive == true) {
                         downRatingJob?.cancel()
-                        pathRatingRepository?.setCurrentRating(SegmentRating.BADLY)
+                        pathRatingUseCase?.setCurrentRating(SegmentRating.BADLY)
                         broadcastRatingChanged()
                         Log.d(TAG, "Set current rating to BADLY")
+                        return true
                     } else {
                         downRatingJob = CoroutineScope(Dispatchers.Default).launch {
                             delay(BEFORE_CHANGE_RATING_DELAY)
-                            pathRatingRepository?.setCurrentRating(SegmentRating.NORMAL)
+                            pathRatingUseCase?.setCurrentRating(SegmentRating.NORMAL)
                             downRatingJob = null
                             broadcastRatingChanged()
                             Log.d(TAG, "Set current rating to NORMAL")
                         }
+                        return true
                     }
                 }
+
                 KeyEvent.KEYCODE_VOLUME_UP -> {
                     downRatingJob?.cancel()
                     if (upRatingJob?.isActive == true) {
                         upRatingJob?.cancel()
-                        pathRatingRepository?.setCurrentRating(SegmentRating.PERFECT)
+                        pathRatingUseCase?.setCurrentRating(SegmentRating.PERFECT)
                         broadcastRatingChanged()
                         Log.d(TAG, "Set current rating to PERFECT")
+                        return true
                     } else {
                         upRatingJob = CoroutineScope(Dispatchers.Default).launch {
                             delay(BEFORE_CHANGE_RATING_DELAY)
-                            pathRatingRepository?.setCurrentRating(SegmentRating.GOOD)
+                            pathRatingUseCase?.setCurrentRating(SegmentRating.GOOD)
                             upRatingJob = null
                             broadcastRatingChanged()
                             Log.d(TAG, "Set current rating to GOOD")
                         }
+                        return true
                     }
                 }
             }
         }
-        return super.onKeyEvent(event)
+        return false
     }
 
     private fun broadcastRatingChanged() {

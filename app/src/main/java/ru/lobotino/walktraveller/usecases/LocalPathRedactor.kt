@@ -17,10 +17,31 @@ class LocalPathRedactor(
     private val defaultDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : IPathRedactor {
 
+    /**
+     * Deleting now paths ids
+     */
+    private val deletingPathsIds = HashSet<Long>()
+
+    override fun getDeletingNowPathsIds(): Set<Long> {
+        return deletingPathsIds.toSet()
+    }
+
     override suspend fun deletePath(pathId: Long) {
+        deletingPathsIds.add(pathId)
         return coroutineScope {
             withContext(defaultDispatcher) {
                 databasePathRepository.deletePath(pathId)
+                deletingPathsIds.remove(pathId)
+            }
+        }
+    }
+
+    override suspend fun deletePaths(pathIds: List<Long>) {
+        deletingPathsIds.addAll(pathIds)
+        return coroutineScope {
+            withContext(defaultDispatcher) {
+                databasePathRepository.deletePaths(pathIds)
+                deletingPathsIds.removeAll(pathIds.toSet())
             }
         }
     }

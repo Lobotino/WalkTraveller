@@ -2,6 +2,7 @@ package ru.lobotino.walktraveller.viewmodels
 
 import android.location.Location
 import android.util.Log
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
@@ -14,12 +15,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import ru.lobotino.walktraveller.R
 import ru.lobotino.walktraveller.model.SegmentRating
 import ru.lobotino.walktraveller.model.map.MapCommonPath
 import ru.lobotino.walktraveller.model.map.MapPathSegment
 import ru.lobotino.walktraveller.model.map.MapPoint
 import ru.lobotino.walktraveller.model.map.MapRatingPath
-import ru.lobotino.walktraveller.repositories.interfaces.IPathRatingRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IUserInfoRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IUserRotationRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IWritingPathStatesRepository
@@ -31,8 +32,10 @@ import ru.lobotino.walktraveller.ui.model.PathsToAction
 import ru.lobotino.walktraveller.usecases.IUserLocationInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IMapPathsInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IMapStateInteractor
+import ru.lobotino.walktraveller.usecases.interfaces.IPathRatingUseCase
 import ru.lobotino.walktraveller.usecases.interfaces.IPermissionsUseCase
 import ru.lobotino.walktraveller.usecases.permissions.GeoPermissionsUseCase
+import ru.lobotino.walktraveller.utils.IResourceManager
 import ru.lobotino.walktraveller.utils.ext.toMapPoint
 
 class MapViewModel(
@@ -43,13 +46,17 @@ class MapViewModel(
     private val mapPathsInteractor: IMapPathsInteractor,
     private val mapStateInteractor: IMapStateInteractor,
     private val writingPathStatesRepository: IWritingPathStatesRepository,
-    private val pathRatingRepository: IPathRatingRepository,
+    private val pathRatingUseCase: IPathRatingUseCase,
     private val userRotationRepository: IUserRotationRepository,
-    private val userInfoRepository: IUserInfoRepository
+    private val userInfoRepository: IUserInfoRepository,
+    private val resourceManager: IResourceManager,
+    private val handle: SavedStateHandle,
 ) : ViewModel() {
 
     companion object {
         private val TAG = MapViewModel::class.java.canonicalName
+        private const val START_REQUEST_VOLUME_KEYS_PERMISSION_KEY =
+            "START_REQUEST_VOLUME_KEYS_PERMISSION"
     }
 
     private val mapUiStateFlow =
@@ -62,12 +69,10 @@ class MapViewModel(
     private val writingPathNowState = MutableStateFlow(false)
     private val regularLocationUpdateStateFlow = MutableStateFlow(false)
 
-    private val permissionsDeniedSharedFlow =
-        MutableSharedFlow<List<String>>(1, 0, BufferOverflow.DROP_OLDEST)
     private val hidePathFlow =
         MutableSharedFlow<PathsToAction>(1, 0, BufferOverflow.DROP_OLDEST)
-    private val newPathSegmentFlow =
-        MutableSharedFlow<MapPathSegment>(1, 0, BufferOverflow.DROP_OLDEST)
+    private val newCurrentPathSegmentsFlow =
+        MutableSharedFlow<List<MapPathSegment>>(1, 0, BufferOverflow.DROP_OLDEST)
     private val newCommonPathFlow =
         MutableSharedFlow<List<MapCommonPath>>(1, 0, BufferOverflow.DROP_OLDEST)
     private val newRatingPathFlow =
@@ -78,9 +83,9 @@ class MapViewModel(
         MutableSharedFlow<MapPoint>(1, 0, BufferOverflow.DROP_OLDEST)
 
     private val newConfirmDialogChannel = Channel<ConfirmDialogType>()
+    private val userErrorChannel = Channel<String>()
 
-    val observePermissionsDeniedResult: Flow<List<String>> = permissionsDeniedSharedFlow
-    val observeNewPathSegment: Flow<MapPathSegment> = newPathSegmentFlow
+    val observeNewCurrentPathSegments: Flow<List<MapPathSegment>> = newCurrentPathSegmentsFlow
     val observeNewCommonPath: Flow<List<MapCommonPath>> = newCommonPathFlow
     val observeNewRatingPath: Flow<List<MapRatingPath>> = newRatingPathFlow
     val observeMapUiState: Flow<MapUiState> = mapUiStateFlow
@@ -90,10 +95,11 @@ class MapViewModel(
     val observeNewCurrentUserLocation: Flow<MapPoint> = newCurrentUserLocationFlow
     val observeWritingPathNow: Flow<Boolean> = writingPathNowState
     val observeNewConfirmDialog: Flow<ConfirmDialogType> = newConfirmDialogChannel.consumeAsFlow()
+    val observeNewUserError: Flow<String> = userErrorChannel.consumeAsFlow()
 
     private var isInitialized = false
     private var updatingYetUnpaintedPaths = false
-    private var updateCurrentSavedPath: Job? = null
+    private var updateCurrentSavedPathJob: Job? = null
     private var backgroundCachingRatingPathsJob: Job? = null
     private var backgroundCachingCommonPathsJob: Job? = null
     private var backgroundCachingPathsInfoJob: Job? = null
@@ -107,7 +113,7 @@ class MapViewModel(
 
         startBackgroundCachingPaths()
 
-        checkPermissions()
+        checkGeoPermissions()
 
         userRotationRepository.startTrackUserRotation()
 
@@ -118,11 +124,11 @@ class MapViewModel(
         isInitialized = true
     }
 
-    private fun checkPermissions() {
-        if (geoPermissionsUseCase.isGeneralGeoPermissionsGranted()) {
+    private fun checkGeoPermissions() {
+        if (geoPermissionsUseCase.isGeoPermissionsGranted()) {
             regularLocationUpdateStateFlow.tryEmit(true)
             updateCurrentMapCenterToUserLocation()
-            checkNotificationPermissions()
+            requestNotificationPermissions()
         } else {
             newConfirmDialogChannel.trySend(
                 ConfirmDialogType.GeoLocationPermissionRequired
@@ -130,11 +136,9 @@ class MapViewModel(
         }
     }
 
-    private fun checkNotificationPermissions() {
-        notificationsPermissionsUseCase.requestPermissions(someDenied = { deniedPermissions ->
-            permissionsDeniedSharedFlow.tryEmit(
-                deniedPermissions
-            )
+    private fun requestNotificationPermissions() {
+        notificationsPermissionsUseCase.requestPermissions(someDenied = {
+            showUserError(resourceManager.getString(R.string.error_notifications_permissions_denied))
         })
     }
 
@@ -156,7 +160,7 @@ class MapViewModel(
                 }
             }
         }
-        pathRatingRepository.getCurrentRating().let { currentRating ->
+        pathRatingUseCase.getCurrentRating().let { currentRating ->
             if (currentRating != mapUiStateFlow.value.newRating) {
                 mapUiStateFlow.update { mapUiState -> mapUiState.copy(newRating = currentRating) }
             }
@@ -164,11 +168,12 @@ class MapViewModel(
     }
 
     fun onResume() {
-        if (geoPermissionsUseCase.isGeneralGeoPermissionsGranted()) {
+        if (geoPermissionsUseCase.isGeoPermissionsGranted()) {
             regularLocationUpdateStateFlow.tryEmit(true)
         }
 
         if (isInitialized) {
+            syncRequestPermissionsState()
             userRotationRepository.startTrackUserRotation()
             updateNewPointsIfNeeded()
         }
@@ -188,14 +193,14 @@ class MapViewModel(
         if (writingPathStatesRepository.isWritingPathNow() && !updatingYetUnpaintedPaths) {
             drawNewSegmentToPoint(
                 MapPoint(location.latitude, location.longitude),
-                pathRatingRepository.getCurrentRating()
+                pathRatingUseCase.getCurrentRating()
             )
         }
     }
 
     fun onNewRatingReceive() {
         mapUiStateFlow.update { uiState ->
-            uiState.copy(newRating = pathRatingRepository.getCurrentRating())
+            uiState.copy(newRating = pathRatingUseCase.getCurrentRating())
         }
     }
 
@@ -208,15 +213,25 @@ class MapViewModel(
     }
 
     private fun startPathTracking() {
-        clearMap()
-        writingPathStatesRepository.setWritingPathNow(true)
-        writingPathNowState.tryEmit(true)
-        mapUiStateFlow.update { uiState ->
-            uiState.copy(
-                isPathFinished = false,
-                newRating = pathRatingRepository.getCurrentRating()
+        if (!geoPermissionsUseCase.isGeoPermissionsGranted()) {
+            newConfirmDialogChannel.trySend(
+                ConfirmDialogType.GeoLocationPermissionRequired
             )
+            return
         }
+        notificationsPermissionsUseCase.requestPermissions(allGranted = {
+            clearMap()
+            writingPathStatesRepository.setWritingPathNow(true)
+            writingPathNowState.tryEmit(true)
+            mapUiStateFlow.update { uiState ->
+                uiState.copy(
+                    isPathFinished = false,
+                    newRating = pathRatingUseCase.getCurrentRating()
+                )
+            }
+        }, someDenied = {
+            showUserError(resourceManager.getString(R.string.error_notifications_permissions_denied))
+        })
     }
 
     fun onStopPathButtonClicked() {
@@ -231,7 +246,7 @@ class MapViewModel(
     }
 
     fun onRatingButtonClicked(ratingGiven: SegmentRating) {
-        pathRatingRepository.setCurrentRating(ratingGiven)
+        pathRatingUseCase.setCurrentRating(ratingGiven)
         mapUiStateFlow.update { uiState ->
             uiState.copy(newRating = ratingGiven)
         }
@@ -245,15 +260,15 @@ class MapViewModel(
                     writingPathNowState.tryEmit(true)
                 }
 
-                updateCurrentSavedPath?.cancel()
-                updateCurrentSavedPath = viewModelScope.launch {
-                    mapPathsInteractor.getLastSavedRatingPath()?.let { lastSavedPath ->
-
-                        if (lastSavedPath.pathSegments.isNotEmpty()) {
-                            clearMap()
-                            redrawAllPathSegments(lastSavedPath.pathSegments)
-                            newCurrentUserLocationFlow.tryEmit(lastSavedPath.pathSegments.last().finishPoint)
-                        }
+                updateCurrentSavedPathJob?.cancel()
+                updateCurrentSavedPathJob = viewModelScope.launch {
+                    val lastSavedPath = mapPathsInteractor.getLastSavedRatingPath()
+                    if (lastSavedPath != null && lastSavedPath.pathSegments.isNotEmpty()) {
+                        redrawAllPathSegments(lastSavedPath)
+                        newCurrentUserLocationFlow.tryEmit(lastSavedPath.pathSegments.last().finishPoint)
+                    }
+                }.also {
+                    it.invokeOnCompletion {
                         updatingYetUnpaintedPaths = false
                     }
                 }
@@ -264,19 +279,19 @@ class MapViewModel(
     }
 
     private fun drawNewSegmentToPoint(newPoint: MapPoint, segmentRating: SegmentRating) {
+        val lastPaintedPoint = lastPaintedPoint
         if (lastPaintedPoint != null) {
-            newPathSegmentFlow.tryEmit(
-                MapPathSegment(lastPaintedPoint!!, newPoint, segmentRating)
+            newCurrentPathSegmentsFlow.tryEmit(
+                listOf(MapPathSegment(lastPaintedPoint, newPoint, segmentRating))
             )
         }
-        lastPaintedPoint = newPoint
+        this.lastPaintedPoint = newPoint
     }
 
-    private fun redrawAllPathSegments(allPathSegment: List<MapPathSegment>) {
-        lastPaintedPoint = allPathSegment.last().finishPoint
-        for (segment in allPathSegment) {
-            newPathSegmentFlow.tryEmit(segment)
-        }
+    private fun redrawAllPathSegments(path: MapRatingPath) {
+        clearMap()
+        lastPaintedPoint = path.pathSegments.last().finishPoint
+        newCurrentPathSegmentsFlow.tryEmit(path.pathSegments)
     }
 
     fun showRatingPathOnMap(ratingPath: MapRatingPath) {
@@ -344,18 +359,18 @@ class MapViewModel(
     }
 
     fun onFindMyLocationButtonClicked() {
-        geoPermissionsUseCase.let { geoPermissionsInteractor ->
-            if (geoPermissionsInteractor.isGeneralGeoPermissionsGranted()) {
+        geoPermissionsUseCase.let { geoPermissionsUseCase ->
+            if (geoPermissionsUseCase.isGeoPermissionsGranted()) {
                 updateCurrentMapCenterToUserLocation()
             } else {
-                geoPermissionsInteractor
+                geoPermissionsUseCase
                     .requestPermissions(
                         {
                             regularLocationUpdateStateFlow.tryEmit(true)
                             updateCurrentMapCenterToUserLocation()
                         },
                         {
-                            if (geoPermissionsInteractor.isGeneralGeoPermissionsGranted()) {
+                            if (geoPermissionsUseCase.isGeoPermissionsGranted()) {
                                 regularLocationUpdateStateFlow.tryEmit(true)
                                 updateCurrentMapCenterToUserLocation()
                             } else {
@@ -431,8 +446,8 @@ class MapViewModel(
         geoPermissionsUseCase.requestPermissions(allGranted = {
             regularLocationUpdateStateFlow.tryEmit(true)
             updateCurrentMapCenterToUserLocation()
-        }, someDenied = { deniedPermissions ->
-            if (geoPermissionsUseCase.isGeneralGeoPermissionsGranted()) {
+        }, someDenied = {
+            if (geoPermissionsUseCase.isGeoPermissionsGranted()) {
                 regularLocationUpdateStateFlow.tryEmit(true)
                 updateCurrentMapCenterToUserLocation()
             } else {
@@ -441,10 +456,10 @@ class MapViewModel(
                         findMyLocationButtonState = FindMyLocationButtonState.ERROR
                     )
                 }
-                permissionsDeniedSharedFlow.tryEmit(deniedPermissions)
+                showUserError(resourceManager.getString(R.string.error_permissions_denied))
             }
         })
-        checkNotificationPermissions()
+        requestNotificationPermissions()
     }
 
     fun onBottomMenuStateChange(newBottomMenuState: BottomMenuState) {
@@ -461,14 +476,32 @@ class MapViewModel(
         startPathTracking()
     }
 
+    /**
+     * @see syncRequestPermissionsState
+     */
     fun onVolumeFeaturePermissionsInfoConfirm() {
-        volumeKeysListenerPermissionsUseCase.requestPermissions(
-            allGranted = {
-                startPathTracking()
-            }, someDenied = {
-                startPathTracking()
-                //TODO show toast error
+        handle[START_REQUEST_VOLUME_KEYS_PERMISSION_KEY] = true
+        volumeKeysListenerPermissionsUseCase.requestPermissions()
+    }
+
+    /**
+     * @see onVolumeFeaturePermissionsInfoConfirm
+     */
+    private fun syncRequestPermissionsState() {
+        if (handle.get<Boolean>(START_REQUEST_VOLUME_KEYS_PERMISSION_KEY) == true) {
+            if (!volumeKeysListenerPermissionsUseCase.isPermissionsGranted()) {
+                showUserError(
+                    resourceManager.getString(R.string.error_message_not_allow_access_to_volume_buttons)
+                )
             }
-        )
+            if (!writingPathStatesRepository.isWritingPathNow()) {
+                startPathTracking()
+            }
+            handle[START_REQUEST_VOLUME_KEYS_PERMISSION_KEY] = false
+        }
+    }
+
+    private fun showUserError(message: String) {
+        userErrorChannel.trySend(message)
     }
 }

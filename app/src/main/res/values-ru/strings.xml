@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="permissions_denied">Некоторые разрешения отклонены. Проверьте настройки приложения.</string>
     <string name="paths_list_title">Список путей</string>
     <string name="outer_paths_list_title">Добавить пути</string>
     <string name="notification_path_tracking_info">Трек пути записывается в фоне</string>
@@ -26,9 +25,175 @@
     <string name="welcome_privacy_policy_text_part">политикой конфиденциальности</string>
     <string name="welcome_terms_of_use_text_part">условиями пользования</string>
     <string name="privacy_policy_title">Политика конфиденциальности</string>
-    <string name="privacy_policy"><![CDATA["<!DOCTYPE html>\n    <html>\n    <body>\n    <p>\n                  Ksenofontov Oleg built the Walk Traveller app as\n                  an Open Source app. This SERVICE is provided by\n                  Ksenofontov Oleg at no cost and is intended for use as\n                  is.\n                </p> <p>\n                  This page is used to inform visitors regarding my\n                  policies with the collection, use, and disclosure of Personal\n                  Information if anyone decided to use my Service.\n                </p> <p>\n                  If you choose to use my Service, then you agree to\n                  the collection and use of information in relation to this\n                  policy. The Personal Information that I collect is\n                  used for providing and improving the Service. I will not use or share your information with\n                  anyone except as described in this Privacy Policy.\n                </p> <p>\n                  The terms used in this Privacy Policy have the same meanings\n                  as in our Terms and Conditions, which are accessible at\n                  Walk Traveller unless otherwise defined in this Privacy Policy.\n                </p> <br> <p><strong>Information Collection and Use</strong></p> <p>\n                  For a better experience, while using our Service, I\n                  may require you to provide us with certain personally\n                  identifiable information, including but not limited to Anonymous user ID, anonymous application usage statistics data. The information that\n                  I request will be retained on your device and is not collected by me in any way.\n                </p> <div><p>\n                    The app does use third–party services that may collect\n                    information used to identify you.\n                  </p> <p>\n                    Link to the privacy policy of third-party service providers used\n                    by the app\n                  </p> <ul><li><a href=\"https://www.google.com/policies/privacy/\" target=\"_blank\" rel=\"noopener noreferrer\">Google Play Services</a></li><!----><li><a href=\"https://firebase.google.com/policies/analytics\" target=\"_blank\" rel=\"noopener noreferrer\">Google Analytics for Firebase</a></li><li><a href=\"https://firebase.google.com/support/privacy/\" target=\"_blank\" rel=\"noopener noreferrer\">Firebase Crashlytics</a></li><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----></ul></div> <br> <p><strong>Log Data</strong></p> <p>\n                  I want to inform you that whenever you\n                  use my Service, in a case of an error in the app\n                  I collect data and information (through third-party\n                  products) on your phone called Log Data. This Log Data may\n                  include information such as your device Internet Protocol\n                  (“IP”) address, device name, operating system version, the\n                  configuration of the app when utilizing my Service,\n                  the time and date of your use of the Service, and other\n                  statistics.\n                </p> <br> <p><strong>Cookies</strong></p> <p>\n                  Cookies are files with a small amount of data that are\n                  commonly used as anonymous unique identifiers. These are sent\n                  to your browser from the websites that you visit and are\n                  stored on your device's internal memory.\n                </p> <p>\n                  This Service does not use these “cookies” explicitly. However,\n                  the app may use third-party code and libraries that use\n                  “cookies” to collect information and improve their services.\n                  You have the option to either accept or refuse these cookies\n                  and know when a cookie is being sent to your device. If you\n                  choose to refuse our cookies, you may not be able to use some\n                  portions of this Service.\n                </p> <br> <p><strong>Service Providers</strong></p> <p>\n                  I may employ third-party companies and\n                  individuals due to the following reasons:\n                </p> <ul><li>To facilitate our Service;</li> <li>To provide the Service on our behalf;</li> <li>To perform Service-related services; or</li> <li>To assist us in analyzing how our Service is used.</li></ul> <p>\n                  I want to inform users of this Service\n                  that these third parties have access to their Personal\n                  Information. The reason is to perform the tasks assigned to\n                  them on our behalf. However, they are obligated not to\n                  disclose or use the information for any other purpose.\n                </p> <br> <p><strong>Security</strong></p> <p>\n                  I value your trust in providing us your\n                  Personal Information, thus we are striving to use commercially\n                  acceptable means of protecting it. But remember that no method\n                  of transmission over the internet, or method of electronic\n                  storage is 100% secure and reliable, and I cannot\n                  guarantee its absolute security.\n                </p> <br> <p><strong>Links to Other Sites</strong></p> <p>\n                  This Service may contain links to other sites. If you click on\n                  a third-party link, you will be directed to that site. Note\n                  that these external sites are not operated by me.\n                  Therefore, I strongly advise you to review the\n                  Privacy Policy of these websites. I have\n                  no control over and assume no responsibility for the content,\n                  privacy policies, or practices of any third-party sites or\n                  services.\n                </p> <br> <p><strong>Children’s Privacy</strong></p> <div><p>\n                    These Services do not address anyone under the age of 13.\n                    I do not knowingly collect personally\n                    identifiable information from children under 13 years of age. In the case\n                    I discover that a child under 13 has provided\n                    me with personal information, I immediately\n                    delete this from our servers. If you are a parent or guardian\n                    and you are aware that your child has provided us with\n                    personal information, please contact me so that\n                    I will be able to do the necessary actions.\n                  </p></div> <!----> <br> <p><strong>Changes to This Privacy Policy</strong></p> <p>\n                  I may update our Privacy Policy from\n                  time to time. Thus, you are advised to review this page\n                  periodically for any changes. I will\n                  notify you of any changes by posting the new Privacy Policy on\n                  this page.\n                </p> <br> <p>This policy is effective as of 2023-03-12</p> <br> <p><strong>Contact Us</strong></p> <p>\n                  If you have any questions or suggestions about my\n                  Privacy Policy, do not hesitate to contact me at testmail@gmail.com.\n             </body>\n    </html>\n      "]]></string>
+    <string name="privacy_policy"><![CDATA["<!DOCTYPE html>
+<html>
+<body>
+<p>
+                  Олег Ксенофонтов разработал приложение Walk Traveller как
+                  приложение с открытым исходным кодом. Этот СЕРВИС предоставляется
+                  Олегом Ксенофонтовым бесплатно и предназначен для использования
+                  как есть.
+                </p> <p>
+                  Эта страница предназначена для информирования посетителей о моих
+                  правилах сбора, использования и раскрытия Личной
+                  Информации, если кто-либо решит использовать мой Сервис.
+                </p> <p>
+                  Если вы решите использовать мой Сервис, то вы соглашаетесь на
+                  сбор и использование информации в соответствии с этой
+                  политикой. Личная информация, которую я собираю,
+                  используется для предоставления и улучшения Сервиса. Я не буду использовать или делиться вашей информацией с
+                  кем-либо, кроме как описано в этой Политике конфиденциальности.
+                </p> <p>
+                  Термины, используемые в этой Политике конфиденциальности, имеют то же значение,
+                  что и в наших Условиях использования, доступных в
+                  Walk Traveller, если не определено иначе в этой Политике конфиденциальности.
+                </p> <br> <p><strong>Сбор и использование информации</strong></p> <p>
+                  Для более комфортного использования нашего Сервиса, я
+                  могу попросить вас предоставить определенную личную
+                  информацию, включая, но не ограничиваясь, анонимный идентификатор пользователя, анонимные данные статистики использования приложения. Информация,
+                  которую я запрашиваю, будет сохранена на вашем устройстве и не собирается мной никаким образом.
+                </p> <div><p>
+                    Приложение использует сервисы третьих лиц, которые могут собирать
+                    информацию, используемую для идентификации вас.
+                  </p> <p>
+                    Ссылка на политику конфиденциальности поставщиков услуг третьих лиц, используемых
+                    приложением
+                  </p> <ul><li><a href="https://www.google.com/policies/privacy/" target="_blank" rel="noopener noreferrer">Google Play Services</a></li><!----><li><a href="https://firebase.google.com/policies/analytics" target="_blank" rel="noopener noreferrer">Google Analytics for Firebase</a></li><li><a href="https://firebase.google.com/support/privacy/" target="_blank" rel="noopener noreferrer">Firebase Crashlytics</a></li><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----></ul></div> <br> <p><strong>Данные журнала</strong></p> <p>
+                  Я хочу проинформировать вас, что всякий раз, когда вы
+                  используете мой Сервис, в случае ошибки в приложении
+                  я собираю данные и информацию (через продукты третьих лиц) на вашем телефоне, называемую Данными журнала. Эти Данные журнала могут
+                  включать в себя такую информацию, как ваш интернет-протокол
+                  (“IP”) адрес, название устройства, версия операционной системы,
+                  конфигурация приложения при использовании моего Сервиса,
+                  время и дата вашего использования Сервиса и другая
+                  статистика.
+                </p> <br> <p><strong>Файлы Cookies</strong></p> <p>
+                  Файлы Cookies — это файлы с небольшим объемом данных, которые
+                  обычно используются как анонимные уникальные идентификаторы. Они отправляются
+                  в ваш браузер с веб-сайтов, которые вы посещаете, и
+                  сохраняются во внутренней памяти вашего устройства.
+                </p> <p>
+                  Этот Сервис явно не использует эти “cookies”. Однако,
+                  приложение может использовать сторонний код и библиотеки, которые
+                  используют “cookies” для сбора информации и улучшения своих сервисов.
+                  У вас есть возможность либо принять, либо отказаться от этих cookies
+                  и знать, когда cookie отправляется на ваше устройство. Если вы
+                  решите отказаться от наших cookies, вы можете не иметь возможности использовать некоторые
+                  части этого Сервиса.
+                </p> <br> <p><strong>Поставщики услуг</strong></p> <p>
+                  Я могу нанимать компании и частных лиц третьих лиц по следующим причинам:
+                </p> <ul><li>Для облегчения нашего Сервиса;</li> <li>Для предоставления Сервиса от нашего имени;</li> <li>Для выполнения связанных с Сервисом услуг; или</li> <li>Для помощи нам в анализе того, как используется наш Сервис.</li></ul> <p>
+                  Я хочу информировать пользователей этого Сервиса
+                  о том, что эти третьи стороны имеют доступ к их Личной
+                  Информации. Причина в том, чтобы выполнять порученные им
+                  задачи от нашего имени. Тем не менее, они обязаны не
+                  раскрывать и не использовать информацию для каких-либо других целей.
+                </p> <br> <p><strong>Безопасность</strong></p> <p>
+                  Я ценю ваше доверие в предоставлении нам вашей
+                  Личной информации, поэтому мы стремимся использовать коммерчески приемлемые
+                  средства для её защиты. Но помните, что ни один метод
+                  передачи через интернет или метод электронного хранения не является на 100% безопасным и надежным, и я не могу
+                  гарантировать его абсолютную безопасность.
+                </p> <br> <p><strong>Ссылки на другие сайты</strong></p> <p>
+                  Этот Сервис может содержать ссылки на другие сайты. Если вы кликнете по
+                  ссылке третьей стороны, вы будете перенаправлены на этот сайт. Обратите внимание,
+                  что эти внешние сайты не управляются мной.
+                  Поэтому я настоятельно рекомендую вам ознакомиться с
+                  Политикой конфиденциальности этих веб-сайтов. Я не имею
+                  контроля и не несу никакой ответственности за содержание,
+                  политику конфиденциальности или практику любых сторонних сайтов или
+                  служб.
+                </p> <br> <p><strong>Конфиденциальность детей</strong></p> <div><p>
+                    Эти Услуги не предназначены для лиц младше 13 лет.
+                    Я не собираю умышленно личную информацию от детей младше 13 лет. В случае,
+                    если я обнаруживаю, что ребенок младше 13 лет предоставил
+                    мне личную информацию, я немедленно
+                    удаляю её с наших серверов. Если вы родитель или законный опекун
+                    и знаете, что ваш ребенок предоставил нам личную
+                    информацию, пожалуйста, свяжитесь со мной, чтобы я
+                    смог предпринять необходимые действия.
+                  </p></div> <!----> <br> <p><strong>Изменения в этой Политике конфиденциальности</strong></p> <p>
+                  Я могу время от времени обновлять нашу Политику конфиденциальности. Таким образом, вам рекомендуется периодически просматривать эту страницу
+                  на предмет изменений. Я буду
+                  уведомлять вас об изменениях, публикуя новую Политику конфиденциальности на
+                  этой странице.
+                </p> <br> <p>Эта политика вступает в силу с 2023-03-12</p> <br> <p><strong>Связаться с нами</strong></p> <p>
+                  Если у вас есть вопросы или предложения относительно моей
+                  Политики конфиденциальности, не стесняйтесь обращаться ко мне на walk.traveller.app@gmail.com.
+             </body>
+</html>
+      "]]></string>
     <string name="terms_of_use_title">Условия пользования</string>
-    <string name="terms_of_use"><![CDATA["<!DOCTYPE html>\n    <html>\n    <body>\n    <p>\n                  By downloading or using the app, these terms will\n                  automatically apply to you – you should make sure therefore\n                  that you read them carefully before using the app. You’re not\n                  allowed to copy or modify the app, any part of the app, or\n                  our trademarks in any way. You’re not allowed to attempt to\n                  extract the source code of the app, and you also shouldn’t try\n                  to translate the app into other languages or make derivative\n                  versions. The app itself, and all the trademarks, copyright,\n                  database rights, and other intellectual property rights related\n                  to it, still belong to Ksenofontov Oleg.\n                </p> <br> <p>\n                  Ksenofontov Oleg is committed to ensuring that the app is\n                  as useful and efficient as possible. For that reason, we\n                  reserve the right to make changes to the app or to charge for\n                  its services, at any time and for any reason. We will never\n                  charge you for the app or its services without making it very\n                  clear to you exactly what you’re paying for.\n                </p> <br> <p>\n                  The Walk Traveller app stores and processes personal data that\n                  you have provided to us, to provide my\n                  Service. It’s your responsibility to keep your phone and\n                  access to the app secure. We therefore recommend that you do\n                  not jailbreak or root your phone, which is the process of\n                  removing software restrictions and limitations imposed by the\n                  official operating system of your device. It could make your\n                  phone vulnerable to malware/viruses/malicious programs,\n                  compromise your phone’s security features and it could mean\n                  that the Walk Traveller app won’t work properly or at all.\n                </p> <div><p>\n                    The app does use third-party services that declare their\n                    Terms and Conditions.\n                  </p> <br> <p>\n                    Link to Terms and Conditions of third-party service\n                    providers used by the app\n                  </p> <ul><li><a href=\"https://policies.google.com/terms\" target=\"_blank\" rel=\"noopener noreferrer\">Google Play Services</a></li><!----><li><a href=\"https://firebase.google.com/terms/analytics\" target=\"_blank\" rel=\"noopener noreferrer\">Google Analytics for Firebase</a></li><li><a href=\"https://firebase.google.com/terms/crashlytics\" target=\"_blank\" rel=\"noopener noreferrer\">Firebase Crashlytics</a></li><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----></ul></div> <p>\n                  You should be aware that there are certain things that\n                  Ksenofontov Oleg will not take responsibility for. Certain\n                  functions of the app will require the app to have an active\n                  internet connection. The connection can be Wi-Fi or provided\n                  by your mobile network provider, but Ksenofontov Oleg\n                  cannot take responsibility for the app not working at full\n                  functionality if you don’t have access to Wi-Fi, and you don’t\n                  have any of your data allowance left.\n                </p> <br> <p>\n                  If you’re using the app outside of an area with Wi-Fi, you\n                  should remember that the terms of the agreement with your\n                  mobile network provider will still apply. As a result, you may\n                  be charged by your mobile provider for the cost of data for\n                  the duration of the connection while accessing the app, or\n                  other third-party charges. In using the app, you’re accepting\n                  responsibility for any such charges, including roaming data\n                  charges if you use the app outside of your home territory\n                  (i.e. region or country) without turning off data roaming. If\n                  you are not the bill payer for the device on which you’re\n                  using the app, please be aware that we assume that you have\n                  received permission from the bill payer for using the app.\n                </p> <br> <p>\n                  Along the same lines, Ksenofontov Oleg cannot always take\n                  responsibility for the way you use the app i.e. You need to\n                  make sure that your device stays charged – if it runs out of\n                  battery and you can’t turn it on to avail the Service,\n                  Ksenofontov Oleg cannot accept responsibility.\n                </p> <br> <p>\n                  With respect to Ksenofontov Oleg’s responsibility for your\n                  use of the app, when you’re using the app, it’s important to\n                  bear in mind that although we endeavor to ensure that it is\n                  updated and correct at all times, we do rely on third parties\n                  to provide information to us so that we can make it available\n                  to you. Ksenofontov Oleg accepts no liability for any\n                  loss, direct or indirect, you experience as a result of\n                  relying wholly on this functionality of the app.\n                </p> <br> <p>\n                  At some point, we may wish to update the app. The app is\n                  currently available on Android – the requirements for the \n                  system(and for any additional systems we\n                  decide to extend the availability of the app to) may change,\n                  and you’ll need to download the updates if you want to keep\n                  using the app. Ksenofontov Oleg does not promise that it\n                  will always update the app so that it is relevant to you\n                  and/or works with the Android version that you have\n                  installed on your device. However, you promise to always\n                  accept updates to the application when offered to you, We may\n                  also wish to stop providing the app, and may terminate use of\n                  it at any time without giving notice of termination to you.\n                  Unless we tell you otherwise, upon any termination, (a) the\n                  rights and licenses granted to you in these terms will end;\n                  (b) you must stop using the app, and (if needed) delete it\n                  from your device.\n                </p> <br> <p><strong>Changes to This Terms and Conditions</strong></p> <br> <p>\n                  I may update our Terms and Conditions\n                  from time to time. Thus, you are advised to review this page\n                  periodically for any changes. I will\n                  notify you of any changes by posting the new Terms and\n                  Conditions on this page.\n                </p> <br> <p>\n                  These terms and conditions are effective as of 2023-03-12\n                </p> <br> <p><strong>Contact Us</strong></p> <br> <p>\n                  If you have any questions or suggestions about my\n                  Terms and Conditions, do not hesitate to contact me\n                  at testmail@gmail.com.\n    </body>\n    </html>\n      "]]></string>
+    <string name="terms_of_use"><![CDATA["<!DOCTYPE html>
+<html>
+<body>
+<p>
+                  Скачивая или используя приложение, вы автоматически соглашаетесь с этими условиями, поэтому вам следует внимательно их прочитать перед использованием приложения. Вам не разрешается копировать или изменять приложение, любую его часть или наши товарные знаки каким-либо образом. Вам не разрешается пытаться извлечь исходный код приложения, а также не следует пытаться перевести приложение на другие языки или создавать производные версии. Само приложение и все товарные знаки, авторские права, права на базы данных и прочие права интеллектуальной собственности, связанные с ним, по-прежнему принадлежат Ксенофонтову Олегу.
+                </p> <br> <p>
+                  Ксенофонтов Олег стремится к тому, чтобы приложение было максимально полезным и эффективным. По этой причине мы оставляем за собой право вносить изменения в приложение или взимать плату за его услуги в любое время и по любой причине. Мы никогда не будем взимать с вас плату за приложение или его услуги, не уведомив вас в явной форме о том, за что именно вы платите.
+                </p> <br> <p>
+                  Приложение Walk Traveller хранит и обрабатывает персональные данные, которые вы нам предоставили, для предоставления моих
+                  Сервисов. Вы несете ответственность за безопасность своего телефона и доступ к приложению. Поэтому мы рекомендуем вам не делать джейлбрейк или рут-доступ на вашем телефоне, что является процессом снятия ограничений и ограничений, налагаемых официальной операционной системой вашего устройства. Это может сделать ваш телефон уязвимым для вредоносных программ/вирусов/злонамеренных программ,
+                  поставить под угрозу функции безопасности вашего телефона и это может означать,
+                  что приложение Walk Traveller не будет работать должным образом или вообще не будет работать.
+                </p> <div><p>
+                    Приложение использует сторонние сервисы, которые заявляют свои
+                    Условия использования.
+                  </p> <br> <p>
+                    Ссылка на Условия использования сторонних сервис-провайдеров, используемых приложением
+                  </p> <ul><li><a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer">Сервисы Google Play</a></li><!----><li><a href="https://firebase.google.com/terms/analytics" target="_blank" rel="noopener noreferrer">Google Analytics для Firebase</a></li><li><a href="https://firebase.google.com/terms/crashlytics" target="_blank" rel="noopener noreferrer">Firebase Crashlytics</a></li><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----><!----></ul></div> <p>
+                  Вы должны осознавать, что есть определенные вещи, за которые
+                  Ксенофонтов Олег не будет нести ответственность. Некоторые
+                  функции приложения потребуют от приложения наличия активного
+                  интернет-соединения. Соединение может быть Wi-Fi или предоставлено
+                  вашим мобильным оператором, но Ксенофонтов Олег
+                  не может нести ответственность за неполную работоспособность приложения, если у вас нет доступа к Wi-Fi, и у вас нет доступного объема данных.
+                </p> <br> <p>
+                  Если вы используете приложение за пределами зоны с Wi-Fi, вы
+                  должны помнить, что условия соглашения с вашим
+                  мобильным оператором все еще применяются. В результате, вас могут
+                  обязать ваш мобильный оператор оплатить стоимость данных за
+                  время соединения при доступе к приложению или
+                  другие третьесторонние расходы. Используя приложение, вы
+                  принимаете на себя ответственность за любые такие расходы, включая расходы на роуминг данных, если вы используете приложение за пределами вашей домашней территории
+                  (т.е. региона или страны) без отключения передачи данных в роуминге. Если
+                  вы не являетесь плательщиком счетов за устройство, на котором
+                  вы используете приложение, пожалуйста, учитывайте, что мы предполагаем, что вы получили разрешение от плательщика счетов на использование приложения.
+                </p> <br> <p>
+                  В том же духе, Ксенофонтов Олег не всегда может нести
+                  ответственность за то, как вы используете приложение, то есть вы должны
+                  убедиться, что ваше устройство заряжено – если оно разряжено и вы не можете его включить, чтобы воспользоваться Сервисом,
+                  Ксенофонтов Олег не может принять ответственность.
+                </p> <br> <p>
+                  С учетом ответственности Ксенофонтова Олега за ваше использование приложения, когда вы используете приложение, важно
+                  помнить, что, хотя мы стремимся обеспечить его актуальность и корректность во все времена, мы полагаемся на третьих лиц в предоставлении нам информации, чтобы мы могли сделать ее доступной для вас. Ксенофонтов Олег не принимает на себя никакой ответственности за любой
+                  прямой или косвенный ущерб, который вы понесли, полагаясь полностью на эту функциональность приложения.
+                </p> <br> <p>
+                  В какой-то момент мы можем захотеть обновить приложение. Приложение в настоящее время доступно на Android – требования для
+                  системы (и для любых дополнительных систем, к которым мы
+                  решим расширить доступность приложения) могут измениться,
+                  и вам нужно будет скачать обновления, если вы хотите продолжить
+                  использование приложения. Ксенофонтов Олег не обещает, что он
+                  всегда будет обновлять приложение так, чтобы оно было актуально для вас
+                  и/или работало с версией Android, которую вы установили на своем устройстве. Однако вы обещаете всегда принимать обновления к приложению, когда они вам предлагаются, Мы также можем захотеть прекратить предоставление приложения и может прекратить использование его в любое время без уведомления о прекращении вас.
+                  Если мы вам не сообщим иначе, при любом прекращении, (а) права и лицензии, предоставленные вам в этих условиях, прекратят свое действие;
+                  (б) вы должны прекратить использование приложения и (если нужно) удалить его
+                  с вашего устройства.
+                </p> <br> <p><strong>Изменения этих Условий и положений</strong></p> <br> <p>
+                  Я могу время от времени обновлять наши Условия и положения.
+                  Таким образом, вам рекомендуется периодически просматривать эту страницу
+                  на предмет изменений. Я буду
+                  уведомлять вас об изменениях, размещая новые Условия и
+                  положения на этой странице.
+                </p> <br> <p>
+                  Условия и положения вступают в силу с 2023-03-12
+                </p> <br> <p><strong>Свяжитесь с нами</strong></p> <br> <p>
+                  Если у вас есть какие-либо вопросы или предложения относительно моих
+                  Условий и положений, не стесняйтесь связаться со мной
+                  на walk.traveller.app@gmail.com.
+</body>
+</html>
+      "]]></string>
     <string name="ok_button">ОК</string>
     <string name="geo_location_required_dialog_title">Необходим доступ к геолокации</string>
     <string name="geo_location_required_dialog_description">Приложение создано для записи и отслеживания пройденных вами путей.\nДля этого приложению необходим доступ к геолокации.\n\nПриложение не передаёт данные о геолокации куда бы то ни было. Записанные треки остаются только на Вашем устройстве.</string>
@@ -80,4 +245,7 @@
     <string name="volume_feature_tutorial_1_time_up_good">1 раз вверх - хорошо</string>
     <string name="volume_feature_tutorial_1_time_down_normal">1 раз вниз - нормально</string>
     <string name="volume_feature_tutorial_2_times_down_bad">2 раза вниз - плохо</string>
+    <string name="error_permissions_denied">Некоторые разрешения отклонены. Проверьте настройки приложения.</string>
+    <string name="error_notifications_permissions_denied">Разрешения на уведомления отклонены. Они необходимы для корректной работы записи пути, проверьте настройки приложения.</string>
+    <string name="error_message_not_allow_access_to_volume_buttons">Доступ к специальным возможностям не предоставлен. Проверьте настройки приложения.</string>
 </resources>

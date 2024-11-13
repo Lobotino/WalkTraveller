@@ -6,7 +6,11 @@ import ru.lobotino.walktraveller.model.map.MapRatingPath
 
 interface IPathRedactor {
 
+    fun getDeletingNowPathsIds(): Set<Long>
+
     suspend fun deletePath(pathId: Long)
+
+    suspend fun deletePaths(pathIds: List<Long>)
 
     suspend fun updatePathLength(path: MapCommonPath): Float
 

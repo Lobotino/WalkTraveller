@@ -118,14 +118,88 @@ class PathPointRelationDatabaseTests {
         pathsPointsRelationsDao.insertPathPointsRelations(
             listOf(
                 firstPathPointRelation,
-                EntityPathPointRelation(1, 2),
-                EntityPathPointRelation(2, 2)
+                secondPathPointRelation
             )
         )
-        pointsDao.deletePointById(2)
+        pointsDao.deletePointById(secondPoint.id)
         assertThat(
             pathsPointsRelationsDao.getAllPathPointRelations(),
             equalTo(listOf(firstPathPointRelation))
         )
+    }
+
+    @Test
+    fun deletePointsByPathIdEmptyResult() = runTest {
+        pathsDao.insertPaths(listOf(firstPath))
+        pointsDao.insertPoints(listOf(firstPoint, secondPoint))
+        assertThat(pointsDao.getAllPoints(), equalTo(listOf(firstPoint, secondPoint)))
+
+        pathsPointsRelationsDao.insertPathPointsRelations(
+            listOf(
+                EntityPathPointRelation(firstPath.id, firstPoint.id),
+                EntityPathPointRelation(firstPath.id, secondPoint.id)
+            )
+        )
+
+        pointsDao.deletePointsByPathId(firstPath.id)
+
+        assertThat(pointsDao.getAllPoints(), equalTo(emptyList()))
+    }
+
+    @Test
+    fun deletePointsByPathIdNotEmptyResult() = runTest {
+        pathsDao.insertPaths(listOf(firstPath, secondPath))
+        pointsDao.insertPoints(listOf(firstPoint, secondPoint, thirdPoint))
+        assertThat(pointsDao.getAllPoints(), equalTo(listOf(firstPoint, secondPoint, thirdPoint)))
+
+        pathsPointsRelationsDao.insertPathPointsRelations(
+            listOf(
+                EntityPathPointRelation(firstPath.id, firstPoint.id),
+                EntityPathPointRelation(firstPath.id, secondPoint.id),
+                EntityPathPointRelation(secondPath.id, thirdPoint.id)
+            )
+        )
+
+        pointsDao.deletePointsByPathId(firstPath.id)
+
+        assertThat(pointsDao.getAllPoints(), equalTo(listOf(thirdPoint)))
+    }
+
+    @Test
+    fun deletePointsByPathIdsListEmptyResult() = runTest {
+        pathsDao.insertPaths(listOf(firstPath, secondPath))
+        pointsDao.insertPoints(listOf(firstPoint, secondPoint, thirdPoint))
+        assertThat(pointsDao.getAllPoints(), equalTo(listOf(firstPoint, secondPoint, thirdPoint)))
+
+        pathsPointsRelationsDao.insertPathPointsRelations(
+            listOf(
+                EntityPathPointRelation(firstPath.id, firstPoint.id),
+                EntityPathPointRelation(firstPath.id, secondPoint.id),
+                EntityPathPointRelation(secondPath.id, thirdPoint.id)
+            )
+        )
+
+        pointsDao.deletePointsByPathIds(listOf(firstPath.id, secondPath.id))
+
+        assertThat(pointsDao.getAllPoints(), equalTo(emptyList()))
+    }
+
+    @Test
+    fun deletePointsByPathIdsListNotEmptyResult() = runTest {
+        pathsDao.insertPaths(listOf(firstPath, secondPath))
+        pointsDao.insertPoints(listOf(firstPoint, secondPoint, thirdPoint))
+        assertThat(pointsDao.getAllPoints(), equalTo(listOf(firstPoint, secondPoint, thirdPoint)))
+
+        pathsPointsRelationsDao.insertPathPointsRelations(
+            listOf(
+                EntityPathPointRelation(firstPath.id, firstPoint.id),
+                EntityPathPointRelation(firstPath.id, secondPoint.id),
+                EntityPathPointRelation(secondPath.id, thirdPoint.id)
+            )
+        )
+
+        pointsDao.deletePointsByPathIds(listOf(firstPath.id))
+
+        assertThat(pointsDao.getAllPoints(), equalTo(listOf(thirdPoint)))
     }
 }

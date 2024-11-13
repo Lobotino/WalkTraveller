@@ -32,9 +32,9 @@ class OuterPathsInteractor(
                 withContext(Dispatchers.IO) {
                     pathRepository.createOuterNewPath(
                         path.pathSegments,
+                        path.pathInfo.timestamp,
                         path.pathInfo.length,
-                        path.pathInfo.mostCommonRating,
-                        path.pathInfo.timestamp
+                        path.pathInfo.mostCommonRating
                     )
                 }
             }

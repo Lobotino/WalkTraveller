@@ -19,4 +19,10 @@ interface PointsDao {
 
     @Query("DELETE FROM points WHERE id = :id")
     suspend fun deletePointById(id: Long)
+
+    @Query("DELETE FROM points WHERE id IN (SELECT id_point FROM path_point_relations WHERE id_path = :pathId)")
+    suspend fun deletePointsByPathId(pathId: Long)
+
+    @Query("DELETE FROM points WHERE id IN (SELECT id_point FROM path_point_relations WHERE id_path IN (:pathIds))")
+    suspend fun deletePointsByPathIds(pathIds: List<Long>)
 }

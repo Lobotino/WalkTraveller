@@ -26,7 +26,6 @@ import android.view.View.VISIBLE
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageView
-import android.widget.Toast
 import androidx.annotation.ColorInt
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
@@ -38,6 +37,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.gms.location.LocationServices
 import com.google.android.material.progressindicator.CircularProgressIndicator
+import com.google.android.material.snackbar.Snackbar
 import kotlin.properties.Delegates
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -84,6 +84,7 @@ import ru.lobotino.walktraveller.repositories.PathsLoaderRepositoryV1
 import ru.lobotino.walktraveller.repositories.PathsLoaderVersionHelper
 import ru.lobotino.walktraveller.repositories.UserInfoRepository
 import ru.lobotino.walktraveller.repositories.UserRotationRepository
+import ru.lobotino.walktraveller.repositories.VibrationRepository
 import ru.lobotino.walktraveller.repositories.WritingPathStatesRepository
 import ru.lobotino.walktraveller.repositories.permissions.AccessibilityPermissionRepository
 import ru.lobotino.walktraveller.repositories.permissions.ExternalStoragePermissionsRepository
@@ -112,11 +113,13 @@ import ru.lobotino.walktraveller.usecases.LocalMapPathsInteractor
 import ru.lobotino.walktraveller.usecases.LocalPathRedactor
 import ru.lobotino.walktraveller.usecases.MapStateInteractor
 import ru.lobotino.walktraveller.usecases.OuterPathsInteractor
+import ru.lobotino.walktraveller.usecases.PathRatingUseCase
 import ru.lobotino.walktraveller.usecases.UserLocationInteractor
 import ru.lobotino.walktraveller.usecases.permissions.ExternalStoragePermissionsUseCase
 import ru.lobotino.walktraveller.usecases.permissions.GeoPermissionsUseCase
 import ru.lobotino.walktraveller.usecases.permissions.NotificationsPermissionsUseCase
 import ru.lobotino.walktraveller.usecases.permissions.VolumeKeysListenerPermissionsUseCase
+import ru.lobotino.walktraveller.utils.ResourceManager
 import ru.lobotino.walktraveller.utils.ext.openNavigationMenu
 import ru.lobotino.walktraveller.utils.ext.toGeoPoint
 import ru.lobotino.walktraveller.utils.ext.toMapPoint
@@ -221,7 +224,7 @@ class MainMapFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?
+        savedInstanceState: Bundle?,
     ): View? {
         return inflater.inflate(R.layout.fragment_map, container, false).also { view ->
             initColors()
@@ -349,13 +352,25 @@ class MainMapFragment : Fragment() {
 
                             PathsMenuButton.FilterPathsColor -> menuViewModel.onShowPathsFilterButtonClicked()
                             PathsMenuButton.Back -> menuViewModel.onPathsMenuBackButtonClicked()
-                            PathsMenuButton.ShowSelectedPaths -> menuViewModel.onShowSelectedPathsButtonClicked(PathsMenuType.MY_PATHS)
-                            PathsMenuButton.ShareSelectedPaths -> menuViewModel.onShareSelectedPathsButtonClicked(PathsMenuType.MY_PATHS)
-                            PathsMenuButton.DeleteSelectedPaths -> menuViewModel.onDeleteSelectedPathsButtonClicked(PathsMenuType.MY_PATHS)
+                            PathsMenuButton.ShowSelectedPaths -> menuViewModel.onShowSelectedPathsButtonClicked(
+                                PathsMenuType.MY_PATHS
+                            )
+
+                            PathsMenuButton.ShareSelectedPaths -> menuViewModel.onShareSelectedPathsButtonClicked(
+                                PathsMenuType.MY_PATHS
+                            )
+
+                            PathsMenuButton.DeleteSelectedPaths -> menuViewModel.onDeleteSelectedPathsButtonClicked(
+                                PathsMenuType.MY_PATHS
+                            )
                         }
                     },
                     itemButtonClickedListener = { pathId, itemButtonClickedType ->
-                        menuViewModel.onPathInListButtonClicked(pathId, itemButtonClickedType, PathsMenuType.MY_PATHS)
+                        menuViewModel.onPathInListButtonClicked(
+                            pathId,
+                            itemButtonClickedType,
+                            PathsMenuType.MY_PATHS
+                        )
                     },
                     itemShortTapListener = { pathId ->
                         menuViewModel.onPathInListShortTap(pathId, PathsMenuType.MY_PATHS)
@@ -370,8 +385,14 @@ class MainMapFragment : Fragment() {
                 setupOnClickListeners(
                     menuTitleButtonClickListener = { pathsMenuButton ->
                         when (pathsMenuButton) {
-                            PathsMenuButton.ShowSelectedPaths -> menuViewModel.onShowSelectedPathsButtonClicked(PathsMenuType.OUTER_PATHS)
-                            PathsMenuButton.DeleteSelectedPaths -> menuViewModel.onDeleteSelectedPathsButtonClicked(PathsMenuType.OUTER_PATHS)
+                            PathsMenuButton.ShowSelectedPaths -> menuViewModel.onShowSelectedPathsButtonClicked(
+                                PathsMenuType.OUTER_PATHS
+                            )
+
+                            PathsMenuButton.DeleteSelectedPaths -> menuViewModel.onDeleteSelectedPathsButtonClicked(
+                                PathsMenuType.OUTER_PATHS
+                            )
+
                             PathsMenuButton.Back -> menuViewModel.onPathsMenuBackButtonClicked()
                             else -> {}
                         }
@@ -380,7 +401,11 @@ class MainMapFragment : Fragment() {
                         menuViewModel.onOuterPathsConfirmButtonClicked()
                     },
                     itemButtonClickedListener = { pathId, itemButtonClickedType ->
-                        menuViewModel.onPathInListButtonClicked(pathId, itemButtonClickedType, PathsMenuType.OUTER_PATHS)
+                        menuViewModel.onPathInListButtonClicked(
+                            pathId,
+                            itemButtonClickedType,
+                            PathsMenuType.OUTER_PATHS
+                        )
                     },
                     itemShortTapListener = { pathId ->
                         menuViewModel.onPathInListShortTap(pathId, PathsMenuType.OUTER_PATHS)
@@ -431,7 +456,8 @@ class MainMapFragment : Fragment() {
                 lastCreatedPathIdRepository
             )
 
-            val pathDistancesInMetersRepository = PathDistancesInMetersRepository(LocationsDistanceRepository())
+            val pathDistancesInMetersRepository =
+                PathDistancesInMetersRepository(LocationsDistanceRepository())
 
             val pathRedactor = LocalPathRedactor(
                 databasePathRepository,
@@ -513,15 +539,25 @@ class MainMapFragment : Fragment() {
 
                 observeNewPathsInfoList.onEach { newPathsInfoListEvent ->
                     when (newPathsInfoListEvent.pathsMenuType) {
-                        PathsMenuType.MY_PATHS -> myPathsMenu.setPathsInfoItems(newPathsInfoListEvent.newPathInfoList)
-                        PathsMenuType.OUTER_PATHS -> outerPathsMenu.setPathsInfoItems(newPathsInfoListEvent.newPathInfoList)
+                        PathsMenuType.MY_PATHS -> myPathsMenu.setPathsInfoItems(
+                            newPathsInfoListEvent.newPathInfoList
+                        )
+
+                        PathsMenuType.OUTER_PATHS -> outerPathsMenu.setPathsInfoItems(
+                            newPathsInfoListEvent.newPathInfoList
+                        )
                     }
                 }.launchIn(lifecycleScope)
 
                 observeNewPathInfoListItemState.onEach { newPathInfoStateEvent ->
                     when (newPathInfoStateEvent.pathsMenuType) {
-                        PathsMenuType.MY_PATHS -> myPathsMenu.syncPathInfoItemState(newPathInfoStateEvent.pathInfoItemState)
-                        PathsMenuType.OUTER_PATHS -> outerPathsMenu.syncPathInfoItemState(newPathInfoStateEvent.pathInfoItemState)
+                        PathsMenuType.MY_PATHS -> myPathsMenu.syncPathInfoItemState(
+                            newPathInfoStateEvent.pathInfoItemState
+                        )
+
+                        PathsMenuType.OUTER_PATHS -> outerPathsMenu.syncPathInfoItemState(
+                            newPathInfoStateEvent.pathInfoItemState
+                        )
                     }
                 }.launchIn(lifecycleScope)
 
@@ -531,13 +567,23 @@ class MainMapFragment : Fragment() {
                         type = "application/*"
                         putExtra(Intent.EXTRA_STREAM, sharedFileUri)
                     }
-                    startActivity(Intent.createChooser(sendIntent, getString(R.string.share_file_title)))
+                    startActivity(
+                        Intent.createChooser(
+                            sendIntent,
+                            getString(R.string.share_file_title)
+                        )
+                    )
                 }.launchIn(lifecycleScope)
 
                 observeDeletePathInfoItemChannel.onEach { deletePathInfoItemEvent ->
                     when (deletePathInfoItemEvent.pathsMenuType) {
-                        PathsMenuType.MY_PATHS -> myPathsMenu.deletePathInfoItem(deletePathInfoItemEvent.pathsToDelete)
-                        PathsMenuType.OUTER_PATHS -> outerPathsMenu.deletePathInfoItem(deletePathInfoItemEvent.pathsToDelete)
+                        PathsMenuType.MY_PATHS -> myPathsMenu.deletePathInfoItem(
+                            deletePathInfoItemEvent.pathsToDelete
+                        )
+
+                        PathsMenuType.OUTER_PATHS -> outerPathsMenu.deletePathInfoItem(
+                            deletePathInfoItemEvent.pathsToDelete
+                        )
                     }
                 }.launchIn(lifecycleScope)
 
@@ -580,7 +626,10 @@ class MainMapFragment : Fragment() {
                             )
                         ),
                         writingPathStatesRepository = writingPathStatesRepository,
-                        pathRatingRepository = PathRatingRepository(sharedPreferences),
+                        pathRatingUseCase = PathRatingUseCase(
+                            PathRatingRepository(sharedPreferences),
+                            VibrationRepository(requireContext().applicationContext)
+                        ),
                         userRotationRepository = UserRotationRepository(
                             requireActivity().getSystemService(
                                 SENSOR_SERVICE
@@ -588,16 +637,13 @@ class MainMapFragment : Fragment() {
                             lifecycleScope
                         ),
                         userInfoRepository = UserInfoRepository(sharedPreferences),
+                        resourceManager = ResourceManager(requireContext().applicationContext),
                         owner = this,
                         bundle = bundle
                     )
                 )[MapViewModel::class.java].apply {
-                    observePermissionsDeniedResult.onEach {
-                        showPermissionsDeniedError()
-                    }.launchIn(lifecycleScope)
-
-                    observeNewPathSegment.onEach { pathSegment ->
-                        paintNewCurrentPathSegment(pathSegment)
+                    observeNewCurrentPathSegments.onEach { pathSegments ->
+                        paintNewCurrentPathSegments(pathSegments)
                     }.launchIn(lifecycleScope)
 
                     observeNewCommonPath.onEach { pathList ->
@@ -670,6 +716,10 @@ class MainMapFragment : Fragment() {
                         showConfirmDialog(confirmDialogInfo)
                     }.launchIn(lifecycleScope)
 
+                    observeNewUserError.onEach { errorMessage ->
+                        showSnackbar(errorMessage)
+                    }.launchIn(lifecycleScope)
+
                     observeNewUserRotation().onEach { newUserRotation ->
                         userLocationOverlay.setRotation(newUserRotation)
                         refreshMapNow()
@@ -678,6 +728,10 @@ class MainMapFragment : Fragment() {
                     onInitFinish()
                 }
         }
+    }
+
+    private fun showSnackbar(message: String, duration: Int = Snackbar.LENGTH_SHORT) {
+        Snackbar.make(mapView, message, duration).show()
     }
 
     private fun showConfirmDialog(confirmDialogType: ConfirmDialogType) {
@@ -866,7 +920,7 @@ class MainMapFragment : Fragment() {
         ratingButtonStar: ImageView,
         @ColorInt selectedColor: Int,
         @ColorInt unselectedColor: Int,
-        selected: Boolean
+        selected: Boolean,
     ) {
         ratingButton.setCardBackgroundColor(if (selected) selectedColor else unselectedColor)
         ImageViewCompat.setImageTintList(
@@ -876,19 +930,11 @@ class MainMapFragment : Fragment() {
     }
 
     private fun clearMap() {
+        currentPathPolyline = null
+        currentPathPolylines.clear()
         mapView.overlays.clear()
         showingPathsPolylines.clear()
         addUserLocationTracker()
-    }
-
-    private fun showPermissionsDeniedError() {
-        if (context != null) {
-            Toast.makeText(
-                context,
-                getString(R.string.permissions_denied),
-                Toast.LENGTH_LONG
-            ).show()
-        }
     }
 
     private fun paintNewCommonPaths(pathList: List<MapCommonPath>, color: Int) {
@@ -958,21 +1004,32 @@ class MainMapFragment : Fragment() {
         }
     }
 
-    private fun paintNewCurrentPathSegment(pathSegment: MapPathSegment) {
-        if (currentPathPolyline == null) {
-            currentPathPolyline = createRatingSegmentPolyline(pathSegment)
-            lastCurrentPathRating = pathSegment.rating
-            mapView.overlays.add(currentPathPolyline)
-            currentPathPolylines.add(currentPathPolyline!!)
-        } else {
-            if (pathSegment.rating == lastCurrentPathRating) {
-                currentPathPolyline!!.addPoint(pathSegment.finishPoint.toGeoPoint())
+    private fun paintNewCurrentPathSegments(pathSegments: List<MapPathSegment>) {
+        val polylinesToAdd = ArrayList<Polyline>()
+        var currentPathPolyline = currentPathPolyline
+        var lastCurrentPathRating = lastCurrentPathRating
+        for (segment in pathSegments) {
+            if (currentPathPolyline == null) {
+                currentPathPolyline = createRatingSegmentPolyline(segment)
+                lastCurrentPathRating = segment.rating
+                polylinesToAdd.add(currentPathPolyline)
             } else {
-                currentPathPolyline = createRatingSegmentPolyline(pathSegment)
-                lastCurrentPathRating = pathSegment.rating
-                mapView.overlays.add(currentPathPolyline)
-                currentPathPolylines.add(currentPathPolyline!!)
+                if (segment.rating == lastCurrentPathRating) {
+                    currentPathPolyline.addPoint(segment.finishPoint.toGeoPoint())
+                } else {
+                    currentPathPolyline = createRatingSegmentPolyline(segment)
+                    lastCurrentPathRating = segment.rating
+                    polylinesToAdd.add(currentPathPolyline)
+                }
             }
+        }
+
+        this.currentPathPolyline = currentPathPolyline
+        this.lastCurrentPathRating = lastCurrentPathRating
+
+        if (polylinesToAdd.isNotEmpty()) {
+            mapView.overlays.addAll(polylinesToAdd)
+            currentPathPolylines.addAll(polylinesToAdd)
         }
 
         refreshMapNow()

@@ -3,7 +3,6 @@ package ru.lobotino.walktraveller
 import android.app.Application
 import android.os.StrictMode
 import android.preference.PreferenceManager
-import com.facebook.stetho.Stetho
 import org.osmdroid.config.Configuration
 
 class App : Application() {
@@ -20,6 +19,5 @@ class App : Application() {
             applicationContext,
             PreferenceManager.getDefaultSharedPreferences(applicationContext)
         )
-        Stetho.initializeWithDefaults(this)
     }
 }
