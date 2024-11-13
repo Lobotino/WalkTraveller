@@ -128,7 +128,7 @@ class MapViewModel(
         if (geoPermissionsUseCase.isGeoPermissionsGranted()) {
             regularLocationUpdateStateFlow.tryEmit(true)
             updateCurrentMapCenterToUserLocation()
-            checkNotificationPermissions()
+            requestNotificationPermissions()
         } else {
             newConfirmDialogChannel.trySend(
                 ConfirmDialogType.GeoLocationPermissionRequired
@@ -136,9 +136,9 @@ class MapViewModel(
         }
     }
 
-    private fun checkNotificationPermissions() {
+    private fun requestNotificationPermissions() {
         notificationsPermissionsUseCase.requestPermissions(someDenied = {
-            showUserError(resourceManager.getString(R.string.error_permissions_denied))
+            showUserError(resourceManager.getString(R.string.error_notifications_permissions_denied))
         })
     }
 
@@ -219,16 +219,19 @@ class MapViewModel(
             )
             return
         }
-
-        clearMap()
-        writingPathStatesRepository.setWritingPathNow(true)
-        writingPathNowState.tryEmit(true)
-        mapUiStateFlow.update { uiState ->
-            uiState.copy(
-                isPathFinished = false,
-                newRating = pathRatingUseCase.getCurrentRating()
-            )
-        }
+        notificationsPermissionsUseCase.requestPermissions(allGranted = {
+            clearMap()
+            writingPathStatesRepository.setWritingPathNow(true)
+            writingPathNowState.tryEmit(true)
+            mapUiStateFlow.update { uiState ->
+                uiState.copy(
+                    isPathFinished = false,
+                    newRating = pathRatingUseCase.getCurrentRating()
+                )
+            }
+        }, someDenied = {
+            showUserError(resourceManager.getString(R.string.error_notifications_permissions_denied))
+        })
     }
 
     fun onStopPathButtonClicked() {
@@ -456,7 +459,7 @@ class MapViewModel(
                 showUserError(resourceManager.getString(R.string.error_permissions_denied))
             }
         })
-        checkNotificationPermissions()
+        requestNotificationPermissions()
     }
 
     fun onBottomMenuStateChange(newBottomMenuState: BottomMenuState) {
