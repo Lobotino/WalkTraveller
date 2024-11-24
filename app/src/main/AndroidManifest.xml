@@ -63,7 +63,13 @@
         </activity>
 
         <service
-            android:name=".services.LocationUpdatesService"
+            android:name=".services.WritingPathService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="location"/>
+
+        <service
+            android:name=".services.UserLocationUpdatesService"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="location"/>

@@ -16,6 +16,7 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.gms.location.LocationServices
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -39,25 +40,13 @@ import ru.lobotino.walktraveller.usecases.PathWritingNowNotificationInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.ICurrentPathInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.ILocationMediator
 import ru.lobotino.walktraveller.usecases.interfaces.INotificationInteractor
+import ru.lobotino.walktraveller.utils.APPLICATION_ID
 import ru.lobotino.walktraveller.utils.ext.toMapPoint
 
-class LocationUpdatesService : Service() {
-
-    companion object {
-        private val TAG = LocationUpdatesService::class.java.simpleName
-        private const val APPLICATION_ID = BuildConfig.APPLICATION_ID
-        private const val CHANNEL_ID = "walk_traveller_notifications_channel"
-        const val EXTRA_LOCATION = "$APPLICATION_ID.location"
-        const val ACTION_BROADCAST = "$APPLICATION_ID.broadcast"
-        const val ACTION_START_LOCATION_UPDATES = "$APPLICATION_ID.start_location_updates"
-        const val ACTION_STOP_LOCATION_UPDATES = "$APPLICATION_ID.stop_location_updates"
-        const val ACTION_FINISH_WRITING_PATH = "$APPLICATION_ID.finish_writing_path"
-    }
+class WritingPathService : Service() {
 
     private val binder: IBinder = LocationUpdatesBinder()
     private lateinit var sharedPreferences: SharedPreferences
-
-    private var lastLocation: Location? = null
 
     private lateinit var writingPathStatesRepository: IWritingPathStatesRepository
     private lateinit var locationUpdatesRepository: ILocationUpdatesRepository
@@ -136,26 +125,17 @@ class LocationUpdatesService : Service() {
     }
 
     private fun initLocationMediator() {
-        locationMediator = LocationMediator(lastLocation)
+        locationMediator = LocationMediator()
     }
 
     private fun onNewLocation(newLocation: Location) {
         Log.d(TAG, "New location: ${newLocation.latitude}, ${newLocation.longitude}")
         locationMediator.onNewLocation(newLocation) { location ->
-            lastLocation = location
-
             if (writingPathStatesRepository.isWritingPathNow()) {
-                CoroutineScope(Dispatchers.Default).launch {
+                MainScope().launch {
                     pathInteractor.addNewPathPoint(location.toMapPoint())
                 }
             }
-
-            LocalBroadcastManager.getInstance(applicationContext)
-                .sendBroadcast(
-                    Intent(ACTION_BROADCAST).apply {
-                        putExtra(EXTRA_LOCATION, location)
-                    }
-                )
         }
     }
 
@@ -174,19 +154,7 @@ class LocationUpdatesService : Service() {
         intent?.action?.let { action ->
             Log.d(TAG, action)
             when (action) {
-                ACTION_START_LOCATION_UPDATES -> {
-                    startLocationUpdates()
-                }
-
-                ACTION_STOP_LOCATION_UPDATES -> {
-                    stopLocationUpdates()
-                    stopSelf()
-                }
-
-                ACTION_FINISH_WRITING_PATH -> {
-                    finishWritingPath()
-                }
-
+                ACTION_START_WRITING_PATH -> startWritingPath()
                 else -> {}
             }
         }
@@ -205,38 +173,31 @@ class LocationUpdatesService : Service() {
     }
 
     override fun onDestroy() {
+        Log.d(TAG, "onDestroy")
         locationUpdatesRepository.stopLocationUpdates()
         super.onDestroy()
     }
 
-    fun startLocationUpdates() {
-        Log.i(TAG, "Requesting location updates")
+    private fun startWritingPath() {
         locationUpdatesRepository.startLocationUpdates()
-    }
-
-    fun stopLocationUpdates() {
-        Log.i(TAG, "Removing location updates")
-        try {
-            locationUpdatesRepository.stopLocationUpdates()
-        } catch (unlikely: SecurityException) {
-            Log.e(
-                TAG,
-                "Lost location permission. Could not remove updates. $unlikely"
-            )
-        }
-    }
-
-    fun startWritingPath() {
         startForegroundNotification()
     }
 
     fun finishWritingPath() {
         pathInteractor.finishCurrentPath()
+        locationUpdatesRepository.stopLocationUpdates()
         stopForegroundNotification()
+        stopSelf()
     }
 
     inner class LocationUpdatesBinder : Binder() {
-        val locationUpdatesService: LocationUpdatesService
-            get() = this@LocationUpdatesService
+        val writingPathService: WritingPathService
+            get() = this@WritingPathService
+    }
+
+    companion object {
+        private val TAG = WritingPathService::class.java.simpleName
+        private const val CHANNEL_ID = "walk_traveller_notifications_channel"
+        const val ACTION_START_WRITING_PATH = "$APPLICATION_ID.start_writing_path"
     }
 }

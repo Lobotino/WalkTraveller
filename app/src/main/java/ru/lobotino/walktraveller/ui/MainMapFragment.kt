@@ -90,10 +90,13 @@ import ru.lobotino.walktraveller.repositories.permissions.AccessibilityPermissio
 import ru.lobotino.walktraveller.repositories.permissions.ExternalStoragePermissionsRepository
 import ru.lobotino.walktraveller.repositories.permissions.GeoPermissionsRepository
 import ru.lobotino.walktraveller.repositories.permissions.NotificationsPermissionsRepository
-import ru.lobotino.walktraveller.services.LocationUpdatesService
-import ru.lobotino.walktraveller.services.LocationUpdatesService.Companion.ACTION_START_LOCATION_UPDATES
-import ru.lobotino.walktraveller.services.LocationUpdatesService.Companion.EXTRA_LOCATION
-import ru.lobotino.walktraveller.services.VolumeKeysDetectorService
+import ru.lobotino.walktraveller.services.UserLocationUpdatesService
+import ru.lobotino.walktraveller.services.UserLocationUpdatesService.Companion.ACTION_BROADCAST
+import ru.lobotino.walktraveller.services.UserLocationUpdatesService.Companion.ACTION_START_LOCATION_UPDATES
+import ru.lobotino.walktraveller.services.UserLocationUpdatesService.Companion.EXTRA_LOCATION
+import ru.lobotino.walktraveller.services.VolumeKeysDetectorService.Companion.RATING_CHANGES_BROADCAST
+import ru.lobotino.walktraveller.services.WritingPathService
+import ru.lobotino.walktraveller.services.WritingPathService.Companion.ACTION_START_WRITING_PATH
 import ru.lobotino.walktraveller.ui.dialog.DeleteConfirmDialog
 import ru.lobotino.walktraveller.ui.dialog.DeleteMultiplePathsConfirmDialog
 import ru.lobotino.walktraveller.ui.dialog.GeoLocationRequiredDialog
@@ -185,7 +188,8 @@ class MainMapFragment : Fragment() {
     private var currentPathPolyline: Polyline? = null
     private var lastCurrentPathRating: SegmentRating? = null
 
-    private var locationUpdatesService: LocationUpdatesService? = null
+    private var writingPathService: WritingPathService? = null
+    private var userLocationUpdatesService: UserLocationUpdatesService? = null
 
     private var stopAcceptProgressJob: Job? = null
 
@@ -193,12 +197,27 @@ class MainMapFragment : Fragment() {
 
     private val serviceConnectionListener: ServiceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName, service: IBinder) {
-            locationUpdatesService =
-                (service as LocationUpdatesService.LocationUpdatesBinder).locationUpdatesService
+            when (service) {
+                is WritingPathService.LocationUpdatesBinder -> {
+                    writingPathService = service.writingPathService
+                }
+
+                is UserLocationUpdatesService.LocationUpdatesBinder -> {
+                    userLocationUpdatesService = service.locationUpdatesService
+                }
+            }
         }
 
         override fun onServiceDisconnected(name: ComponentName) {
-            locationUpdatesService = null
+            when (name.className) {
+                WritingPathService.Companion::class.java.name -> {
+                    writingPathService = null
+                }
+
+                UserLocationUpdatesService.Companion::class.java.name -> {
+                    userLocationUpdatesService = null
+                }
+            }
         }
     }
 
@@ -780,10 +799,16 @@ class MainMapFragment : Fragment() {
     }
 
     private fun sendStartLocationUpdatesAction() {
-        locationUpdatesService?.startLocationUpdates() ?: activity?.let { activity ->
-            startForegroundService(
-                activity,
-                Intent(activity, LocationUpdatesService::class.java).apply {
+        val activity = activity ?: return
+        if(userLocationUpdatesService == null) {
+            activity.startService(
+                Intent(activity, UserLocationUpdatesService::class.java).apply {
+                    action = ACTION_START_LOCATION_UPDATES
+                }
+            )
+        } else {
+            activity.sendBroadcast(
+                Intent(activity, UserLocationUpdatesService::class.java).apply {
                     action = ACTION_START_LOCATION_UPDATES
                 }
             )
@@ -791,24 +816,42 @@ class MainMapFragment : Fragment() {
     }
 
     private fun sendStopLocationUpdatesAction() {
-        locationUpdatesService?.stopLocationUpdates()
+        val activity = activity ?: return
+        activity.stopService(
+            Intent(activity, UserLocationUpdatesService::class.java)
+        )
+        userLocationUpdatesService = null
     }
 
     private fun sendStartCurrentPathAction() {
-        locationUpdatesService?.startWritingPath()
+        val activity = activity ?: return
+        startForegroundService(
+            activity,
+            Intent(activity, WritingPathService::class.java).apply {
+                action = ACTION_START_WRITING_PATH
+            }
+        )
     }
 
     private fun sendFinishCurrentPathAction() {
-        locationUpdatesService?.finishWritingPath()
+        writingPathService?.finishWritingPath()
+        writingPathService = null
     }
 
     override fun onStart() {
-        activity?.bindService(
-            Intent(activity, LocationUpdatesService::class.java),
-            serviceConnectionListener,
-            Context.BIND_AUTO_CREATE
-        )
         super.onStart()
+        activity?.let {
+            it.bindService(
+                Intent(activity, WritingPathService::class.java),
+                serviceConnectionListener,
+                Context.BIND_IMPORTANT
+            )
+            it.bindService(
+                Intent(activity, UserLocationUpdatesService::class.java),
+                serviceConnectionListener,
+                Context.BIND_ADJUST_WITH_ACTIVITY
+            )
+        }
     }
 
     override fun onStop() {
@@ -817,18 +860,20 @@ class MainMapFragment : Fragment() {
     }
 
     override fun onResume() {
+        super.onResume()
         mapView.onResume()
         mapViewModel.onResume()
         menuViewModel.onResume(getExtraData())
-        LocalBroadcastManager.getInstance(requireContext()).registerReceiver(
-            locationChangeReceiver,
-            IntentFilter(LocationUpdatesService.ACTION_BROADCAST)
-        )
-        LocalBroadcastManager.getInstance(requireContext()).registerReceiver(
-            ratingChangeReceiver,
-            IntentFilter(VolumeKeysDetectorService.RATING_CHANGES_BROADCAST)
-        )
-        super.onResume()
+        LocalBroadcastManager.getInstance(requireContext()).apply {
+            registerReceiver(
+                locationChangeReceiver,
+                IntentFilter(ACTION_BROADCAST)
+            )
+            registerReceiver(
+                ratingChangeReceiver,
+                IntentFilter(RATING_CHANGES_BROADCAST)
+            )
+        }
     }
 
     private fun getExtraData(): Uri? {
@@ -845,6 +890,7 @@ class MainMapFragment : Fragment() {
         LocalBroadcastManager
             .getInstance(requireContext())
             .unregisterReceiver(locationChangeReceiver)
+        sendStopLocationUpdatesAction()
         super.onPause()
     }
 

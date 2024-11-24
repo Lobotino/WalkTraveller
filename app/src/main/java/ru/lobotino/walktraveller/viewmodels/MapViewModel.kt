@@ -182,9 +182,7 @@ class MapViewModel(
     fun onPause() {
         userRotationRepository.stopTrackUserRotation()
         updatingYetUnpaintedPaths = false
-        if (!writingPathStatesRepository.isWritingPathNow()) {
-            regularLocationUpdateStateFlow.tryEmit(false)
-        }
+        regularLocationUpdateStateFlow.tryEmit(false)
     }
 
     fun onNewLocationReceive(location: Location) {
