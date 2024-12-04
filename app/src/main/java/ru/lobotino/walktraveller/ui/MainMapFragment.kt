@@ -59,6 +59,7 @@ import ru.lobotino.walktraveller.model.SegmentRating.GOOD
 import ru.lobotino.walktraveller.model.SegmentRating.NONE
 import ru.lobotino.walktraveller.model.SegmentRating.NORMAL
 import ru.lobotino.walktraveller.model.SegmentRating.PERFECT
+import ru.lobotino.walktraveller.model.TileSource
 import ru.lobotino.walktraveller.model.map.MapCommonPath
 import ru.lobotino.walktraveller.model.map.MapPathSegment
 import ru.lobotino.walktraveller.model.map.MapRatingPath
@@ -74,6 +75,7 @@ import ru.lobotino.walktraveller.repositories.PathDistancesInMetersRepository
 import ru.lobotino.walktraveller.repositories.PathRatingRepository
 import ru.lobotino.walktraveller.repositories.PathsLoaderRepositoryV1
 import ru.lobotino.walktraveller.repositories.PathsLoaderVersionHelper
+import ru.lobotino.walktraveller.repositories.TileSourceRepository
 import ru.lobotino.walktraveller.repositories.UserInfoRepository
 import ru.lobotino.walktraveller.repositories.UserRotationRepository
 import ru.lobotino.walktraveller.repositories.VibrationRepository
@@ -110,6 +112,7 @@ import ru.lobotino.walktraveller.usecases.LocalPathRedactor
 import ru.lobotino.walktraveller.usecases.MapStateInteractor
 import ru.lobotino.walktraveller.usecases.OuterPathsInteractor
 import ru.lobotino.walktraveller.usecases.PathRatingUseCase
+import ru.lobotino.walktraveller.usecases.TileSourceInteractor
 import ru.lobotino.walktraveller.usecases.UserLocationInteractor
 import ru.lobotino.walktraveller.usecases.permissions.ExternalStoragePermissionsUseCase
 import ru.lobotino.walktraveller.usecases.permissions.GeoPermissionsUseCase
@@ -262,7 +265,6 @@ class MainMapFragment : Fragment() {
             val mapViewContainer = view.findViewById<FrameLayout>(R.id.map_view_container)
 
             mapView = MapView(context).apply {
-                setTileSource(TileSourceFactory.MAPNIK)
                 controller.setZoom(DEFAULT_COMFORT_ZOOM)
                 zoomController.setVisibility(CustomZoomButtonsController.Visibility.NEVER)
                 setMultiTouchControls(true)
@@ -616,6 +618,11 @@ class MainMapFragment : Fragment() {
                                 sharedPreferences
                             )
                         ),
+                        tileSourceInteractor = TileSourceInteractor(
+                            TileSourceRepository(
+                                sharedPreferences
+                            )
+                        ),
                         writingPathStatesRepository = writingPathStatesRepository,
                         pathRatingUseCase = PathRatingUseCase(
                             PathRatingRepository(sharedPreferences),
@@ -711,6 +718,10 @@ class MainMapFragment : Fragment() {
                         showSnackbar(errorMessage)
                     }.launchIn(viewLifecycleOwner.lifecycleScope)
 
+                    observeTileSourceState.onEach { tileSource ->
+                        syncTileSource(tileSource)
+                    }.launchIn(viewLifecycleOwner.lifecycleScope)
+
                     observeNewUserRotation().onEach { newUserRotation ->
                         userLocationOverlay.setRotation(newUserRotation)
                         refreshMapNow()
@@ -723,6 +734,13 @@ class MainMapFragment : Fragment() {
 
     private fun showSnackbar(message: String, duration: Int = Snackbar.LENGTH_SHORT) {
         Snackbar.make(mapView, message, duration).show()
+    }
+
+    private fun syncTileSource(tileSource: TileSource) {
+        when (tileSource) {
+            is TileSource.OSMTileSource -> mapView.setTileSource(tileSource.tileSource)
+            //TODO 2gis, yandex, google...
+        }
     }
 
     private fun showConfirmDialog(confirmDialogType: ConfirmDialogType) {

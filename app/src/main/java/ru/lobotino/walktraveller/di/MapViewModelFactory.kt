@@ -14,6 +14,7 @@ import ru.lobotino.walktraveller.usecases.interfaces.IMapPathsInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IMapStateInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IPathRatingUseCase
 import ru.lobotino.walktraveller.usecases.interfaces.IPermissionsUseCase
+import ru.lobotino.walktraveller.usecases.interfaces.ITileSourceInteractor
 import ru.lobotino.walktraveller.usecases.permissions.GeoPermissionsUseCase
 import ru.lobotino.walktraveller.utils.IResourceManager
 import ru.lobotino.walktraveller.viewmodels.MapViewModel
@@ -26,6 +27,7 @@ class MapViewModelFactory(
     private val userLocationInteractor: IUserLocationInteractor,
     private val mapPathsInteractor: IMapPathsInteractor,
     private val mapStateInteractor: IMapStateInteractor,
+    private val tileSourceInteractor: ITileSourceInteractor,
     private val writingPathStatesRepository: IWritingPathStatesRepository,
     private val pathRatingUseCase: IPathRatingUseCase,
     private val userRotationRepository: IUserRotationRepository,
@@ -50,6 +52,7 @@ class MapViewModelFactory(
                 userLocationInteractor,
                 mapPathsInteractor,
                 mapStateInteractor,
+                tileSourceInteractor,
                 writingPathStatesRepository,
                 pathRatingUseCase,
                 userRotationRepository,

@@ -6,10 +6,12 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.savedstate.SavedStateRegistryOwner
 import ru.lobotino.walktraveller.repositories.interfaces.IOptimizePathsSettingsRepository
+import ru.lobotino.walktraveller.usecases.interfaces.ITileSourceInteractor
 import ru.lobotino.walktraveller.viewmodels.SettingsViewModel
 
 class SettingsViewModelFactory(
     private val optimizePathsSettingsRepository: IOptimizePathsSettingsRepository,
+    private val tileSourceInteractor: ITileSourceInteractor,
     owner: SavedStateRegistryOwner,
     bundle: Bundle?
 ) : AbstractSavedStateViewModelFactory(owner, bundle) {
@@ -22,7 +24,8 @@ class SettingsViewModelFactory(
     ): T {
         return when (modelClass) {
             SettingsViewModel::class.java -> SettingsViewModel(
-                optimizePathsSettingsRepository
+                optimizePathsSettingsRepository,
+                tileSourceInteractor
             ) as T
 
             else -> throw IllegalArgumentException("Unknown ViewModel class")

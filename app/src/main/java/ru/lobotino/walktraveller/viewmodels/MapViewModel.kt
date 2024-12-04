@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import ru.lobotino.walktraveller.R
 import ru.lobotino.walktraveller.model.SegmentRating
+import ru.lobotino.walktraveller.model.TileSource
 import ru.lobotino.walktraveller.model.map.MapCommonPath
 import ru.lobotino.walktraveller.model.map.MapPathSegment
 import ru.lobotino.walktraveller.model.map.MapPoint
@@ -35,6 +36,7 @@ import ru.lobotino.walktraveller.usecases.interfaces.IMapPathsInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IMapStateInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IPathRatingUseCase
 import ru.lobotino.walktraveller.usecases.interfaces.IPermissionsUseCase
+import ru.lobotino.walktraveller.usecases.interfaces.ITileSourceInteractor
 import ru.lobotino.walktraveller.usecases.permissions.GeoPermissionsUseCase
 import ru.lobotino.walktraveller.utils.IResourceManager
 import ru.lobotino.walktraveller.utils.ext.toMapPoint
@@ -47,6 +49,7 @@ class MapViewModel(
     private val userLocationInteractor: IUserLocationInteractor,
     private val mapPathsInteractor: IMapPathsInteractor,
     private val mapStateInteractor: IMapStateInteractor,
+    private val tileSourceInteractor: ITileSourceInteractor,
     private val writingPathStatesRepository: IWritingPathStatesRepository,
     private val pathRatingUseCase: IPathRatingUseCase,
     private val userRotationRepository: IUserRotationRepository,
@@ -89,6 +92,8 @@ class MapViewModel(
     //Enable (true) or disable (false) location updates
     private val regularLocationUpdateActionChannel = Channel<Boolean>()
 
+    private val tileSourceStateFlow = MutableStateFlow(tileSourceInteractor.getCurrentTileSource())
+
     val observeNewCurrentPathSegments: Flow<List<MapPathSegment>> = newCurrentPathSegmentsFlow
     val observeNewCommonPath: Flow<List<MapCommonPath>> = newCommonPathFlow
     val observeNewRatingPath: Flow<List<MapRatingPath>> = newRatingPathFlow
@@ -101,6 +106,7 @@ class MapViewModel(
     val observeWritingPathNow: Flow<Boolean> = writingPathNowState
     val observeNewConfirmDialog: Flow<ConfirmDialogType> = newConfirmDialogChannel.consumeAsFlow()
     val observeNewUserError: Flow<String> = userErrorChannel.consumeAsFlow()
+    val observeTileSourceState: Flow<TileSource> = tileSourceStateFlow
 
     private var isInitialized = false
     private var updatingYetUnpaintedPaths = false
@@ -166,8 +172,13 @@ class MapViewModel(
                 userRotationRepository.startTrackUserRotation()
             }
             syncRequestPermissionsState()
+            syncMapTileSet()
             updateNewPointsIfNeeded()
         }
+    }
+
+    private fun syncMapTileSet() {
+        tileSourceStateFlow.tryEmit(tileSourceInteractor.getCurrentTileSource())
     }
 
     fun onPause() {
