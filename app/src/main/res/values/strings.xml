@@ -48,7 +48,7 @@
     <string name="content_desc_rating_normal">Rating normal button</string>
     <string name="content_desc_rating_good">Rating good button</string>
     <string name="content_desc_rating_perfect">Rating perfect button</string>
-    <string name="content_desc_find_my_location_button">Find my location button</string>
+    <string name="content_desc_find_my_location_button">Find my location</string>
     <string name="content_desc_empty_paths_list_error_image">Empty outer paths list error image</string>
     <string name="content_desc_start_walk_button">Start walk button</string>
     <string name="content_desc_stop_walk_button">Stop walk button</string>
@@ -60,7 +60,7 @@
     <string name="content_desc_hide_selected_paths_button">Hide selected paths button</string>
     <string name="content_desc_share_paths_button">Share paths button</string>
     <string name="content_desc_delete_path_button">Delete path button</string>
-    <string name="content_desc_back_button">Back button</string>
+    <string name="content_desc_back_button">Back</string>
     <string name="content_desc_select_all_paths_button">Select all paths button</string>
     <string name="content_desc_show_selected_paths_button">Show selected paths button</string>
     <string name="content_desc_share_path_button">Share path button</string>

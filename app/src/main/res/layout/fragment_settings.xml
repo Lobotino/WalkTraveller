@@ -48,12 +48,13 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:stepSize="1"
-                android:valueTo="20"
-                android:valueFrom="2"
-                android:value="2"
                 android:layout_marginHorizontal="8dp"
-                android:layout_weight="1" />
+                android:layout_weight="1"
+                android:contentDescription="@string/settings_optimizing_paths_title"
+                android:stepSize="1"
+                android:value="2"
+                android:valueFrom="2"
+                android:valueTo="20" />
 
             <TextView
                 android:id="@+id/optimizing_less_points"

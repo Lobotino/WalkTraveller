@@ -214,7 +214,7 @@
     <string name="content_desc_rating_normal">Кнопка рейтинга «нормально»</string>
     <string name="content_desc_rating_good">Кнопка рейтинга «хорошо»</string>
     <string name="content_desc_rating_perfect">Кнопка рейтинга «прекрасно»</string>
-    <string name="content_desc_find_my_location_button">Кнопка «найти мою геолокацию»</string>
+    <string name="content_desc_find_my_location_button">найти мою геолокацию</string>
     <string name="content_desc_empty_paths_list_error_image">Изображение «пустой список путей на добавление»</string>
     <string name="content_desc_start_walk_button">Кнопка старта прогулки</string>
     <string name="content_desc_stop_walk_button">Кнопка окончания прогулки</string>
@@ -226,7 +226,7 @@
     <string name="content_desc_hide_selected_paths_button">Кнопка скрытия выбранных путей с карты</string>
     <string name="content_desc_share_paths_button">Кнопка «поделиться» для выбранных путей</string>
     <string name="content_desc_delete_path_button">Кнопка удаления пути</string>
-    <string name="content_desc_back_button">Кнопка «назад»</string>
+    <string name="content_desc_back_button">Назад</string>
     <string name="content_desc_select_all_paths_button">Кнопка «выбрать все»</string>
     <string name="content_desc_show_selected_paths_button">Кнопка «показать выбранные пути»</string>
     <string name="content_desc_share_path_button">Кнопка «поделиться»</string>
