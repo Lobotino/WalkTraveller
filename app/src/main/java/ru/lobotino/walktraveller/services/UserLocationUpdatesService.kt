@@ -88,7 +88,8 @@ class UserLocationUpdatesService : Service() {
         super.onDestroy()
     }
 
-    private fun startLocationUpdates() {
+    fun startLocationUpdates() {
+        //FIXME twice requesting after onResume
         Log.i(TAG, "Requesting location updates")
         locationUpdatesRepository.startLocationUpdates()
     }

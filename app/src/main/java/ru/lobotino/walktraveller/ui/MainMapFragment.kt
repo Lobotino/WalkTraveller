@@ -520,11 +520,11 @@ class MainMapFragment : Fragment() {
             )[PathsMenuViewModel::class.java].apply {
                 observeMyPathsMenuUiState.onEach { myPathsUiState ->
                     myPathsMenu.syncState(myPathsUiState)
-                }.launchIn(lifecycleScope)
+                }.launchIn(viewLifecycleOwner.lifecycleScope)
 
                 observeOuterPathsMenuUiState.onEach { outerPathsUiState ->
                     outerPathsMenu.syncState(outerPathsUiState)
-                }.launchIn(lifecycleScope)
+                }.launchIn(viewLifecycleOwner.lifecycleScope)
 
                 observeNewMapEvent.onEach { mapEvent ->
                     when (mapEvent) {
@@ -556,7 +556,7 @@ class MainMapFragment : Fragment() {
                             mapViewModel.onBottomMenuStateChange(mapEvent.newBottomMenuState)
                         }
                     }
-                }.launchIn(lifecycleScope)
+                }.launchIn(viewLifecycleOwner.lifecycleScope)
 
                 observeNewPathsInfoList.onEach { newPathsInfoListEvent ->
                     when (newPathsInfoListEvent.pathsMenuType) {
@@ -568,7 +568,7 @@ class MainMapFragment : Fragment() {
                             newPathsInfoListEvent.newPathInfoList
                         )
                     }
-                }.launchIn(lifecycleScope)
+                }.launchIn(viewLifecycleOwner.lifecycleScope)
 
                 observeNewPathInfoListItemState.onEach { newPathInfoStateEvent ->
                     when (newPathInfoStateEvent.pathsMenuType) {
@@ -580,7 +580,7 @@ class MainMapFragment : Fragment() {
                             newPathInfoStateEvent.pathInfoItemState
                         )
                     }
-                }.launchIn(lifecycleScope)
+                }.launchIn(viewLifecycleOwner.lifecycleScope)
 
                 observeShareFileChannel.onEach { sharedFileUri ->
                     val sendIntent = Intent().apply {
@@ -594,7 +594,7 @@ class MainMapFragment : Fragment() {
                             getString(R.string.share_file_title)
                         )
                     )
-                }.launchIn(lifecycleScope)
+                }.launchIn(viewLifecycleOwner.lifecycleScope)
 
                 observeDeletePathInfoItemChannel.onEach { deletePathInfoItemEvent ->
                     when (deletePathInfoItemEvent.pathsMenuType) {
@@ -606,11 +606,11 @@ class MainMapFragment : Fragment() {
                             deletePathInfoItemEvent.pathsToDelete
                         )
                     }
-                }.launchIn(lifecycleScope)
+                }.launchIn(viewLifecycleOwner.lifecycleScope)
 
                 observeNewConfirmDialog.onEach { confirmDialogInfo ->
                     showConfirmDialog(confirmDialogInfo)
-                }.launchIn(lifecycleScope)
+                }.launchIn(viewLifecycleOwner.lifecycleScope)
             }
 
             mapViewModel =
@@ -655,7 +655,7 @@ class MainMapFragment : Fragment() {
                             requireActivity().getSystemService(
                                 SENSOR_SERVICE
                             ) as SensorManager,
-                            lifecycleScope
+                            viewLifecycleOwner.lifecycleScope
                         ),
                         userInfoRepository = UserInfoRepository(sharedPreferences),
                         resourceManager = ResourceManager(requireContext().applicationContext),
@@ -665,19 +665,19 @@ class MainMapFragment : Fragment() {
                 )[MapViewModel::class.java].apply {
                     observeNewCurrentPathSegments.onEach { pathSegments ->
                         paintNewCurrentPathSegments(pathSegments)
-                    }.launchIn(lifecycleScope)
+                    }.launchIn(viewLifecycleOwner.lifecycleScope)
 
                     observeNewCommonPath.onEach { pathList ->
                         paintNewCommonPaths(pathList, commonPathColor)
-                    }.launchIn(lifecycleScope)
+                    }.launchIn(viewLifecycleOwner.lifecycleScope)
 
                     observeNewRatingPath.onEach { pathList ->
                         paintNewRatingPaths(pathList)
-                    }.launchIn(lifecycleScope)
+                    }.launchIn(viewLifecycleOwner.lifecycleScope)
 
                     observeMapUiState.onEach { mapUiState ->
                         updateMapUiState(mapUiState)
-                    }.launchIn(lifecycleScope)
+                    }.launchIn(viewLifecycleOwner.lifecycleScope)
 
                     observeRegularLocationUpdate.onEach { needToUpdateLocation ->
                         if (needToUpdateLocation) {
@@ -685,7 +685,7 @@ class MainMapFragment : Fragment() {
                         } else {
                             sendStopLocationUpdatesAction()
                         }
-                    }.launchIn(lifecycleScope)
+                    }.launchIn(viewLifecycleOwner.lifecycleScope)
 
                     observeNewMapCenter.onEach { newMapCenter ->
                         mapView.controller?.let { mapViewController ->
@@ -694,7 +694,7 @@ class MainMapFragment : Fragment() {
                                 mapViewController.setZoom(DEFAULT_COMFORT_ZOOM)
                             }
                         }
-                    }.launchIn(lifecycleScope)
+                    }.launchIn(viewLifecycleOwner.lifecycleScope)
 
                     observeHidePath.onEach { pathsToHide ->
                         when (pathsToHide) {
@@ -710,12 +710,12 @@ class MainMapFragment : Fragment() {
                                 hidePathsList(pathsToHide.pathIds)
                             }
                         }
-                    }.launchIn(lifecycleScope)
+                    }.launchIn(viewLifecycleOwner.lifecycleScope)
 
                     observeNewCurrentUserLocation.onEach { newUserLocation ->
                         userLocationOverlay.setPosition(newUserLocation.toGeoPoint())
                         refreshMapNow()
-                    }.launchIn(lifecycleScope)
+                    }.launchIn(viewLifecycleOwner.lifecycleScope)
 
                     observeWritingPathNow.onEach { isWritingPathNow ->
                         if (isWritingPathNow) {
@@ -731,20 +731,20 @@ class MainMapFragment : Fragment() {
                             ratingButtonsHolder.visibility = GONE
                             ratingNoneButtonHolder.visibility = GONE
                         }
-                    }.launchIn(lifecycleScope)
+                    }.launchIn(viewLifecycleOwner.lifecycleScope)
 
                     observeNewConfirmDialog.onEach { confirmDialogInfo ->
                         showConfirmDialog(confirmDialogInfo)
-                    }.launchIn(lifecycleScope)
+                    }.launchIn(viewLifecycleOwner.lifecycleScope)
 
                     observeNewUserError.onEach { errorMessage ->
                         showSnackbar(errorMessage)
-                    }.launchIn(lifecycleScope)
+                    }.launchIn(viewLifecycleOwner.lifecycleScope)
 
                     observeNewUserRotation().onEach { newUserRotation ->
                         userLocationOverlay.setRotation(newUserRotation)
                         refreshMapNow()
-                    }.launchIn(lifecycleScope)
+                    }.launchIn(viewLifecycleOwner.lifecycleScope)
 
                     onInitFinish()
                 }
@@ -800,18 +800,13 @@ class MainMapFragment : Fragment() {
 
     private fun sendStartLocationUpdatesAction() {
         val activity = activity ?: return
-        if(userLocationUpdatesService == null) {
-            activity.startService(
-                Intent(activity, UserLocationUpdatesService::class.java).apply {
-                    action = ACTION_START_LOCATION_UPDATES
-                }
-            )
+        val userLocationUpdatesService = userLocationUpdatesService
+        if (userLocationUpdatesService == null) {
+            activity.startService(Intent(activity, UserLocationUpdatesService::class.java).apply {
+                action = ACTION_START_LOCATION_UPDATES
+            })
         } else {
-            activity.sendBroadcast(
-                Intent(activity, UserLocationUpdatesService::class.java).apply {
-                    action = ACTION_START_LOCATION_UPDATES
-                }
-            )
+            userLocationUpdatesService.startLocationUpdates()
         }
     }
 
@@ -890,7 +885,6 @@ class MainMapFragment : Fragment() {
         LocalBroadcastManager
             .getInstance(requireContext())
             .unregisterReceiver(locationChangeReceiver)
-        sendStopLocationUpdatesAction()
         super.onPause()
     }
 

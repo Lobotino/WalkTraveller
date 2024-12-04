@@ -67,7 +67,6 @@ class MapViewModel(
         )
 
     private val writingPathNowState = MutableStateFlow(false)
-    private val regularLocationUpdateStateFlow = MutableStateFlow(false)
 
     private val hidePathFlow =
         MutableSharedFlow<PathsToAction>(1, 0, BufferOverflow.DROP_OLDEST)
@@ -85,11 +84,15 @@ class MapViewModel(
     private val newConfirmDialogChannel = Channel<ConfirmDialogType>()
     private val userErrorChannel = Channel<String>()
 
+    //Enable (true) or disable (false) location updates
+    private val regularLocationUpdateActionChannel = Channel<Boolean>()
+
     val observeNewCurrentPathSegments: Flow<List<MapPathSegment>> = newCurrentPathSegmentsFlow
     val observeNewCommonPath: Flow<List<MapCommonPath>> = newCommonPathFlow
     val observeNewRatingPath: Flow<List<MapRatingPath>> = newRatingPathFlow
     val observeMapUiState: Flow<MapUiState> = mapUiStateFlow
-    val observeRegularLocationUpdate: Flow<Boolean> = regularLocationUpdateStateFlow
+    val observeRegularLocationUpdate: Flow<Boolean> =
+        regularLocationUpdateActionChannel.consumeAsFlow()
     val observeNewMapCenter: Flow<MapPoint> = newMapCenterFlow
     val observeHidePath: Flow<PathsToAction> = hidePathFlow
     val observeNewCurrentUserLocation: Flow<MapPoint> = newCurrentUserLocationFlow
@@ -110,36 +113,23 @@ class MapViewModel(
 
     fun onInitFinish() {
         setupMapCenterToLastSeenLocation()
-
         startBackgroundCachingPaths()
-
         checkGeoPermissions()
-
-        userRotationRepository.startTrackUserRotation()
-
         clearMap()
-
         syncWritingPathState()
-
         isInitialized = true
     }
 
     private fun checkGeoPermissions() {
         if (geoPermissionsUseCase.isGeoPermissionsGranted()) {
-            regularLocationUpdateStateFlow.tryEmit(true)
+            regularLocationUpdateActionChannel.trySend(true)
+            userRotationRepository.startTrackUserRotation()
             updateCurrentMapCenterToUserLocation()
-            requestNotificationPermissions()
         } else {
             newConfirmDialogChannel.trySend(
                 ConfirmDialogType.GeoLocationPermissionRequired
             )
         }
-    }
-
-    private fun requestNotificationPermissions() {
-        notificationsPermissionsUseCase.requestPermissions(someDenied = {
-            showUserError(resourceManager.getString(R.string.error_notifications_permissions_denied))
-        })
     }
 
     private fun needToAskVolumeButtonsPermissions(): Boolean {
@@ -168,21 +158,20 @@ class MapViewModel(
     }
 
     fun onResume() {
-        if (geoPermissionsUseCase.isGeoPermissionsGranted()) {
-            regularLocationUpdateStateFlow.tryEmit(true)
-        }
-
         if (isInitialized) {
+            if (geoPermissionsUseCase.isGeoPermissionsGranted()) {
+                regularLocationUpdateActionChannel.trySend(true)
+                userRotationRepository.startTrackUserRotation()
+            }
             syncRequestPermissionsState()
-            userRotationRepository.startTrackUserRotation()
             updateNewPointsIfNeeded()
         }
     }
 
     fun onPause() {
+        regularLocationUpdateActionChannel.trySend(false)
         userRotationRepository.stopTrackUserRotation()
         updatingYetUnpaintedPaths = false
-        regularLocationUpdateStateFlow.tryEmit(false)
     }
 
     fun onNewLocationReceive(location: Location) {
@@ -218,6 +207,7 @@ class MapViewModel(
             return
         }
         notificationsPermissionsUseCase.requestPermissions(allGranted = {
+            tryStartRegularLocationUpdates()
             clearMap()
             writingPathStatesRepository.setWritingPathNow(true)
             writingPathNowState.tryEmit(true)
@@ -229,7 +219,14 @@ class MapViewModel(
             }
         }, someDenied = {
             showUserError(resourceManager.getString(R.string.error_notifications_permissions_denied))
+            tryStartRegularLocationUpdates()
         })
+    }
+
+    private fun tryStartRegularLocationUpdates() {
+        if (geoPermissionsUseCase.isGeoPermissionsGranted()) {
+            regularLocationUpdateActionChannel.trySend(true)
+        }
     }
 
     fun onStopPathButtonClicked() {
@@ -363,13 +360,13 @@ class MapViewModel(
             } else {
                 geoPermissionsUseCase
                     .requestPermissions(
-                        {
-                            regularLocationUpdateStateFlow.tryEmit(true)
+                        allGranted = {
+                            regularLocationUpdateActionChannel.trySend(true)
                             updateCurrentMapCenterToUserLocation()
                         },
-                        {
+                        someDenied = {
                             if (geoPermissionsUseCase.isGeoPermissionsGranted()) {
-                                regularLocationUpdateStateFlow.tryEmit(true)
+                                regularLocationUpdateActionChannel.trySend(true)
                                 updateCurrentMapCenterToUserLocation()
                             } else {
                                 mapUiStateFlow.update { mapUiState ->
@@ -442,11 +439,11 @@ class MapViewModel(
 
     fun onLocationPermissionDialogConfirmed() {
         geoPermissionsUseCase.requestPermissions(allGranted = {
-            regularLocationUpdateStateFlow.tryEmit(true)
+            regularLocationUpdateActionChannel.trySend(true)
             updateCurrentMapCenterToUserLocation()
         }, someDenied = {
             if (geoPermissionsUseCase.isGeoPermissionsGranted()) {
-                regularLocationUpdateStateFlow.tryEmit(true)
+                regularLocationUpdateActionChannel.trySend(true)
                 updateCurrentMapCenterToUserLocation()
             } else {
                 mapUiStateFlow.update { mapUiState ->
@@ -457,7 +454,6 @@ class MapViewModel(
                 showUserError(resourceManager.getString(R.string.error_permissions_denied))
             }
         })
-        requestNotificationPermissions()
     }
 
     fun onBottomMenuStateChange(newBottomMenuState: BottomMenuState) {
