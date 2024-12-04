@@ -30,6 +30,7 @@ import ru.lobotino.walktraveller.ui.model.FindMyLocationButtonState
 import ru.lobotino.walktraveller.ui.model.MapUiState
 import ru.lobotino.walktraveller.ui.model.PathsToAction
 import ru.lobotino.walktraveller.usecases.IUserLocationInteractor
+import ru.lobotino.walktraveller.usecases.interfaces.IFinishPathWritingUseCase
 import ru.lobotino.walktraveller.usecases.interfaces.IMapPathsInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IMapStateInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IPathRatingUseCase
@@ -42,6 +43,7 @@ class MapViewModel(
     private val notificationsPermissionsUseCase: IPermissionsUseCase,
     private val volumeKeysListenerPermissionsUseCase: IPermissionsUseCase,
     private val geoPermissionsUseCase: GeoPermissionsUseCase,
+    private val finishPathWritingUseCase: IFinishPathWritingUseCase,
     private val userLocationInteractor: IUserLocationInteractor,
     private val mapPathsInteractor: IMapPathsInteractor,
     private val mapStateInteractor: IMapStateInteractor,
@@ -230,7 +232,7 @@ class MapViewModel(
     }
 
     fun onStopPathButtonClicked() {
-        writingPathStatesRepository.setWritingPathNow(false)
+        finishPathWritingUseCase.finishPathWriting()
         writingPathNowState.tryEmit(false)
         mapUiStateFlow.update { uiState ->
             uiState.copy(

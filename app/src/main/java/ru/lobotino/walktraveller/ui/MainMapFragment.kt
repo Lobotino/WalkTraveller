@@ -18,8 +18,6 @@ import android.os.Bundle
 import android.os.IBinder
 import android.util.ArrayMap
 import android.view.LayoutInflater
-import android.view.MotionEvent.ACTION_DOWN
-import android.view.MotionEvent.ACTION_UP
 import android.view.View
 import android.view.View.GONE
 import android.view.View.VISIBLE
@@ -39,14 +37,8 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.gms.location.LocationServices
 import com.google.android.material.progressindicator.CircularProgressIndicator
 import com.google.android.material.snackbar.Snackbar
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.osmdroid.events.MapListener
 import org.osmdroid.events.ScrollEvent
 import org.osmdroid.events.ZoomEvent
@@ -112,6 +104,7 @@ import ru.lobotino.walktraveller.ui.model.PathsToAction
 import ru.lobotino.walktraveller.ui.view.FindMyLocationButton
 import ru.lobotino.walktraveller.ui.view.MyPathsMenuView
 import ru.lobotino.walktraveller.ui.view.OuterPathsMenuView
+import ru.lobotino.walktraveller.usecases.FinishPathWritingUseCase
 import ru.lobotino.walktraveller.usecases.LocalMapPathsInteractor
 import ru.lobotino.walktraveller.usecases.LocalPathRedactor
 import ru.lobotino.walktraveller.usecases.MapStateInteractor
@@ -190,8 +183,6 @@ class MainMapFragment : Fragment() {
 
     private var writingPathService: WritingPathService? = null
     private var userLocationUpdatesService: UserLocationUpdatesService? = null
-
-    private var stopAcceptProgressJob: Job? = null
 
     private lateinit var sharedPreferences: SharedPreferences
 
@@ -331,34 +322,7 @@ class MainMapFragment : Fragment() {
 
             walkStopAcceptProgress = view.findViewById(R.id.walk_stop_accept_progress)
 
-            walkStopButton = view.findViewById<CardView>(R.id.walk_stop_button)
-                .apply {
-                    setOnTouchListener { _, event ->
-                        when (event.action) {
-                            ACTION_DOWN -> {
-                                isPressed = true
-                                walkStopAcceptProgressStart {
-                                    isPressed = false
-                                    performClick()
-                                }
-                                true
-                            }
-
-                            ACTION_UP -> {
-                                tryCancelWalkStopAcceptProgress().also { canceled ->
-                                    if (canceled) {
-                                        isPressed = false
-                                    }
-                                }
-                                true
-                            }
-
-                            else -> {
-                                true
-                            }
-                        }
-                    }
-                }
+            walkStopButton = view.findViewById(R.id.walk_stop_button)
 
             walkStopButton.setOnClickListener { mapViewModel.onStopPathButtonClicked() }
 
@@ -613,6 +577,8 @@ class MainMapFragment : Fragment() {
                 }.launchIn(viewLifecycleOwner.lifecycleScope)
             }
 
+            val vibrationRepository = VibrationRepository(requireContext().applicationContext)
+
             mapViewModel =
                 ViewModelProvider(
                     this,
@@ -634,6 +600,10 @@ class MainMapFragment : Fragment() {
                                 requireContext().applicationContext
                             )
                         ),
+                        finishPathWritingUseCase = FinishPathWritingUseCase(
+                            writingPathStatesRepository,
+                            vibrationRepository
+                        ),
                         userLocationInteractor = UserLocationInteractor(
                             LocationUpdatesRepository(
                                 LocationServices.getFusedLocationProviderClient(requireActivity()),
@@ -649,7 +619,7 @@ class MainMapFragment : Fragment() {
                         writingPathStatesRepository = writingPathStatesRepository,
                         pathRatingUseCase = PathRatingUseCase(
                             PathRatingRepository(sharedPreferences),
-                            VibrationRepository(requireContext().applicationContext)
+                            vibrationRepository
                         ),
                         userRotationRepository = UserRotationRepository(
                             requireActivity().getSystemService(
@@ -1129,33 +1099,6 @@ class MainMapFragment : Fragment() {
 
     private fun refreshMapNow() {
         mapView.postInvalidate()
-    }
-
-    private fun walkStopAcceptProgressStart(onFinished: () -> Unit) {
-        stopAcceptProgressJob = CoroutineScope(Dispatchers.Default).launch {
-            while (walkStopAcceptProgress.progress != 100) {
-                delay(5)
-                withContext(Dispatchers.Main) {
-                    walkStopAcceptProgress.progress += 1
-                }
-            }
-            withContext(Dispatchers.Main) {
-                onFinished()
-            }
-        }
-    }
-
-    /**
-     * @return success of canceling
-     */
-    private fun tryCancelWalkStopAcceptProgress(): Boolean {
-        return if (stopAcceptProgressJob != null) {
-            stopAcceptProgressJob!!.cancel()
-            walkStopAcceptProgress.progress = 0
-            true
-        } else {
-            false
-        }
     }
 
     private fun addUserLocationTracker() {

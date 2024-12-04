@@ -9,6 +9,7 @@ import ru.lobotino.walktraveller.repositories.interfaces.IUserInfoRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IUserRotationRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IWritingPathStatesRepository
 import ru.lobotino.walktraveller.usecases.IUserLocationInteractor
+import ru.lobotino.walktraveller.usecases.interfaces.IFinishPathWritingUseCase
 import ru.lobotino.walktraveller.usecases.interfaces.IMapPathsInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IMapStateInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IPathRatingUseCase
@@ -21,6 +22,7 @@ class MapViewModelFactory(
     private val notificationsPermissionsInteractor: IPermissionsUseCase,
     private val volumeKeysListenerPermissionsInteractor: IPermissionsUseCase,
     private val geoPermissionsUseCase: GeoPermissionsUseCase,
+    private val finishPathWritingUseCase: IFinishPathWritingUseCase,
     private val userLocationInteractor: IUserLocationInteractor,
     private val mapPathsInteractor: IMapPathsInteractor,
     private val mapStateInteractor: IMapStateInteractor,
@@ -30,16 +32,21 @@ class MapViewModelFactory(
     private val userInfoRepository: IUserInfoRepository,
     private val resourceManager: IResourceManager,
     owner: SavedStateRegistryOwner,
-    bundle: Bundle?
+    bundle: Bundle?,
 ) : AbstractSavedStateViewModelFactory(owner, bundle) {
 
     @Suppress("UNCHECKED_CAST")
-    override fun <T : ViewModel> create(key: String, modelClass: Class<T>, handle: SavedStateHandle): T {
+    override fun <T : ViewModel> create(
+        key: String,
+        modelClass: Class<T>,
+        handle: SavedStateHandle,
+    ): T {
         return when (modelClass) {
             MapViewModel::class.java -> MapViewModel(
                 notificationsPermissionsInteractor,
                 volumeKeysListenerPermissionsInteractor,
                 geoPermissionsUseCase,
+                finishPathWritingUseCase,
                 userLocationInteractor,
                 mapPathsInteractor,
                 mapStateInteractor,
