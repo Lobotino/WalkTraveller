@@ -1,8 +1,11 @@
 package ru.lobotino.walktraveller.ui
 
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.view.MenuItem
+import android.view.WindowInsets
+import android.view.WindowInsetsController
 import android.widget.TextView
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
@@ -14,6 +17,7 @@ import ru.lobotino.walktraveller.R
 import ru.lobotino.walktraveller.repositories.UserInfoRepository
 import ru.lobotino.walktraveller.repositories.interfaces.AppScreen
 import ru.lobotino.walktraveller.repositories.interfaces.IScreenNavigation
+
 
 class MainActivity :
     AppCompatActivity(R.layout.activity_main),
@@ -122,5 +126,16 @@ class MainActivity :
 
     override fun openNavigationMenu() {
         drawerLayout.open()
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val insetsController = window.insetsController
+            if (insetsController != null) {
+                insetsController.hide(WindowInsets.Type.systemBars())
+                insetsController.systemBarsBehavior = WindowInsetsController.BEHAVIOR_DEFAULT
+            }
+        }
     }
 }
