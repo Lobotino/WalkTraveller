@@ -34,6 +34,7 @@
     <string name="menu_settings_title">Settings</string>
     <string name="menu_map_title">Map</string>
     <string name="menu_rate_app_title">Rate the app</string>
+    <string name="menu_write_to_author">Write to the author</string>
     <string name="menu_about_title">About project</string>
     <string name="nav_open">Open navigation menu</string>
     <string name="nav_close">Close navigation menu</string>
@@ -85,6 +86,6 @@
     <string name="error_message_not_allow_access_to_volume_buttons">Special access not permitted. Check application settings.</string>
     <string name="settings_map_style_title">Map style</string>
     <string name="error_something_went_wrong">Something went wrong :(</string>
-    <string name="navigation_title_other">Other</string>
+    <string name="navigation_title_feedback">Feedback</string>
     <string name="navigation_title_navigation">Navigation</string>
 </resources>

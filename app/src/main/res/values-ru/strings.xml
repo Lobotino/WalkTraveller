@@ -200,6 +200,7 @@
     <string name="menu_settings_title">Настройки</string>
     <string name="menu_map_title">Карта</string>
     <string name="menu_rate_app_title">Оценить приложение</string>
+    <string name="menu_write_to_author">Написать автору</string>
     <string name="menu_about_title">О проекте</string>
     <string name="nav_open">Открыть меню навигации</string>
     <string name="nav_close">Закрыть меню навигации</string>
@@ -251,6 +252,6 @@
     <string name="error_message_not_allow_access_to_volume_buttons">Доступ к специальным возможностям не предоставлен. Проверьте настройки приложения.</string>
     <string name="settings_map_style_title">Стиль карты</string>
     <string name="error_something_went_wrong">Что-то пошло не так :(</string>
-    <string name="navigation_title_other">Прочее</string>
+    <string name="navigation_title_feedback">Обратная связь</string>
     <string name="navigation_title_navigation">Навигация</string>
 </resources>

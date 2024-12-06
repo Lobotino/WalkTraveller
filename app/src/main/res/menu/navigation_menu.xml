@@ -16,12 +16,15 @@
         </menu>
     </item>
 
-    <item android:title="@string/navigation_title_other">
+    <item android:title="@string/navigation_title_feedback">
         <menu>
             <group android:checkableBehavior="none">
                 <item
                     android:id="@+id/nav_rate_app"
                     android:title="@string/menu_rate_app_title" />
+                <item
+                    android:id="@+id/nav_write_to_author"
+                    android:title="@string/menu_write_to_author" />
             </group>
         </menu>
     </item>

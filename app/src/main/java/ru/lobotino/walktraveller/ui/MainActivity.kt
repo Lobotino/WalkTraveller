@@ -1,5 +1,6 @@
 package ru.lobotino.walktraveller.ui
 
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -13,6 +14,7 @@ import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.drawerlayout.widget.DrawerLayout
 import com.google.android.material.navigation.NavigationView
+import com.google.android.material.snackbar.Snackbar
 import ru.lobotino.walktraveller.App
 import ru.lobotino.walktraveller.BuildConfig
 import ru.lobotino.walktraveller.R
@@ -109,6 +111,22 @@ class MainActivity :
         startActivity(intent)
     }
 
+    private fun navigateToWriteToAuthor() {
+        val emailIntent = Intent(Intent.ACTION_SENDTO).apply {
+            setData(Uri.parse("mailto:"))
+            putExtra(Intent.EXTRA_EMAIL, arrayOf("walk.traveller.app@gmail.com"))
+            putExtra(Intent.EXTRA_SUBJECT, "Предложение по улучшению приложения WalkTraveller")
+            putExtra(Intent.EXTRA_TEXT, "Пожелания, замечания или просто спасибо :)")
+        }
+
+        try {
+            startActivity(emailIntent)
+        } catch (ex: ActivityNotFoundException) {
+            Snackbar.make(fragmentContainer, "Почтовый клиент не найден", Snackbar.LENGTH_SHORT)
+                .show()
+        }
+    }
+
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.nav_map -> {
@@ -122,6 +140,10 @@ class MainActivity :
             R.id.nav_rate_app -> {
                 navigateTo(AppScreen.RATE_THE_APP)
             }
+
+            R.id.nav_write_to_author -> {
+                navigateTo(AppScreen.WRITE_TO_AUTHOR)
+            }
         }
         drawerLayout.close()
         return true
@@ -133,6 +155,7 @@ class MainActivity :
             AppScreen.SETTINGS -> showSettingsFragment()
             AppScreen.WELCOME_SCREEN -> showFirstWelcomeFragment(extraData)
             AppScreen.RATE_THE_APP -> navigateToRateStore()
+            AppScreen.WRITE_TO_AUTHOR -> navigateToWriteToAuthor()
         }
         updateNavigationMenuSelect(appScreen)
     }
@@ -141,7 +164,7 @@ class MainActivity :
         when (appScreen) {
             AppScreen.WELCOME_SCREEN, AppScreen.MAP_SCREEN -> navigationView.setCheckedItem(R.id.nav_map)
             AppScreen.SETTINGS -> navigationView.setCheckedItem(R.id.nav_settings)
-            AppScreen.RATE_THE_APP -> {}
+            AppScreen.RATE_THE_APP, AppScreen.WRITE_TO_AUTHOR -> {}
         }
     }
 
