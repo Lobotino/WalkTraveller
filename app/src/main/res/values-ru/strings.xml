@@ -199,6 +199,7 @@
     <string name="geo_location_required_dialog_description">Приложение создано для записи и отслеживания пройденных вами путей.\nДля этого приложению необходим доступ к геолокации.\n\nПриложение не передаёт данные о геолокации куда бы то ни было. Записанные треки остаются только на Вашем устройстве.</string>
     <string name="menu_settings_title">Настройки</string>
     <string name="menu_map_title">Карта</string>
+    <string name="menu_rate_app_title">Оценить приложение</string>
     <string name="menu_about_title">О проекте</string>
     <string name="nav_open">Открыть меню навигации</string>
     <string name="nav_close">Закрыть меню навигации</string>
@@ -249,4 +250,7 @@
     <string name="error_notifications_permissions_denied">Разрешения на уведомления отклонены. Они необходимы для корректной работы записи пути, проверьте настройки приложения.</string>
     <string name="error_message_not_allow_access_to_volume_buttons">Доступ к специальным возможностям не предоставлен. Проверьте настройки приложения.</string>
     <string name="settings_map_style_title">Стиль карты</string>
+    <string name="error_something_went_wrong">Что-то пошло не так :(</string>
+    <string name="navigation_title_other">Прочее</string>
+    <string name="navigation_title_navigation">Навигация</string>
 </resources>

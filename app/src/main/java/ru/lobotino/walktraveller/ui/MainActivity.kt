@@ -1,9 +1,11 @@
 package ru.lobotino.walktraveller.ui
 
+import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.view.MenuItem
+import android.view.View
 import android.view.WindowInsets
 import android.view.WindowInsetsController
 import android.widget.TextView
@@ -29,6 +31,8 @@ class MainActivity :
 
     private lateinit var navigationView: NavigationView
     private lateinit var navigationTitleVersion: TextView
+
+    private lateinit var fragmentContainer: View
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,6 +66,8 @@ class MainActivity :
 
         navigationView = findViewById(R.id.navigation_view)
 
+        fragmentContainer = findViewById(R.id.fragment_container)
+
         navigationTitleVersion =
             navigationView.getHeaderView(0).findViewById<TextView>(R.id.navigation_title_version)
                 .apply {
@@ -94,6 +100,15 @@ class MainActivity :
             .commit()
     }
 
+    private fun navigateToRateStore() {
+        val intent = Intent(
+            Intent.ACTION_VIEW,
+            Uri.parse("https://play.google.com/store/apps/details?id=ru.lobotino.walktraveller")
+        )
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        startActivity(intent)
+    }
+
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.nav_map -> {
@@ -102,6 +117,10 @@ class MainActivity :
 
             R.id.nav_settings -> {
                 navigateTo(AppScreen.SETTINGS)
+            }
+
+            R.id.nav_rate_app -> {
+                navigateTo(AppScreen.RATE_THE_APP)
             }
         }
         drawerLayout.close()
@@ -113,6 +132,7 @@ class MainActivity :
             AppScreen.MAP_SCREEN -> showMapFragment(extraData)
             AppScreen.SETTINGS -> showSettingsFragment()
             AppScreen.WELCOME_SCREEN -> showFirstWelcomeFragment(extraData)
+            AppScreen.RATE_THE_APP -> navigateToRateStore()
         }
         updateNavigationMenuSelect(appScreen)
     }
@@ -121,6 +141,7 @@ class MainActivity :
         when (appScreen) {
             AppScreen.WELCOME_SCREEN, AppScreen.MAP_SCREEN -> navigationView.setCheckedItem(R.id.nav_map)
             AppScreen.SETTINGS -> navigationView.setCheckedItem(R.id.nav_settings)
+            AppScreen.RATE_THE_APP -> {}
         }
     }
 
