@@ -88,4 +88,9 @@
     <string name="error_something_went_wrong">Something went wrong :(</string>
     <string name="navigation_title_feedback">Feedback</string>
     <string name="navigation_title_navigation">Navigation</string>
+    <string name="permission_granted">Permission granted, all is great!</string>
+    <string name="path_is_not_tracking">Path is not tracking?</string>
+    <string name="disable_battery_safe_mode">Disable battery safe mode</string>
+    <string name="check_notification_permission">Check notifications permission</string>
+    <string name="check_location_permission">Check location permission</string>
 </resources>

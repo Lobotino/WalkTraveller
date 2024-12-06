@@ -254,4 +254,9 @@
     <string name="error_something_went_wrong">Что-то пошло не так :(</string>
     <string name="navigation_title_feedback">Обратная связь</string>
     <string name="navigation_title_navigation">Навигация</string>
+    <string name="permission_granted">Разрешение получено, всё отлично!</string>
+    <string name="path_is_not_tracking">Не записывается путь?</string>
+    <string name="disable_battery_safe_mode">Отключить режим энергосбережения</string>
+    <string name="check_notification_permission">Проверить разрешение на уведомления</string>
+    <string name="check_location_permission">Проверить разрешение на геолокацию</string>
 </resources>
