@@ -12,7 +12,6 @@ import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.gms.location.LocationServices
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -21,7 +20,6 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import ru.lobotino.walktraveller.App
-import ru.lobotino.walktraveller.BuildConfig
 import ru.lobotino.walktraveller.R
 import ru.lobotino.walktraveller.database.provideDatabase
 import ru.lobotino.walktraveller.repositories.DatabasePathRepository

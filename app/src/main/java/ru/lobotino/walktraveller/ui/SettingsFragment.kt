@@ -40,7 +40,6 @@ import ru.lobotino.walktraveller.utils.ResourceManager
 import ru.lobotino.walktraveller.utils.ext.openNavigationMenu
 import ru.lobotino.walktraveller.viewmodels.SettingsViewModel
 
-
 class SettingsFragment : Fragment() {
 
     private lateinit var toolbar: Toolbar
@@ -143,8 +142,8 @@ class SettingsFragment : Fragment() {
                 R.layout.item_map_tile_source,
                 TileSourceType.values().map { it.simpleName }
             )
-            onItemSelectedListener = object : OnItemSelectedListener,
-                AdapterView.OnItemSelectedListener {
+            onItemSelectedListener = object :
+                OnItemSelectedListener, AdapterView.OnItemSelectedListener {
 
                 override fun onItemSelected(
                     parent: AdapterView<*>?,

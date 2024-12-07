@@ -50,7 +50,9 @@ class SettingsViewModel(
                     notificationChannel.trySend(resourceManager.getString(R.string.permission_granted))
                 },
                 someDenied = {
-                    notificationChannel.trySend(resourceManager.getString(R.string.error_notifications_permissions_denied))
+                    notificationChannel.trySend(
+                        resourceManager.getString(R.string.error_notifications_permissions_denied)
+                    )
                 }
             )
         } else {

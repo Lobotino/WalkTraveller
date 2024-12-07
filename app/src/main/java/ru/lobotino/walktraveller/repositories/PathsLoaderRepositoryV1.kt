@@ -3,9 +3,6 @@ package ru.lobotino.walktraveller.repositories
 import android.content.Context
 import android.net.Uri
 import android.util.Log
-import java.io.IOException
-import java.io.InputStreamReader
-import java.io.Reader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import ru.lobotino.walktraveller.model.SegmentRating
@@ -14,6 +11,9 @@ import ru.lobotino.walktraveller.model.map.MapPoint
 import ru.lobotino.walktraveller.repositories.interfaces.IPathsLoaderRepository
 import ru.lobotino.walktraveller.utils.SHARE_FILE_NEW_MAP_RATING_PATH_TAG
 import ru.lobotino.walktraveller.utils.SHARE_FILE_VERSION_1_TAG
+import java.io.IOException
+import java.io.InputStreamReader
+import java.io.Reader
 
 class PathsLoaderRepositoryV1(private val applicationContext: Context) : IPathsLoaderRepository {
 
@@ -23,7 +23,7 @@ class PathsLoaderRepositoryV1(private val applicationContext: Context) : IPathsL
             openFileToRead(fileUri).forEachLine { line ->
                 when (line) {
                     SHARE_FILE_VERSION_1_TAG -> {
-                        //skip
+                        // skip
                     }
 
                     SHARE_FILE_NEW_MAP_RATING_PATH_TAG -> {

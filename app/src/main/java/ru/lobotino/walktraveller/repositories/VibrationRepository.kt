@@ -33,7 +33,8 @@ class VibrationRepository(private val appContext: Context) : IVibrationRepositor
     }
 
     override fun vibrateTriple(durationInMillis: Long, amplitude: Int) {
-        val vibrationPattern = longArrayOf(0, durationInMillis, durationInMillis, durationInMillis, durationInMillis, durationInMillis)
+        val vibrationPattern =
+            longArrayOf(0, durationInMillis, durationInMillis, durationInMillis, durationInMillis, durationInMillis)
         val vibrationAmplitudes = intArrayOf(0, amplitude, 0, amplitude, 0, amplitude)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val vibrationEffect =

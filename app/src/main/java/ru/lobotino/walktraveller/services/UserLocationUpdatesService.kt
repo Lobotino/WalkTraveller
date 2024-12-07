@@ -89,7 +89,7 @@ class UserLocationUpdatesService : Service() {
     }
 
     fun startLocationUpdates() {
-        //FIXME twice requesting after onResume
+        // FIXME twice requesting after onResume
         Log.i(TAG, "Requesting location updates")
         locationUpdatesRepository.startLocationUpdates()
     }

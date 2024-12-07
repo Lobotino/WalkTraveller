@@ -89,7 +89,7 @@ class MapViewModel(
     private val newConfirmDialogChannel = Channel<ConfirmDialogType>()
     private val userErrorChannel = Channel<String>()
 
-    //Enable (true) or disable (false) location updates
+    // Enable (true) or disable (false) location updates
     private val regularLocationUpdateActionChannel = Channel<Boolean>()
 
     private val tileSourceStateFlow = MutableStateFlow(tileSourceInteractor.getCurrentTileSource())

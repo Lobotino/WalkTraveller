@@ -13,9 +13,9 @@ import androidx.core.view.isVisible
 import androidx.core.widget.ImageViewCompat
 import androidx.transition.Fade
 import androidx.transition.TransitionManager
-import kotlin.properties.Delegates
 import ru.lobotino.walktraveller.R
 import ru.lobotino.walktraveller.model.SegmentRating
+import kotlin.properties.Delegates
 
 class VolumeButtonsFeatureSuggestDialog(context: Context, onYesClicked: () -> Unit, onNoClicked: () -> Unit) : ConfirmYesNoDialog(
     context,
@@ -114,7 +114,7 @@ class VolumeButtonsFeatureSuggestDialog(context: Context, onYesClicked: () -> Un
             .rotationBy(180f)
             .setDuration(200)
             .setInterpolator(LinearInterpolator())
-            .start();
+            .start()
     }
 
     private fun hideTutorialView() {
@@ -124,7 +124,7 @@ class VolumeButtonsFeatureSuggestDialog(context: Context, onYesClicked: () -> Un
             .rotationBy(-180f)
             .setDuration(200)
             .setInterpolator(LinearInterpolator())
-            .start();
+            .start()
     }
 
     private fun syncRatingButtons(currentRating: SegmentRating) {

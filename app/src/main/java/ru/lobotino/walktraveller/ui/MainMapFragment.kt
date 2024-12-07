@@ -42,7 +42,6 @@ import kotlinx.coroutines.flow.onEach
 import org.osmdroid.events.MapListener
 import org.osmdroid.events.ScrollEvent
 import org.osmdroid.events.ZoomEvent
-import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.CustomZoomButtonsController
 import org.osmdroid.views.MapView
@@ -125,7 +124,6 @@ import ru.lobotino.walktraveller.utils.ext.toMapPoint
 import ru.lobotino.walktraveller.viewmodels.MapViewModel
 import ru.lobotino.walktraveller.viewmodels.PathsMenuViewModel
 import kotlin.properties.Delegates
-
 
 class MainMapFragment : Fragment() {
 
@@ -739,7 +737,7 @@ class MainMapFragment : Fragment() {
     private fun syncTileSource(tileSource: TileSource) {
         when (tileSource) {
             is TileSource.OSMTileSource -> mapView.setTileSource(tileSource.tileSource)
-            //TODO 2gis, yandex, google...
+            // TODO 2gis, yandex, google...
         }
     }
 
@@ -790,9 +788,11 @@ class MainMapFragment : Fragment() {
         val activity = activity ?: return
         val userLocationUpdatesService = userLocationUpdatesService
         if (userLocationUpdatesService == null) {
-            activity.startService(Intent(activity, UserLocationUpdatesService::class.java).apply {
-                action = ACTION_START_LOCATION_UPDATES
-            })
+            activity.startService(
+                Intent(activity, UserLocationUpdatesService::class.java).apply {
+                    action = ACTION_START_LOCATION_UPDATES
+                }
+            )
         } else {
             userLocationUpdatesService.startLocationUpdates()
         }

@@ -3,13 +3,13 @@ package ru.lobotino.walktraveller.repositories
 import android.content.Context
 import android.net.Uri
 import android.util.Log
-import java.io.BufferedReader
-import java.io.IOException
-import java.io.InputStreamReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import ru.lobotino.walktraveller.repositories.interfaces.IPathsLoaderVersionHelper
 import ru.lobotino.walktraveller.utils.SHARE_FILE_VERSION_1_TAG
+import java.io.BufferedReader
+import java.io.IOException
+import java.io.InputStreamReader
 
 class PathsLoaderVersionHelper(private val applicationContext: Context) : IPathsLoaderVersionHelper {
 

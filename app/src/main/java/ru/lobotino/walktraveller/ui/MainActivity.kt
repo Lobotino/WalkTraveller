@@ -22,7 +22,6 @@ import ru.lobotino.walktraveller.repositories.UserInfoRepository
 import ru.lobotino.walktraveller.repositories.interfaces.AppScreen
 import ru.lobotino.walktraveller.repositories.interfaces.IScreenNavigation
 
-
 class MainActivity :
     AppCompatActivity(R.layout.activity_main),
     NavigationView.OnNavigationItemSelectedListener,

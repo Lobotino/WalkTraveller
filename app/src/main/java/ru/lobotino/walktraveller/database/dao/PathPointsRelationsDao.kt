@@ -15,7 +15,9 @@ interface PathPointsRelationsDao {
     @Query("SELECT id_point FROM path_point_relations WHERE id_path = :pathId")
     suspend fun getAllPathPointsIds(pathId: Long): List<Long>
 
-    @Query("SELECT points.* FROM points INNER JOIN path_point_relations ON points.id = path_point_relations.id_point WHERE path_point_relations.id_path = :pathId")
+    @Query(
+        "SELECT points.* FROM points INNER JOIN path_point_relations ON points.id = path_point_relations.id_point WHERE path_point_relations.id_path = :pathId"
+    )
     suspend fun getAllPathPoints(pathId: Long): List<EntityPoint>
 
     @Insert
