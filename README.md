@@ -1,7 +1,9 @@
 ## Walk Traveller
 ### Android приложение для разметки и оценки маршрутов на карте цветом
 
-![Screenshot_20241224-232902-2](https://github.com/user-attachments/assets/a57c60f5-67e3-4983-83a4-ba21a0ce8102)
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/a57c60f5-67e3-4983-83a4-ba21a0ce8102" />
+</p>
 
 ### Что делает?
 - Записывает пути в реальном времени во время прогулки и сохраняет в локальную базу данных
