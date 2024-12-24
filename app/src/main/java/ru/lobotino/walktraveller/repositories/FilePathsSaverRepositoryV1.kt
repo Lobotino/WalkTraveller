@@ -6,11 +6,6 @@ import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
-import java.io.File
-import java.io.IOException
-import java.io.OutputStreamWriter
-import java.io.Writer
-import java.util.Date
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import ru.lobotino.walktraveller.model.map.MapRatingPath
@@ -19,6 +14,11 @@ import ru.lobotino.walktraveller.utils.SHARE_FILE_EXTENSION
 import ru.lobotino.walktraveller.utils.SHARE_FILE_NEW_MAP_RATING_PATH_TAG
 import ru.lobotino.walktraveller.utils.SHARE_FILE_VERSION_1_TAG
 import ru.lobotino.walktraveller.utils.ext.toText
+import java.io.File
+import java.io.IOException
+import java.io.OutputStreamWriter
+import java.io.Writer
+import java.util.Date
 
 class FilePathsSaverRepositoryV1(private val applicationContext: Context) : IPathsSaverRepository {
 
@@ -89,9 +89,5 @@ class FilePathsSaverRepositoryV1(private val applicationContext: Context) : IPat
 
     private fun generateFileName(paths: List<MapRatingPath>): String {
         return "Paths_${paths.size}_count_${Date().time}"
-    }
-
-    companion object {
-        private val TAG = FilePathsSaverRepositoryV1::class.java.canonicalName
     }
 }

@@ -8,5 +8,5 @@ interface IScreenNavigation {
 }
 
 enum class AppScreen {
-    WELCOME_SCREEN, MAP_SCREEN, SETTINGS
+    WELCOME_SCREEN, MAP_SCREEN, SETTINGS, RATE_THE_APP, WRITE_TO_AUTHOR
 }

@@ -33,6 +33,8 @@
     <string name="geo_location_required_dialog_description">This application is designed to allow you to record and track your paths.\nThis requires access to the location.\n\nThe application does not transmit geolocation data anywhere. Recorded tracks remain only on your device.</string>
     <string name="menu_settings_title">Settings</string>
     <string name="menu_map_title">Map</string>
+    <string name="menu_rate_app_title">Rate the app</string>
+    <string name="menu_write_to_author">Write to the author</string>
     <string name="menu_about_title">About project</string>
     <string name="nav_open">Open navigation menu</string>
     <string name="nav_close">Close navigation menu</string>
@@ -48,7 +50,7 @@
     <string name="content_desc_rating_normal">Rating normal button</string>
     <string name="content_desc_rating_good">Rating good button</string>
     <string name="content_desc_rating_perfect">Rating perfect button</string>
-    <string name="content_desc_find_my_location_button">Find my location button</string>
+    <string name="content_desc_find_my_location_button">Find my location</string>
     <string name="content_desc_empty_paths_list_error_image">Empty outer paths list error image</string>
     <string name="content_desc_start_walk_button">Start walk button</string>
     <string name="content_desc_stop_walk_button">Stop walk button</string>
@@ -60,12 +62,12 @@
     <string name="content_desc_hide_selected_paths_button">Hide selected paths button</string>
     <string name="content_desc_share_paths_button">Share paths button</string>
     <string name="content_desc_delete_path_button">Delete path button</string>
-    <string name="content_desc_back_button">Back button</string>
+    <string name="content_desc_back_button">Back</string>
     <string name="content_desc_select_all_paths_button">Select all paths button</string>
     <string name="content_desc_show_selected_paths_button">Show selected paths button</string>
     <string name="content_desc_share_path_button">Share path button</string>
     <string name="content_desc_delete_selected_paths_button">Delete selected paths button</string>
-    <string name="volume_buttons_feature_request_desc">The application supports the ability to control the rating of a route section using the phone volume buttons without taking your phone out of your pocket. Want to try?\n\n(This feature can be switched at any time in the application settings)</string>
+    <string name="volume_buttons_feature_request_desc">The application supports the ability to control the rating of a route section using the phone volume buttons without taking your phone out of your pocket. Want to try?</string>
     <string name="volume_buttons_feature_request_title">Rating management</string>
     <string name="volume_buttons_feature_info_title">Need confirmation</string>
     <string name="volume_buttons_feature_info_desc">To access information about volume button presses, an app needs Device Accessibility permission. The application guarantees that it will not collect any additional information other than pressing the volume buttons while recording a track.</string>
@@ -82,4 +84,13 @@
     <string name="error_permissions_denied">Some permissions are denied. Check application settings.</string>
     <string name="error_notifications_permissions_denied">Notifications permissions are denied. It need for correct work of path tracking. Check application settings.</string>
     <string name="error_message_not_allow_access_to_volume_buttons">Special access not permitted. Check application settings.</string>
+    <string name="settings_map_style_title">Map style</string>
+    <string name="error_something_went_wrong">Something went wrong :(</string>
+    <string name="navigation_title_feedback">Feedback</string>
+    <string name="navigation_title_navigation">Navigation</string>
+    <string name="permission_granted">Permission granted, all is great!</string>
+    <string name="path_is_not_tracking">Path is not tracking?</string>
+    <string name="disable_battery_safe_mode">Disable battery safe mode</string>
+    <string name="check_notification_permission">Check notifications permission</string>
+    <string name="check_location_permission">Check location permission</string>
 </resources>

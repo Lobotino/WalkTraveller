@@ -3,8 +3,6 @@ package ru.lobotino.walktraveller.repositories.permissions
 import android.Manifest.permission.*
 import android.content.Context
 import android.content.pm.PackageManager
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 

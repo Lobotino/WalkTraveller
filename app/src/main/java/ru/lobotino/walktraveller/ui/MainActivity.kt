@@ -1,13 +1,20 @@
 package ru.lobotino.walktraveller.ui
 
+import android.content.ActivityNotFoundException
+import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.view.MenuItem
+import android.view.View
+import android.view.WindowInsets
+import android.view.WindowInsetsController
 import android.widget.TextView
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.drawerlayout.widget.DrawerLayout
 import com.google.android.material.navigation.NavigationView
+import com.google.android.material.snackbar.Snackbar
 import ru.lobotino.walktraveller.App
 import ru.lobotino.walktraveller.BuildConfig
 import ru.lobotino.walktraveller.R
@@ -25,6 +32,8 @@ class MainActivity :
 
     private lateinit var navigationView: NavigationView
     private lateinit var navigationTitleVersion: TextView
+
+    private lateinit var fragmentContainer: View
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -58,6 +67,8 @@ class MainActivity :
 
         navigationView = findViewById(R.id.navigation_view)
 
+        fragmentContainer = findViewById(R.id.fragment_container)
+
         navigationTitleVersion =
             navigationView.getHeaderView(0).findViewById<TextView>(R.id.navigation_title_version)
                 .apply {
@@ -90,6 +101,31 @@ class MainActivity :
             .commit()
     }
 
+    private fun navigateToRateStore() {
+        val intent = Intent(
+            Intent.ACTION_VIEW,
+            Uri.parse("https://play.google.com/store/apps/details?id=ru.lobotino.walktraveller")
+        )
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        startActivity(intent)
+    }
+
+    private fun navigateToWriteToAuthor() {
+        val emailIntent = Intent(Intent.ACTION_SENDTO).apply {
+            setData(Uri.parse("mailto:"))
+            putExtra(Intent.EXTRA_EMAIL, arrayOf("walk.traveller.app@gmail.com"))
+            putExtra(Intent.EXTRA_SUBJECT, "Предложение по улучшению приложения WalkTraveller")
+            putExtra(Intent.EXTRA_TEXT, "Пожелания, замечания или просто спасибо :)")
+        }
+
+        try {
+            startActivity(emailIntent)
+        } catch (ex: ActivityNotFoundException) {
+            Snackbar.make(fragmentContainer, "Почтовый клиент не найден", Snackbar.LENGTH_SHORT)
+                .show()
+        }
+    }
+
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.nav_map -> {
@@ -98,6 +134,14 @@ class MainActivity :
 
             R.id.nav_settings -> {
                 navigateTo(AppScreen.SETTINGS)
+            }
+
+            R.id.nav_rate_app -> {
+                navigateTo(AppScreen.RATE_THE_APP)
+            }
+
+            R.id.nav_write_to_author -> {
+                navigateTo(AppScreen.WRITE_TO_AUTHOR)
             }
         }
         drawerLayout.close()
@@ -109,6 +153,8 @@ class MainActivity :
             AppScreen.MAP_SCREEN -> showMapFragment(extraData)
             AppScreen.SETTINGS -> showSettingsFragment()
             AppScreen.WELCOME_SCREEN -> showFirstWelcomeFragment(extraData)
+            AppScreen.RATE_THE_APP -> navigateToRateStore()
+            AppScreen.WRITE_TO_AUTHOR -> navigateToWriteToAuthor()
         }
         updateNavigationMenuSelect(appScreen)
     }
@@ -117,10 +163,22 @@ class MainActivity :
         when (appScreen) {
             AppScreen.WELCOME_SCREEN, AppScreen.MAP_SCREEN -> navigationView.setCheckedItem(R.id.nav_map)
             AppScreen.SETTINGS -> navigationView.setCheckedItem(R.id.nav_settings)
+            AppScreen.RATE_THE_APP, AppScreen.WRITE_TO_AUTHOR -> {}
         }
     }
 
     override fun openNavigationMenu() {
         drawerLayout.open()
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val insetsController = window.insetsController
+            if (insetsController != null) {
+                insetsController.hide(WindowInsets.Type.systemBars())
+                insetsController.systemBarsBehavior = WindowInsetsController.BEHAVIOR_DEFAULT
+            }
+        }
     }
 }

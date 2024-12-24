@@ -2,7 +2,6 @@ package ru.lobotino.walktraveller.usecases
 
 import android.app.Notification
 import android.app.NotificationManager
-import android.os.Build
 import ru.lobotino.walktraveller.repositories.interfaces.INotificationRepository
 import ru.lobotino.walktraveller.usecases.interfaces.INotificationInteractor
 

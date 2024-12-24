@@ -1,10 +1,6 @@
 package ru.lobotino.walktraveller.usecases
 
 import android.net.Uri
-import java.io.IOException
-import java.util.Date
-import java.util.concurrent.ConcurrentHashMap
-import kotlin.random.Random
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
@@ -16,6 +12,10 @@ import ru.lobotino.walktraveller.repositories.interfaces.IPathRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IPathsLoaderRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IPathsLoaderVersionHelper
 import ru.lobotino.walktraveller.usecases.interfaces.IOuterPathsInteractor
+import java.io.IOException
+import java.util.Date
+import java.util.concurrent.ConcurrentHashMap
+import kotlin.random.Random
 
 class OuterPathsInteractor(
     private val pathsLoaderVersionHelper: IPathsLoaderVersionHelper,

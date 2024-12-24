@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main_view"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
@@ -13,6 +15,37 @@
         android:title="@string/settings_title"
         android:titleTextColor="@color/white" />
 
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical|start"
+            android:layout_marginStart="16dp"
+            android:gravity="center"
+            android:text="@string/settings_map_style_title"
+            android:textColor="@color/black"
+            android:textSize="18sp" />
+
+        <Spinner
+            android:id="@+id/map_tiles_sources_spinner"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical|end"
+            android:layout_marginHorizontal="8dp"
+            android:gravity="end"
+            tools:listitem="@layout/item_map_tile_source" />
+
+    </FrameLayout>
+
+    <com.google.android.material.divider.MaterialDivider
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp" />
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -23,7 +56,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="12dp"
             android:text="@string/settings_optimizing_paths_title"
             android:textColor="@color/black"
             android:textSize="18sp" />
@@ -48,12 +81,13 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:stepSize="1"
-                android:valueTo="20"
-                android:valueFrom="2"
-                android:value="2"
                 android:layout_marginHorizontal="8dp"
-                android:layout_weight="1" />
+                android:layout_weight="1"
+                android:contentDescription="@string/settings_optimizing_paths_title"
+                android:stepSize="1"
+                android:value="2"
+                android:valueFrom="2"
+                android:valueTo="20" />
 
             <TextView
                 android:id="@+id/optimizing_less_points"
@@ -65,5 +99,60 @@
                 android:text="@string/settings_optimize_paths_less_points" />
 
         </LinearLayout>
+
+        <com.google.android.material.divider.MaterialDivider
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="12dp"
+            android:text="@string/path_is_not_tracking"
+            android:textColor="@color/black"
+            android:textSize="18sp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <Button
+                android:id="@+id/faq_disable_battery_safe_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="12dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/confirm_button_background"
+                android:text="@string/disable_battery_safe_mode"
+                android:textAllCaps="false" />
+
+            <Button
+                android:id="@+id/faq_check_notification_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="12dp"
+                android:layout_marginTop="2dp"
+                android:background="@drawable/confirm_button_background"
+                android:text="@string/check_notification_permission"
+                android:textAllCaps="false" />
+
+            <Button
+                android:id="@+id/faq_check_geolocation_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="12dp"
+                android:layout_marginTop="2dp"
+                android:layout_marginBottom="8dp"
+                android:background="@drawable/confirm_button_background"
+                android:text="@string/check_location_permission"
+                android:textAllCaps="false" />
+        </LinearLayout>
     </LinearLayout>
+
+    <com.google.android.material.divider.MaterialDivider
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
 </LinearLayout>

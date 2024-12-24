@@ -34,6 +34,7 @@ class PathWritingNowNotificationRepository(
             .setOngoing(true)
             .setPriority(NotificationManager.IMPORTANCE_DEFAULT)
             .setSmallIcon(R.drawable.ic_path)
+            .setSilent(true)
             .setTicker(notificationInfoText).apply {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     setChannelId(notificationChannelId)

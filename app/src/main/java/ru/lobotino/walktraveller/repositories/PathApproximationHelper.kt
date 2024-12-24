@@ -1,11 +1,11 @@
 package ru.lobotino.walktraveller.repositories
 
-import kotlin.math.abs
-import kotlin.math.pow
-import kotlin.math.sqrt
 import ru.lobotino.walktraveller.model.map.CoordinatePoint
 import ru.lobotino.walktraveller.model.map.MapPoint
 import ru.lobotino.walktraveller.utils.ext.toCoordinatePoint
+import kotlin.math.abs
+import kotlin.math.pow
+import kotlin.math.sqrt
 
 object PathApproximationHelper {
 
@@ -72,13 +72,14 @@ object PathApproximationHelper {
     ): LineEquation {
         return if (startPathPoint == finishPathPoint) {
             LineEquation(0.0, 0.0, 0.0)
-        } else
+        } else {
             LineEquation(
                 finishPathPoint.y - startPathPoint.y,
                 -1 * (finishPathPoint.x - startPathPoint.x),
                 -1 * startPathPoint.x * (finishPathPoint.y - startPathPoint.y) +
                     startPathPoint.y * (finishPathPoint.x - startPathPoint.x)
             )
+        }
     }
 
     private fun calculateDistanceToLine(

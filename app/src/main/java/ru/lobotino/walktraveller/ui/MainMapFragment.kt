@@ -18,8 +18,6 @@ import android.os.Bundle
 import android.os.IBinder
 import android.util.ArrayMap
 import android.view.LayoutInflater
-import android.view.MotionEvent.ACTION_DOWN
-import android.view.MotionEvent.ACTION_UP
 import android.view.View
 import android.view.View.GONE
 import android.view.View.VISIBLE
@@ -30,6 +28,7 @@ import androidx.annotation.ColorInt
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
+import androidx.core.content.ContextCompat.startForegroundService
 import androidx.core.widget.ImageViewCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -38,19 +37,11 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.gms.location.LocationServices
 import com.google.android.material.progressindicator.CircularProgressIndicator
 import com.google.android.material.snackbar.Snackbar
-import kotlin.properties.Delegates
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.osmdroid.events.MapListener
 import org.osmdroid.events.ScrollEvent
 import org.osmdroid.events.ZoomEvent
-import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.CustomZoomButtonsController
 import org.osmdroid.views.MapView
@@ -67,6 +58,7 @@ import ru.lobotino.walktraveller.model.SegmentRating.GOOD
 import ru.lobotino.walktraveller.model.SegmentRating.NONE
 import ru.lobotino.walktraveller.model.SegmentRating.NORMAL
 import ru.lobotino.walktraveller.model.SegmentRating.PERFECT
+import ru.lobotino.walktraveller.model.TileSource
 import ru.lobotino.walktraveller.model.map.MapCommonPath
 import ru.lobotino.walktraveller.model.map.MapPathSegment
 import ru.lobotino.walktraveller.model.map.MapRatingPath
@@ -82,6 +74,7 @@ import ru.lobotino.walktraveller.repositories.PathDistancesInMetersRepository
 import ru.lobotino.walktraveller.repositories.PathRatingRepository
 import ru.lobotino.walktraveller.repositories.PathsLoaderRepositoryV1
 import ru.lobotino.walktraveller.repositories.PathsLoaderVersionHelper
+import ru.lobotino.walktraveller.repositories.TileSourceRepository
 import ru.lobotino.walktraveller.repositories.UserInfoRepository
 import ru.lobotino.walktraveller.repositories.UserRotationRepository
 import ru.lobotino.walktraveller.repositories.VibrationRepository
@@ -90,10 +83,13 @@ import ru.lobotino.walktraveller.repositories.permissions.AccessibilityPermissio
 import ru.lobotino.walktraveller.repositories.permissions.ExternalStoragePermissionsRepository
 import ru.lobotino.walktraveller.repositories.permissions.GeoPermissionsRepository
 import ru.lobotino.walktraveller.repositories.permissions.NotificationsPermissionsRepository
-import ru.lobotino.walktraveller.services.LocationUpdatesService
-import ru.lobotino.walktraveller.services.LocationUpdatesService.Companion.ACTION_START_LOCATION_UPDATES
-import ru.lobotino.walktraveller.services.LocationUpdatesService.Companion.EXTRA_LOCATION
-import ru.lobotino.walktraveller.services.VolumeKeysDetectorService
+import ru.lobotino.walktraveller.services.UserLocationUpdatesService
+import ru.lobotino.walktraveller.services.UserLocationUpdatesService.Companion.ACTION_BROADCAST
+import ru.lobotino.walktraveller.services.UserLocationUpdatesService.Companion.ACTION_START_LOCATION_UPDATES
+import ru.lobotino.walktraveller.services.UserLocationUpdatesService.Companion.EXTRA_LOCATION
+import ru.lobotino.walktraveller.services.VolumeKeysDetectorService.Companion.RATING_CHANGES_BROADCAST
+import ru.lobotino.walktraveller.services.WritingPathService
+import ru.lobotino.walktraveller.services.WritingPathService.Companion.ACTION_START_WRITING_PATH
 import ru.lobotino.walktraveller.ui.dialog.DeleteConfirmDialog
 import ru.lobotino.walktraveller.ui.dialog.DeleteMultiplePathsConfirmDialog
 import ru.lobotino.walktraveller.ui.dialog.GeoLocationRequiredDialog
@@ -109,11 +105,13 @@ import ru.lobotino.walktraveller.ui.model.PathsToAction
 import ru.lobotino.walktraveller.ui.view.FindMyLocationButton
 import ru.lobotino.walktraveller.ui.view.MyPathsMenuView
 import ru.lobotino.walktraveller.ui.view.OuterPathsMenuView
+import ru.lobotino.walktraveller.usecases.FinishPathWritingUseCase
 import ru.lobotino.walktraveller.usecases.LocalMapPathsInteractor
 import ru.lobotino.walktraveller.usecases.LocalPathRedactor
 import ru.lobotino.walktraveller.usecases.MapStateInteractor
 import ru.lobotino.walktraveller.usecases.OuterPathsInteractor
 import ru.lobotino.walktraveller.usecases.PathRatingUseCase
+import ru.lobotino.walktraveller.usecases.TileSourceInteractor
 import ru.lobotino.walktraveller.usecases.UserLocationInteractor
 import ru.lobotino.walktraveller.usecases.permissions.ExternalStoragePermissionsUseCase
 import ru.lobotino.walktraveller.usecases.permissions.GeoPermissionsUseCase
@@ -125,6 +123,7 @@ import ru.lobotino.walktraveller.utils.ext.toGeoPoint
 import ru.lobotino.walktraveller.utils.ext.toMapPoint
 import ru.lobotino.walktraveller.viewmodels.MapViewModel
 import ru.lobotino.walktraveller.viewmodels.PathsMenuViewModel
+import kotlin.properties.Delegates
 
 class MainMapFragment : Fragment() {
 
@@ -183,20 +182,34 @@ class MainMapFragment : Fragment() {
     private var currentPathPolyline: Polyline? = null
     private var lastCurrentPathRating: SegmentRating? = null
 
-    private var locationUpdatesService: LocationUpdatesService? = null
-
-    private var stopAcceptProgressJob: Job? = null
+    private var writingPathService: WritingPathService? = null
+    private var userLocationUpdatesService: UserLocationUpdatesService? = null
 
     private lateinit var sharedPreferences: SharedPreferences
 
     private val serviceConnectionListener: ServiceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName, service: IBinder) {
-            locationUpdatesService =
-                (service as LocationUpdatesService.LocationUpdatesBinder).locationUpdatesService
+            when (service) {
+                is WritingPathService.LocationUpdatesBinder -> {
+                    writingPathService = service.writingPathService
+                }
+
+                is UserLocationUpdatesService.LocationUpdatesBinder -> {
+                    userLocationUpdatesService = service.locationUpdatesService
+                }
+            }
         }
 
         override fun onServiceDisconnected(name: ComponentName) {
-            locationUpdatesService = null
+            when (name.className) {
+                WritingPathService.Companion::class.java.name -> {
+                    writingPathService = null
+                }
+
+                UserLocationUpdatesService.Companion::class.java.name -> {
+                    userLocationUpdatesService = null
+                }
+            }
         }
     }
 
@@ -250,7 +263,6 @@ class MainMapFragment : Fragment() {
             val mapViewContainer = view.findViewById<FrameLayout>(R.id.map_view_container)
 
             mapView = MapView(context).apply {
-                setTileSource(TileSourceFactory.MAPNIK)
                 controller.setZoom(DEFAULT_COMFORT_ZOOM)
                 zoomController.setVisibility(CustomZoomButtonsController.Visibility.NEVER)
                 setMultiTouchControls(true)
@@ -310,34 +322,7 @@ class MainMapFragment : Fragment() {
 
             walkStopAcceptProgress = view.findViewById(R.id.walk_stop_accept_progress)
 
-            walkStopButton = view.findViewById<CardView>(R.id.walk_stop_button)
-                .apply {
-                    setOnTouchListener { _, event ->
-                        when (event.action) {
-                            ACTION_DOWN -> {
-                                isPressed = true
-                                walkStopAcceptProgressStart {
-                                    isPressed = false
-                                    performClick()
-                                }
-                                true
-                            }
-
-                            ACTION_UP -> {
-                                tryCancelWalkStopAcceptProgress().also { canceled ->
-                                    if (canceled) {
-                                        isPressed = false
-                                    }
-                                }
-                                true
-                            }
-
-                            else -> {
-                                true
-                            }
-                        }
-                    }
-                }
+            walkStopButton = view.findViewById(R.id.walk_stop_button)
 
             walkStopButton.setOnClickListener { mapViewModel.onStopPathButtonClicked() }
 
@@ -499,11 +484,11 @@ class MainMapFragment : Fragment() {
             )[PathsMenuViewModel::class.java].apply {
                 observeMyPathsMenuUiState.onEach { myPathsUiState ->
                     myPathsMenu.syncState(myPathsUiState)
-                }.launchIn(lifecycleScope)
+                }.launchIn(viewLifecycleOwner.lifecycleScope)
 
                 observeOuterPathsMenuUiState.onEach { outerPathsUiState ->
                     outerPathsMenu.syncState(outerPathsUiState)
-                }.launchIn(lifecycleScope)
+                }.launchIn(viewLifecycleOwner.lifecycleScope)
 
                 observeNewMapEvent.onEach { mapEvent ->
                     when (mapEvent) {
@@ -535,7 +520,7 @@ class MainMapFragment : Fragment() {
                             mapViewModel.onBottomMenuStateChange(mapEvent.newBottomMenuState)
                         }
                     }
-                }.launchIn(lifecycleScope)
+                }.launchIn(viewLifecycleOwner.lifecycleScope)
 
                 observeNewPathsInfoList.onEach { newPathsInfoListEvent ->
                     when (newPathsInfoListEvent.pathsMenuType) {
@@ -547,7 +532,7 @@ class MainMapFragment : Fragment() {
                             newPathsInfoListEvent.newPathInfoList
                         )
                     }
-                }.launchIn(lifecycleScope)
+                }.launchIn(viewLifecycleOwner.lifecycleScope)
 
                 observeNewPathInfoListItemState.onEach { newPathInfoStateEvent ->
                     when (newPathInfoStateEvent.pathsMenuType) {
@@ -559,7 +544,7 @@ class MainMapFragment : Fragment() {
                             newPathInfoStateEvent.pathInfoItemState
                         )
                     }
-                }.launchIn(lifecycleScope)
+                }.launchIn(viewLifecycleOwner.lifecycleScope)
 
                 observeShareFileChannel.onEach { sharedFileUri ->
                     val sendIntent = Intent().apply {
@@ -573,7 +558,7 @@ class MainMapFragment : Fragment() {
                             getString(R.string.share_file_title)
                         )
                     )
-                }.launchIn(lifecycleScope)
+                }.launchIn(viewLifecycleOwner.lifecycleScope)
 
                 observeDeletePathInfoItemChannel.onEach { deletePathInfoItemEvent ->
                     when (deletePathInfoItemEvent.pathsMenuType) {
@@ -585,12 +570,14 @@ class MainMapFragment : Fragment() {
                             deletePathInfoItemEvent.pathsToDelete
                         )
                     }
-                }.launchIn(lifecycleScope)
+                }.launchIn(viewLifecycleOwner.lifecycleScope)
 
                 observeNewConfirmDialog.onEach { confirmDialogInfo ->
                     showConfirmDialog(confirmDialogInfo)
-                }.launchIn(lifecycleScope)
+                }.launchIn(viewLifecycleOwner.lifecycleScope)
             }
+
+            val vibrationRepository = VibrationRepository(requireContext().applicationContext)
 
             mapViewModel =
                 ViewModelProvider(
@@ -613,6 +600,10 @@ class MainMapFragment : Fragment() {
                                 requireContext().applicationContext
                             )
                         ),
+                        finishPathWritingUseCase = FinishPathWritingUseCase(
+                            writingPathStatesRepository,
+                            vibrationRepository
+                        ),
                         userLocationInteractor = UserLocationInteractor(
                             LocationUpdatesRepository(
                                 LocationServices.getFusedLocationProviderClient(requireActivity()),
@@ -625,16 +616,21 @@ class MainMapFragment : Fragment() {
                                 sharedPreferences
                             )
                         ),
+                        tileSourceInteractor = TileSourceInteractor(
+                            TileSourceRepository(
+                                sharedPreferences
+                            )
+                        ),
                         writingPathStatesRepository = writingPathStatesRepository,
                         pathRatingUseCase = PathRatingUseCase(
                             PathRatingRepository(sharedPreferences),
-                            VibrationRepository(requireContext().applicationContext)
+                            vibrationRepository
                         ),
                         userRotationRepository = UserRotationRepository(
                             requireActivity().getSystemService(
                                 SENSOR_SERVICE
                             ) as SensorManager,
-                            lifecycleScope
+                            viewLifecycleOwner.lifecycleScope
                         ),
                         userInfoRepository = UserInfoRepository(sharedPreferences),
                         resourceManager = ResourceManager(requireContext().applicationContext),
@@ -644,19 +640,19 @@ class MainMapFragment : Fragment() {
                 )[MapViewModel::class.java].apply {
                     observeNewCurrentPathSegments.onEach { pathSegments ->
                         paintNewCurrentPathSegments(pathSegments)
-                    }.launchIn(lifecycleScope)
+                    }.launchIn(viewLifecycleOwner.lifecycleScope)
 
                     observeNewCommonPath.onEach { pathList ->
                         paintNewCommonPaths(pathList, commonPathColor)
-                    }.launchIn(lifecycleScope)
+                    }.launchIn(viewLifecycleOwner.lifecycleScope)
 
                     observeNewRatingPath.onEach { pathList ->
                         paintNewRatingPaths(pathList)
-                    }.launchIn(lifecycleScope)
+                    }.launchIn(viewLifecycleOwner.lifecycleScope)
 
                     observeMapUiState.onEach { mapUiState ->
                         updateMapUiState(mapUiState)
-                    }.launchIn(lifecycleScope)
+                    }.launchIn(viewLifecycleOwner.lifecycleScope)
 
                     observeRegularLocationUpdate.onEach { needToUpdateLocation ->
                         if (needToUpdateLocation) {
@@ -664,7 +660,7 @@ class MainMapFragment : Fragment() {
                         } else {
                             sendStopLocationUpdatesAction()
                         }
-                    }.launchIn(lifecycleScope)
+                    }.launchIn(viewLifecycleOwner.lifecycleScope)
 
                     observeNewMapCenter.onEach { newMapCenter ->
                         mapView.controller?.let { mapViewController ->
@@ -673,7 +669,7 @@ class MainMapFragment : Fragment() {
                                 mapViewController.setZoom(DEFAULT_COMFORT_ZOOM)
                             }
                         }
-                    }.launchIn(lifecycleScope)
+                    }.launchIn(viewLifecycleOwner.lifecycleScope)
 
                     observeHidePath.onEach { pathsToHide ->
                         when (pathsToHide) {
@@ -689,12 +685,12 @@ class MainMapFragment : Fragment() {
                                 hidePathsList(pathsToHide.pathIds)
                             }
                         }
-                    }.launchIn(lifecycleScope)
+                    }.launchIn(viewLifecycleOwner.lifecycleScope)
 
                     observeNewCurrentUserLocation.onEach { newUserLocation ->
                         userLocationOverlay.setPosition(newUserLocation.toGeoPoint())
                         refreshMapNow()
-                    }.launchIn(lifecycleScope)
+                    }.launchIn(viewLifecycleOwner.lifecycleScope)
 
                     observeWritingPathNow.onEach { isWritingPathNow ->
                         if (isWritingPathNow) {
@@ -710,20 +706,24 @@ class MainMapFragment : Fragment() {
                             ratingButtonsHolder.visibility = GONE
                             ratingNoneButtonHolder.visibility = GONE
                         }
-                    }.launchIn(lifecycleScope)
+                    }.launchIn(viewLifecycleOwner.lifecycleScope)
 
                     observeNewConfirmDialog.onEach { confirmDialogInfo ->
                         showConfirmDialog(confirmDialogInfo)
-                    }.launchIn(lifecycleScope)
+                    }.launchIn(viewLifecycleOwner.lifecycleScope)
 
                     observeNewUserError.onEach { errorMessage ->
                         showSnackbar(errorMessage)
-                    }.launchIn(lifecycleScope)
+                    }.launchIn(viewLifecycleOwner.lifecycleScope)
+
+                    observeTileSourceState.onEach { tileSource ->
+                        syncTileSource(tileSource)
+                    }.launchIn(viewLifecycleOwner.lifecycleScope)
 
                     observeNewUserRotation().onEach { newUserRotation ->
                         userLocationOverlay.setRotation(newUserRotation)
                         refreshMapNow()
-                    }.launchIn(lifecycleScope)
+                    }.launchIn(viewLifecycleOwner.lifecycleScope)
 
                     onInitFinish()
                 }
@@ -732,6 +732,13 @@ class MainMapFragment : Fragment() {
 
     private fun showSnackbar(message: String, duration: Int = Snackbar.LENGTH_SHORT) {
         Snackbar.make(mapView, message, duration).show()
+    }
+
+    private fun syncTileSource(tileSource: TileSource) {
+        when (tileSource) {
+            is TileSource.OSMTileSource -> mapView.setTileSource(tileSource.tileSource)
+            // TODO 2gis, yandex, google...
+        }
     }
 
     private fun showConfirmDialog(confirmDialogType: ConfirmDialogType) {
@@ -770,7 +777,7 @@ class MainMapFragment : Fragment() {
                 ConfirmDialogType.VolumeButtonsFeatureInfo -> {
                     VolumeButtonsPermissionsInfoDialog(
                         context = context,
-                        onConfirm = { mapViewModel.onVolumeFeaturePermissionsInfoConfirm() }
+                        onYesClicked = { mapViewModel.onVolumeFeaturePermissionsInfoConfirm() }
                     ).show()
                 }
             }
@@ -778,34 +785,56 @@ class MainMapFragment : Fragment() {
     }
 
     private fun sendStartLocationUpdatesAction() {
-        locationUpdatesService?.startLocationUpdates() ?: activity?.let { activity ->
+        val activity = activity ?: return
+        val userLocationUpdatesService = userLocationUpdatesService
+        if (userLocationUpdatesService == null) {
             activity.startService(
-                Intent(activity, LocationUpdatesService::class.java).apply {
+                Intent(activity, UserLocationUpdatesService::class.java).apply {
                     action = ACTION_START_LOCATION_UPDATES
                 }
             )
+        } else {
+            userLocationUpdatesService.startLocationUpdates()
         }
     }
 
     private fun sendStopLocationUpdatesAction() {
-        locationUpdatesService?.stopLocationUpdates()
+        val activity = activity ?: return
+        activity.stopService(
+            Intent(activity, UserLocationUpdatesService::class.java)
+        )
+        userLocationUpdatesService = null
     }
 
     private fun sendStartCurrentPathAction() {
-        locationUpdatesService?.startWritingPath()
+        val activity = activity ?: return
+        startForegroundService(
+            activity,
+            Intent(activity, WritingPathService::class.java).apply {
+                action = ACTION_START_WRITING_PATH
+            }
+        )
     }
 
     private fun sendFinishCurrentPathAction() {
-        locationUpdatesService?.finishWritingPath()
+        writingPathService?.finishWritingPath()
+        writingPathService = null
     }
 
     override fun onStart() {
-        activity?.bindService(
-            Intent(activity, LocationUpdatesService::class.java),
-            serviceConnectionListener,
-            Context.BIND_AUTO_CREATE
-        )
         super.onStart()
+        activity?.let {
+            it.bindService(
+                Intent(activity, WritingPathService::class.java),
+                serviceConnectionListener,
+                Context.BIND_IMPORTANT
+            )
+            it.bindService(
+                Intent(activity, UserLocationUpdatesService::class.java),
+                serviceConnectionListener,
+                Context.BIND_ADJUST_WITH_ACTIVITY
+            )
+        }
     }
 
     override fun onStop() {
@@ -814,18 +843,20 @@ class MainMapFragment : Fragment() {
     }
 
     override fun onResume() {
+        super.onResume()
         mapView.onResume()
         mapViewModel.onResume()
         menuViewModel.onResume(getExtraData())
-        LocalBroadcastManager.getInstance(requireContext()).registerReceiver(
-            locationChangeReceiver,
-            IntentFilter(LocationUpdatesService.ACTION_BROADCAST)
-        )
-        LocalBroadcastManager.getInstance(requireContext()).registerReceiver(
-            ratingChangeReceiver,
-            IntentFilter(VolumeKeysDetectorService.RATING_CHANGES_BROADCAST)
-        )
-        super.onResume()
+        LocalBroadcastManager.getInstance(requireContext()).apply {
+            registerReceiver(
+                locationChangeReceiver,
+                IntentFilter(ACTION_BROADCAST)
+            )
+            registerReceiver(
+                ratingChangeReceiver,
+                IntentFilter(RATING_CHANGES_BROADCAST)
+            )
+        }
     }
 
     private fun getExtraData(): Uri? {
@@ -1086,33 +1117,6 @@ class MainMapFragment : Fragment() {
 
     private fun refreshMapNow() {
         mapView.postInvalidate()
-    }
-
-    private fun walkStopAcceptProgressStart(onFinished: () -> Unit) {
-        stopAcceptProgressJob = CoroutineScope(Dispatchers.Default).launch {
-            while (walkStopAcceptProgress.progress != 100) {
-                delay(5)
-                withContext(Dispatchers.Main) {
-                    walkStopAcceptProgress.progress += 1
-                }
-            }
-            withContext(Dispatchers.Main) {
-                onFinished()
-            }
-        }
-    }
-
-    /**
-     * @return success of canceling
-     */
-    private fun tryCancelWalkStopAcceptProgress(): Boolean {
-        return if (stopAcceptProgressJob != null) {
-            stopAcceptProgressJob!!.cancel()
-            walkStopAcceptProgress.progress = 0
-            true
-        } else {
-            false
-        }
     }
 
     private fun addUserLocationTracker() {

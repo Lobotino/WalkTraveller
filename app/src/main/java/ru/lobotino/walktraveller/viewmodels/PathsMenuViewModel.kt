@@ -4,7 +4,6 @@ import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import java.io.IOException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.channels.BufferOverflow
@@ -41,6 +40,7 @@ import ru.lobotino.walktraveller.usecases.interfaces.IMapPathsInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IOuterPathsInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IPathRedactor
 import ru.lobotino.walktraveller.usecases.interfaces.IPermissionsUseCase
+import java.io.IOException
 
 class PathsMenuViewModel(
     private val pathsSaverRepository: IPathsSaverRepository,
@@ -525,7 +525,11 @@ class PathsMenuViewModel(
                             )
                         )
                         viewModelScope.launch {
-                            val savedRatingPath = mapPathsInteractor.getSavedRatingPath(pathId, withRatingOnly = false, isOptimized = true)
+                            val savedRatingPath = mapPathsInteractor.getSavedRatingPath(
+                                pathId,
+                                withRatingOnly = false,
+                                isOptimized = true
+                            )
                             if (savedRatingPath != null) {
                                 newMapEventChannel.trySend(MapEvent.ShowRatingPath(savedRatingPath))
                                 newPathInfoListItemStateFlow.tryEmit(

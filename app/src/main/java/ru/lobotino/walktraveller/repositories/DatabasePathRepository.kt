@@ -68,17 +68,20 @@ class DatabasePathRepository(
 
         val pathId = createNewPath(pathsSegments[0].startPoint, true, pointTimestamp, pathLength, mostCommonRating)
 
-        addNewPathPoints(pathId, pathsSegments.map { segment ->
-            pointTimestamp++
+        addNewPathPoints(
+            pathId,
+            pathsSegments.map { segment ->
+                pointTimestamp++
 
-            val finishPoint = segment.finishPoint
-            PointWithRating(
-                latitude = finishPoint.latitude,
-                longitude = finishPoint.longitude,
-                timestamp = pointTimestamp,
-                rating = segment.rating
-            )
-        })
+                val finishPoint = segment.finishPoint
+                PointWithRating(
+                    latitude = finishPoint.latitude,
+                    longitude = finishPoint.longitude,
+                    timestamp = pointTimestamp,
+                    rating = segment.rating
+                )
+            }
+        )
 
         return pathId
     }
@@ -102,7 +105,9 @@ class DatabasePathRepository(
         points: List<PointWithRating>
     ): List<Long> {
         insertNewPoints(points).let { insertedPointsIds ->
-            if (points.size != insertedPointsIds.size) throw RuntimeException("Trying to add path segments, but not all points are success inserted!")
+            if (points.size != insertedPointsIds.size) throw RuntimeException(
+                "Trying to add path segments, but not all points are success inserted!"
+            )
             Log.i(TAG, "addNewPathPoints $insertedPointsIds to pathId $pathId")
             insertNewPathPointRelations(pathId, insertedPointsIds)
             insertNewPathSegments(pathId, insertedPointsIds.zip(points))
@@ -197,7 +202,10 @@ class DatabasePathRepository(
                 }
             }
         )
-        Log.i(TAG, "insertNewPathSegments with start point id: ${pathFinishPoint.id}. Segments inserted: ${newPoints.size}")
+        Log.i(
+            TAG,
+            "insertNewPathSegments with start point id: ${pathFinishPoint.id}. Segments inserted: ${newPoints.size}"
+        )
     }
 
     private suspend fun getPathFinishPoint(pathId: Long): EntityPoint? {

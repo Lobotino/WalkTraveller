@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import ru.lobotino.walktraveller.R
 import ru.lobotino.walktraveller.model.SegmentRating
+import ru.lobotino.walktraveller.model.TileSource
 import ru.lobotino.walktraveller.model.map.MapCommonPath
 import ru.lobotino.walktraveller.model.map.MapPathSegment
 import ru.lobotino.walktraveller.model.map.MapPoint
@@ -30,10 +31,12 @@ import ru.lobotino.walktraveller.ui.model.FindMyLocationButtonState
 import ru.lobotino.walktraveller.ui.model.MapUiState
 import ru.lobotino.walktraveller.ui.model.PathsToAction
 import ru.lobotino.walktraveller.usecases.IUserLocationInteractor
+import ru.lobotino.walktraveller.usecases.interfaces.IFinishPathWritingUseCase
 import ru.lobotino.walktraveller.usecases.interfaces.IMapPathsInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IMapStateInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IPathRatingUseCase
 import ru.lobotino.walktraveller.usecases.interfaces.IPermissionsUseCase
+import ru.lobotino.walktraveller.usecases.interfaces.ITileSourceInteractor
 import ru.lobotino.walktraveller.usecases.permissions.GeoPermissionsUseCase
 import ru.lobotino.walktraveller.utils.IResourceManager
 import ru.lobotino.walktraveller.utils.ext.toMapPoint
@@ -42,9 +45,11 @@ class MapViewModel(
     private val notificationsPermissionsUseCase: IPermissionsUseCase,
     private val volumeKeysListenerPermissionsUseCase: IPermissionsUseCase,
     private val geoPermissionsUseCase: GeoPermissionsUseCase,
+    private val finishPathWritingUseCase: IFinishPathWritingUseCase,
     private val userLocationInteractor: IUserLocationInteractor,
     private val mapPathsInteractor: IMapPathsInteractor,
     private val mapStateInteractor: IMapStateInteractor,
+    private val tileSourceInteractor: ITileSourceInteractor,
     private val writingPathStatesRepository: IWritingPathStatesRepository,
     private val pathRatingUseCase: IPathRatingUseCase,
     private val userRotationRepository: IUserRotationRepository,
@@ -67,7 +72,6 @@ class MapViewModel(
         )
 
     private val writingPathNowState = MutableStateFlow(false)
-    private val regularLocationUpdateStateFlow = MutableStateFlow(false)
 
     private val hidePathFlow =
         MutableSharedFlow<PathsToAction>(1, 0, BufferOverflow.DROP_OLDEST)
@@ -85,17 +89,24 @@ class MapViewModel(
     private val newConfirmDialogChannel = Channel<ConfirmDialogType>()
     private val userErrorChannel = Channel<String>()
 
+    // Enable (true) or disable (false) location updates
+    private val regularLocationUpdateActionChannel = Channel<Boolean>()
+
+    private val tileSourceStateFlow = MutableStateFlow(tileSourceInteractor.getCurrentTileSource())
+
     val observeNewCurrentPathSegments: Flow<List<MapPathSegment>> = newCurrentPathSegmentsFlow
     val observeNewCommonPath: Flow<List<MapCommonPath>> = newCommonPathFlow
     val observeNewRatingPath: Flow<List<MapRatingPath>> = newRatingPathFlow
     val observeMapUiState: Flow<MapUiState> = mapUiStateFlow
-    val observeRegularLocationUpdate: Flow<Boolean> = regularLocationUpdateStateFlow
+    val observeRegularLocationUpdate: Flow<Boolean> =
+        regularLocationUpdateActionChannel.consumeAsFlow()
     val observeNewMapCenter: Flow<MapPoint> = newMapCenterFlow
     val observeHidePath: Flow<PathsToAction> = hidePathFlow
     val observeNewCurrentUserLocation: Flow<MapPoint> = newCurrentUserLocationFlow
     val observeWritingPathNow: Flow<Boolean> = writingPathNowState
     val observeNewConfirmDialog: Flow<ConfirmDialogType> = newConfirmDialogChannel.consumeAsFlow()
     val observeNewUserError: Flow<String> = userErrorChannel.consumeAsFlow()
+    val observeTileSourceState: Flow<TileSource> = tileSourceStateFlow
 
     private var isInitialized = false
     private var updatingYetUnpaintedPaths = false
@@ -110,36 +121,23 @@ class MapViewModel(
 
     fun onInitFinish() {
         setupMapCenterToLastSeenLocation()
-
         startBackgroundCachingPaths()
-
         checkGeoPermissions()
-
-        userRotationRepository.startTrackUserRotation()
-
         clearMap()
-
         syncWritingPathState()
-
         isInitialized = true
     }
 
     private fun checkGeoPermissions() {
         if (geoPermissionsUseCase.isGeoPermissionsGranted()) {
-            regularLocationUpdateStateFlow.tryEmit(true)
+            regularLocationUpdateActionChannel.trySend(true)
+            userRotationRepository.startTrackUserRotation()
             updateCurrentMapCenterToUserLocation()
-            requestNotificationPermissions()
         } else {
             newConfirmDialogChannel.trySend(
                 ConfirmDialogType.GeoLocationPermissionRequired
             )
         }
-    }
-
-    private fun requestNotificationPermissions() {
-        notificationsPermissionsUseCase.requestPermissions(someDenied = {
-            showUserError(resourceManager.getString(R.string.error_notifications_permissions_denied))
-        })
     }
 
     private fun needToAskVolumeButtonsPermissions(): Boolean {
@@ -168,23 +166,25 @@ class MapViewModel(
     }
 
     fun onResume() {
-        if (geoPermissionsUseCase.isGeoPermissionsGranted()) {
-            regularLocationUpdateStateFlow.tryEmit(true)
-        }
-
         if (isInitialized) {
+            if (geoPermissionsUseCase.isGeoPermissionsGranted()) {
+                regularLocationUpdateActionChannel.trySend(true)
+                userRotationRepository.startTrackUserRotation()
+            }
             syncRequestPermissionsState()
-            userRotationRepository.startTrackUserRotation()
+            syncMapTileSet()
             updateNewPointsIfNeeded()
         }
     }
 
+    private fun syncMapTileSet() {
+        tileSourceStateFlow.tryEmit(tileSourceInteractor.getCurrentTileSource())
+    }
+
     fun onPause() {
+        regularLocationUpdateActionChannel.trySend(false)
         userRotationRepository.stopTrackUserRotation()
         updatingYetUnpaintedPaths = false
-        if (!writingPathStatesRepository.isWritingPathNow()) {
-            regularLocationUpdateStateFlow.tryEmit(false)
-        }
     }
 
     fun onNewLocationReceive(location: Location) {
@@ -220,6 +220,7 @@ class MapViewModel(
             return
         }
         notificationsPermissionsUseCase.requestPermissions(allGranted = {
+            tryStartRegularLocationUpdates()
             clearMap()
             writingPathStatesRepository.setWritingPathNow(true)
             writingPathNowState.tryEmit(true)
@@ -231,11 +232,18 @@ class MapViewModel(
             }
         }, someDenied = {
             showUserError(resourceManager.getString(R.string.error_notifications_permissions_denied))
+            tryStartRegularLocationUpdates()
         })
     }
 
+    private fun tryStartRegularLocationUpdates() {
+        if (geoPermissionsUseCase.isGeoPermissionsGranted()) {
+            regularLocationUpdateActionChannel.trySend(true)
+        }
+    }
+
     fun onStopPathButtonClicked() {
-        writingPathStatesRepository.setWritingPathNow(false)
+        finishPathWritingUseCase.finishPathWriting()
         writingPathNowState.tryEmit(false)
         mapUiStateFlow.update { uiState ->
             uiState.copy(
@@ -365,13 +373,13 @@ class MapViewModel(
             } else {
                 geoPermissionsUseCase
                     .requestPermissions(
-                        {
-                            regularLocationUpdateStateFlow.tryEmit(true)
+                        allGranted = {
+                            regularLocationUpdateActionChannel.trySend(true)
                             updateCurrentMapCenterToUserLocation()
                         },
-                        {
+                        someDenied = {
                             if (geoPermissionsUseCase.isGeoPermissionsGranted()) {
-                                regularLocationUpdateStateFlow.tryEmit(true)
+                                regularLocationUpdateActionChannel.trySend(true)
                                 updateCurrentMapCenterToUserLocation()
                             } else {
                                 mapUiStateFlow.update { mapUiState ->
@@ -444,11 +452,11 @@ class MapViewModel(
 
     fun onLocationPermissionDialogConfirmed() {
         geoPermissionsUseCase.requestPermissions(allGranted = {
-            regularLocationUpdateStateFlow.tryEmit(true)
+            regularLocationUpdateActionChannel.trySend(true)
             updateCurrentMapCenterToUserLocation()
         }, someDenied = {
             if (geoPermissionsUseCase.isGeoPermissionsGranted()) {
-                regularLocationUpdateStateFlow.tryEmit(true)
+                regularLocationUpdateActionChannel.trySend(true)
                 updateCurrentMapCenterToUserLocation()
             } else {
                 mapUiStateFlow.update { mapUiState ->
@@ -459,7 +467,6 @@ class MapViewModel(
                 showUserError(resourceManager.getString(R.string.error_permissions_denied))
             }
         })
-        requestNotificationPermissions()
     }
 
     fun onBottomMenuStateChange(newBottomMenuState: BottomMenuState) {

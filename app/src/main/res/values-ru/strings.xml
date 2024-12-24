@@ -199,6 +199,8 @@
     <string name="geo_location_required_dialog_description">Приложение создано для записи и отслеживания пройденных вами путей.\nДля этого приложению необходим доступ к геолокации.\n\nПриложение не передаёт данные о геолокации куда бы то ни было. Записанные треки остаются только на Вашем устройстве.</string>
     <string name="menu_settings_title">Настройки</string>
     <string name="menu_map_title">Карта</string>
+    <string name="menu_rate_app_title">Оценить приложение</string>
+    <string name="menu_write_to_author">Написать автору</string>
     <string name="menu_about_title">О проекте</string>
     <string name="nav_open">Открыть меню навигации</string>
     <string name="nav_close">Закрыть меню навигации</string>
@@ -214,7 +216,7 @@
     <string name="content_desc_rating_normal">Кнопка рейтинга «нормально»</string>
     <string name="content_desc_rating_good">Кнопка рейтинга «хорошо»</string>
     <string name="content_desc_rating_perfect">Кнопка рейтинга «прекрасно»</string>
-    <string name="content_desc_find_my_location_button">Кнопка «найти мою геолокацию»</string>
+    <string name="content_desc_find_my_location_button">найти мою геолокацию</string>
     <string name="content_desc_empty_paths_list_error_image">Изображение «пустой список путей на добавление»</string>
     <string name="content_desc_start_walk_button">Кнопка старта прогулки</string>
     <string name="content_desc_stop_walk_button">Кнопка окончания прогулки</string>
@@ -226,12 +228,12 @@
     <string name="content_desc_hide_selected_paths_button">Кнопка скрытия выбранных путей с карты</string>
     <string name="content_desc_share_paths_button">Кнопка «поделиться» для выбранных путей</string>
     <string name="content_desc_delete_path_button">Кнопка удаления пути</string>
-    <string name="content_desc_back_button">Кнопка «назад»</string>
+    <string name="content_desc_back_button">Назад</string>
     <string name="content_desc_select_all_paths_button">Кнопка «выбрать все»</string>
     <string name="content_desc_show_selected_paths_button">Кнопка «показать выбранные пути»</string>
     <string name="content_desc_share_path_button">Кнопка «поделиться»</string>
     <string name="content_desc_delete_selected_paths_button">Кнопка «удалить выбранные пути»</string>
-    <string name="volume_buttons_feature_request_desc">Приложение поддерживает возможность управления рейтингом участка маршрута с помощью кнопок громкости телефона, не доставая телефон из кармана.\n\nХотите попробовать?\n\n(Эту функцию можно выключить в любой момент в настройках приложения)</string>
+    <string name="volume_buttons_feature_request_desc">Приложение поддерживает возможность управления рейтингом участка маршрута с помощью кнопок громкости телефона, не доставая телефон из кармана.\n\nХотите попробовать?</string>
     <string name="volume_buttons_feature_request_title">Оценка пути</string>
     <string name="volume_buttons_feature_info_title">Нужно подтверждение</string>
     <string name="volume_buttons_feature_info_desc">Чтобы получить доступ к информации о нажатиях кнопок громкости, приложению требуется доступ к специальным возможностям.\n\nПриложение гарантирует, что не будет собирать никакой дополнительной информации, которые предоставляются полученным доступом, кроме нажатия кнопок громкости во время записи трека</string>
@@ -248,4 +250,13 @@
     <string name="error_permissions_denied">Некоторые разрешения отклонены. Проверьте настройки приложения.</string>
     <string name="error_notifications_permissions_denied">Разрешения на уведомления отклонены. Они необходимы для корректной работы записи пути, проверьте настройки приложения.</string>
     <string name="error_message_not_allow_access_to_volume_buttons">Доступ к специальным возможностям не предоставлен. Проверьте настройки приложения.</string>
+    <string name="settings_map_style_title">Стиль карты</string>
+    <string name="error_something_went_wrong">Что-то пошло не так :(</string>
+    <string name="navigation_title_feedback">Обратная связь</string>
+    <string name="navigation_title_navigation">Навигация</string>
+    <string name="permission_granted">Разрешение получено, всё отлично!</string>
+    <string name="path_is_not_tracking">Не записывается путь?</string>
+    <string name="disable_battery_safe_mode">Отключить режим энергосбережения</string>
+    <string name="check_notification_permission">Проверить разрешение на уведомления</string>
+    <string name="check_location_permission">Проверить разрешение на геолокацию</string>
 </resources>

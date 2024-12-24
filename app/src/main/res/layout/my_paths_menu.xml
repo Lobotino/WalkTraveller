@@ -41,7 +41,7 @@
 
                 <ImageView
                     android:id="@+id/paths_menu_back_button"
-                    android:layout_width="40dp"
+                    android:layout_width="48dp"
                     android:layout_height="44dp"
                     android:layout_gravity="start"
                     android:contentDescription="@string/content_desc_back_button"
