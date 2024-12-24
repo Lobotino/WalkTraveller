@@ -1,9 +1,7 @@
 ## Walk Traveller
 ### Android приложение для разметки и оценки маршрутов на карте цветом
 
-<p align="center">
-  <img src="https://github.com/user-attachments/assets/a57c60f5-67e3-4983-83a4-ba21a0ce8102" />
-</p>
+<img src="https://github.com/user-attachments/assets/a57c60f5-67e3-4983-83a4-ba21a0ce8102" />
 
 ### Что делает?
 - Записывает пути в реальном времени во время прогулки и сохраняет в локальную базу данных
@@ -33,7 +31,7 @@
 - Добавить онбординг по переключению цвета на кнопки громкости. Иногда система забирает права на специальные возможности без предупреждения
 - Добавить UI тесты
 
-### Скачать
-![card][card]
+### Попробовать
 
-[card]: https://PlayBadges.pavi2410.me/badge/full?id=ru.lobotino.walktraveller
+[![Скачать](https://github.com/user-attachments/assets/0057c3e6-037f-4388-8173-b7d712673802)](https://play.google.com/store/apps/details?id=ru.lobotino.walktraveller&pcampaignid=web_share)
+
