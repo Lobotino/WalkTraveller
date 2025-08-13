@@ -36,8 +36,8 @@ open class PathsInfoAdapter(
 
     private var pathsItems: MutableList<PathInfoItemModel> = ArrayList<PathInfoItemModel>()
 
-    protected var defaultItemBackgroundColor by Delegates.notNull<@ColorInt Int>()
-    protected var selectedItemBackgroundColor by Delegates.notNull<@ColorInt Int>()
+    protected var defaultItemBackgroundColor by Delegates.notNull<Int>()
+    protected var selectedItemBackgroundColor by Delegates.notNull<Int>()
 
     init {
         defaultItemBackgroundColor = ContextCompat.getColor(context, R.color.white)

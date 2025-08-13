@@ -24,12 +24,12 @@ class VolumeButtonsFeatureSuggestDialog(context: Context, onYesClicked: () -> Un
     onYesClicked,
     onNoClicked
 ) {
-    private var ratingWhiteColor by Delegates.notNull<@ColorInt Int>()
-    private var ratingPerfectColor by Delegates.notNull<@ColorInt Int>()
-    private var ratingGoodColor by Delegates.notNull<@ColorInt Int>()
-    private var ratingNormalColor by Delegates.notNull<@ColorInt Int>()
-    private var ratingBadlyColor by Delegates.notNull<@ColorInt Int>()
-    private var ratingNoneColor by Delegates.notNull<@ColorInt Int>()
+    private var ratingWhiteColor by Delegates.notNull<Int>()
+    private var ratingPerfectColor by Delegates.notNull<Int>()
+    private var ratingGoodColor by Delegates.notNull<Int>()
+    private var ratingNormalColor by Delegates.notNull<Int>()
+    private var ratingBadlyColor by Delegates.notNull<Int>()
+    private var ratingNoneColor by Delegates.notNull<Int>()
 
     private lateinit var parentViewGroup: ViewGroup
     private lateinit var ratingBadlyButton: CardView

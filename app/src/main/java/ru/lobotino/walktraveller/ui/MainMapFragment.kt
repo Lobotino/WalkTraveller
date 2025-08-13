@@ -169,13 +169,13 @@ class MainMapFragment : Fragment() {
 
     private lateinit var userLocationOverlay: UserLocationOverlay
 
-    private var ratingWhiteColor by Delegates.notNull<@ColorInt Int>()
-    private var ratingPerfectColor by Delegates.notNull<@ColorInt Int>()
-    private var ratingGoodColor by Delegates.notNull<@ColorInt Int>()
-    private var ratingNormalColor by Delegates.notNull<@ColorInt Int>()
-    private var ratingBadlyColor by Delegates.notNull<@ColorInt Int>()
-    private var ratingNoneColor by Delegates.notNull<@ColorInt Int>()
-    private var commonPathColor by Delegates.notNull<@ColorInt Int>()
+    private var ratingWhiteColor by Delegates.notNull<Int>()
+    private var ratingPerfectColor by Delegates.notNull<Int>()
+    private var ratingGoodColor by Delegates.notNull<Int>()
+    private var ratingNormalColor by Delegates.notNull<Int>()
+    private var ratingBadlyColor by Delegates.notNull<Int>()
+    private var ratingNoneColor by Delegates.notNull<Int>()
+    private var commonPathColor by Delegates.notNull<Int>()
 
     private val showingPathsPolylines = ArrayMap<Long, List<Polyline>>()
     private val currentPathPolylines = ArrayList<Polyline>()
@@ -551,6 +551,7 @@ class MainMapFragment : Fragment() {
                         action = Intent.ACTION_SEND
                         type = "application/*"
                         putExtra(Intent.EXTRA_STREAM, sharedFileUri)
+                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                     }
                     startActivity(
                         Intent.createChooser(
