@@ -272,6 +272,8 @@ class MainMapFragment : Fragment() {
             mapView.onCreate(null)
             mapView.getMapAsync { map ->
                 mapLibreMap = map
+                // onMapScrolled also resets the find-my-location button out of its
+                // "center on current location" state, so this must fire after camera moves.
                 map.addOnCameraIdleListener {
                     map.cameraPosition.target?.let { target ->
                         mapViewModel.onMapScrolled(target.toMapPoint())
