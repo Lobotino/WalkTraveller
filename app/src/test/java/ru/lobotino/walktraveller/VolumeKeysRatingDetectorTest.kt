@@ -15,7 +15,7 @@ class VolumeKeysRatingDetectorTest {
     @Test
     fun `single volume down sets NORMAL only after the delay`() = runTest {
         val results = mutableListOf<SegmentRating>()
-        val detector = VolumeKeysRatingDetector(backgroundScope) { results.add(it) }
+        val detector = VolumeKeysRatingDetector(this) { results.add(it) }
 
         detector.onVolumeDown()
         assertTrue("nothing should fire before the delay elapses", results.isEmpty())
@@ -27,7 +27,7 @@ class VolumeKeysRatingDetectorTest {
     @Test
     fun `double volume down sets BADLY and never NORMAL`() = runTest {
         val results = mutableListOf<SegmentRating>()
-        val detector = VolumeKeysRatingDetector(backgroundScope) { results.add(it) }
+        val detector = VolumeKeysRatingDetector(this) { results.add(it) }
 
         detector.onVolumeDown()
         detector.onVolumeDown()
@@ -39,7 +39,7 @@ class VolumeKeysRatingDetectorTest {
     @Test
     fun `single volume up sets GOOD only after the delay`() = runTest {
         val results = mutableListOf<SegmentRating>()
-        val detector = VolumeKeysRatingDetector(backgroundScope) { results.add(it) }
+        val detector = VolumeKeysRatingDetector(this) { results.add(it) }
 
         detector.onVolumeUp()
         assertTrue(results.isEmpty())
@@ -51,7 +51,7 @@ class VolumeKeysRatingDetectorTest {
     @Test
     fun `double volume up sets PERFECT and never GOOD`() = runTest {
         val results = mutableListOf<SegmentRating>()
-        val detector = VolumeKeysRatingDetector(backgroundScope) { results.add(it) }
+        val detector = VolumeKeysRatingDetector(this) { results.add(it) }
 
         detector.onVolumeUp()
         detector.onVolumeUp()
@@ -63,7 +63,7 @@ class VolumeKeysRatingDetectorTest {
     @Test
     fun `opposite key press cancels the pending rating`() = runTest {
         val results = mutableListOf<SegmentRating>()
-        val detector = VolumeKeysRatingDetector(backgroundScope) { results.add(it) }
+        val detector = VolumeKeysRatingDetector(this) { results.add(it) }
 
         detector.onVolumeDown()
         detector.onVolumeUp()
@@ -75,7 +75,7 @@ class VolumeKeysRatingDetectorTest {
     @Test
     fun `release cancels pending rating`() = runTest {
         val results = mutableListOf<SegmentRating>()
-        val detector = VolumeKeysRatingDetector(backgroundScope) { results.add(it) }
+        val detector = VolumeKeysRatingDetector(this) { results.add(it) }
 
         detector.onVolumeDown()
         detector.release()
