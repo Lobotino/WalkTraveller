@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import ru.lobotino.walktraveller.App
 import ru.lobotino.walktraveller.R
+import ru.lobotino.walktraveller.analytics.AnalyticsEvent
 import ru.lobotino.walktraveller.repositories.UserInfoRepository
 import ru.lobotino.walktraveller.repositories.interfaces.AppScreen
 import ru.lobotino.walktraveller.ui.dialog.PrivacyPolicyDialog
@@ -50,6 +51,12 @@ class FirstWelcomeFragment : Fragment() {
             initViews(view)
             initViewModel()
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        (requireContext().applicationContext as App).analyticsTracker
+            .track(AnalyticsEvent.ScreenView("welcome"))
     }
 
     private fun initViews(view: View) {

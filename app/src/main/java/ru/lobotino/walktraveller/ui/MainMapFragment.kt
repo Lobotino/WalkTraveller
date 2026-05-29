@@ -49,6 +49,7 @@ import org.osmdroid.views.overlay.Overlay
 import org.osmdroid.views.overlay.Polyline
 import ru.lobotino.walktraveller.App
 import ru.lobotino.walktraveller.R
+import ru.lobotino.walktraveller.analytics.AnalyticsEvent
 import ru.lobotino.walktraveller.database.provideDatabase
 import ru.lobotino.walktraveller.di.MapViewModelFactory
 import ru.lobotino.walktraveller.di.PathsMenuViewModelFactory
@@ -427,6 +428,8 @@ class MainMapFragment : Fragment() {
                 AppCompatActivity.MODE_PRIVATE
             )
 
+            val analyticsTracker = (requireContext().applicationContext as App).analyticsTracker
+
             val writingPathStatesRepository =
                 WritingPathStatesRepository(sharedPreferences)
 
@@ -475,6 +478,7 @@ class MainMapFragment : Fragment() {
                         databasePathRepository
                     ),
                     pathRedactor = pathRedactor,
+                    analyticsTracker = analyticsTracker,
                     owner = this,
                     bundle = bundle
                 )
@@ -627,6 +631,7 @@ class MainMapFragment : Fragment() {
                         ),
                         userInfoRepository = UserInfoRepository(sharedPreferences),
                         resourceManager = ResourceManager(requireContext().applicationContext),
+                        analyticsTracker = analyticsTracker,
                         owner = this,
                         bundle = bundle
                     )
@@ -830,6 +835,8 @@ class MainMapFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
+        (requireContext().applicationContext as App).analyticsTracker
+            .track(AnalyticsEvent.ScreenView("map"))
         mapView.onResume()
         mapViewModel.onResume()
         menuViewModel.onResume(getExtraData())

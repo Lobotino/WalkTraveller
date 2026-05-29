@@ -30,6 +30,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import ru.lobotino.walktraveller.App
 import ru.lobotino.walktraveller.R
+import ru.lobotino.walktraveller.analytics.AnalyticsEvent
 import ru.lobotino.walktraveller.di.SettingsViewModelFactory
 import ru.lobotino.walktraveller.model.TileSourceType
 import ru.lobotino.walktraveller.repositories.OptimizePathsSettingsRepository
@@ -74,6 +75,12 @@ class SettingsFragment : Fragment() {
             initViews(view)
             initViewModel(savedInstanceState)
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        (requireContext().applicationContext as App).analyticsTracker
+            .track(AnalyticsEvent.ScreenView("settings"))
     }
 
     private fun initViewModel(bundle: Bundle?) {
