@@ -4,6 +4,7 @@ import android.app.Application
 import android.os.StrictMode
 import android.preference.PreferenceManager
 import com.google.firebase.analytics.FirebaseAnalytics
+import org.maplibre.android.MapLibre
 import org.osmdroid.config.Configuration
 import ru.lobotino.walktraveller.analytics.AnalyticsTracker
 import ru.lobotino.walktraveller.analytics.DebugLogAnalyticsLogger
@@ -18,6 +19,7 @@ class App : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        MapLibre.getInstance(this)
         StrictMode.setThreadPolicy(StrictMode.ThreadPolicy.Builder().permitAll().build())
         Configuration.getInstance().load(
             applicationContext,
