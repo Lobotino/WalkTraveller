@@ -14,7 +14,7 @@ class AnalyticsTrackerTest {
 
     private class ThrowingAnalyticsLogger : IAnalyticsLogger {
         override fun log(event: AnalyticsEvent) {
-            throw IllegalStateException("boom")
+            error("boom")
         }
     }
 

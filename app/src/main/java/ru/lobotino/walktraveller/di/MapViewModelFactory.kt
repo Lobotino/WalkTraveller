@@ -5,6 +5,7 @@ import androidx.lifecycle.AbstractSavedStateViewModelFactory
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.savedstate.SavedStateRegistryOwner
+import ru.lobotino.walktraveller.analytics.IAnalyticsTracker
 import ru.lobotino.walktraveller.repositories.interfaces.IUserInfoRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IUserRotationRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IWritingPathStatesRepository
@@ -16,10 +17,10 @@ import ru.lobotino.walktraveller.usecases.interfaces.IPathRatingUseCase
 import ru.lobotino.walktraveller.usecases.interfaces.IPermissionsUseCase
 import ru.lobotino.walktraveller.usecases.interfaces.ITileSourceInteractor
 import ru.lobotino.walktraveller.usecases.permissions.GeoPermissionsUseCase
-import ru.lobotino.walktraveller.analytics.IAnalyticsTracker
 import ru.lobotino.walktraveller.utils.IResourceManager
 import ru.lobotino.walktraveller.viewmodels.MapViewModel
 
+@Suppress("LongParameterList")
 class MapViewModelFactory(
     private val notificationsPermissionsInteractor: IPermissionsUseCase,
     private val geoPermissionsUseCase: GeoPermissionsUseCase,

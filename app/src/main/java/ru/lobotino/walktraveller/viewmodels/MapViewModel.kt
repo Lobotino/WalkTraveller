@@ -15,6 +15,8 @@ import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import ru.lobotino.walktraveller.R
+import ru.lobotino.walktraveller.analytics.AnalyticsEvent
+import ru.lobotino.walktraveller.analytics.IAnalyticsTracker
 import ru.lobotino.walktraveller.model.SegmentRating
 import ru.lobotino.walktraveller.model.TileSource
 import ru.lobotino.walktraveller.model.map.MapCommonPath
@@ -37,11 +39,10 @@ import ru.lobotino.walktraveller.usecases.interfaces.IPathRatingUseCase
 import ru.lobotino.walktraveller.usecases.interfaces.IPermissionsUseCase
 import ru.lobotino.walktraveller.usecases.interfaces.ITileSourceInteractor
 import ru.lobotino.walktraveller.usecases.permissions.GeoPermissionsUseCase
-import ru.lobotino.walktraveller.analytics.AnalyticsEvent
-import ru.lobotino.walktraveller.analytics.IAnalyticsTracker
 import ru.lobotino.walktraveller.utils.IResourceManager
 import ru.lobotino.walktraveller.utils.ext.toMapPoint
 
+@Suppress("LongParameterList")
 class MapViewModel(
     private val notificationsPermissionsUseCase: IPermissionsUseCase,
     private val geoPermissionsUseCase: GeoPermissionsUseCase,

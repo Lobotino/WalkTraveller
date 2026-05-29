@@ -13,6 +13,7 @@ import ru.lobotino.walktraveller.usecases.interfaces.IPathRedactor
 import ru.lobotino.walktraveller.usecases.interfaces.IPermissionsUseCase
 import ru.lobotino.walktraveller.viewmodels.PathsMenuViewModel
 
+@Suppress("LongParameterList")
 class PathsMenuViewModelFactory(
     private val pathsSaverRepository: IPathsSaverRepository,
     private val externalStoragePermissionsUseCase: IPermissionsUseCase,
