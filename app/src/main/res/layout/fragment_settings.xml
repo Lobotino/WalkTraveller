@@ -46,6 +46,21 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp" />
 
+    <androidx.appcompat.widget.SwitchCompat
+        android:id="@+id/volume_keys_rating_switch"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="12dp"
+        android:text="@string/settings_volume_keys_rating_title"
+        android:textColor="@color/black"
+        android:textSize="18sp" />
+
+    <com.google.android.material.divider.MaterialDivider
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp" />
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

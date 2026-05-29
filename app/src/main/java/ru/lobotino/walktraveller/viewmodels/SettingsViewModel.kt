@@ -9,6 +9,7 @@ import ru.lobotino.walktraveller.R
 import ru.lobotino.walktraveller.model.TileSourceType
 import ru.lobotino.walktraveller.repositories.interfaces.IOptimizePathsSettingsRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IPermissionsRepository
+import ru.lobotino.walktraveller.repositories.interfaces.IUserInfoRepository
 import ru.lobotino.walktraveller.repositories.permissions.GeoPermissionsRepository
 import ru.lobotino.walktraveller.ui.model.SettingsUiState
 import ru.lobotino.walktraveller.usecases.interfaces.ITileSourceInteractor
@@ -19,6 +20,7 @@ class SettingsViewModel(
     private val tileSourceInteractor: ITileSourceInteractor,
     private val geoPermissionsRepository: GeoPermissionsRepository,
     private val notificationPermissionsRepository: IPermissionsRepository,
+    private val userInfoRepository: IUserInfoRepository,
     private val resourceManager: ResourceManager,
 ) : ViewModel() {
 
@@ -29,7 +31,8 @@ class SettingsViewModel(
         MutableStateFlow(
             SettingsUiState(
                 optimizePathsSettingsRepository.getOptimizePathsApproximationDistance() ?: 1f,
-                tileSourceInteractor.getCurrentTileSourceType()
+                tileSourceInteractor.getCurrentTileSourceType(),
+                userInfoRepository.isVolumeKeysRatingEnabled()
             )
         )
 
@@ -41,6 +44,11 @@ class SettingsViewModel(
 
     fun onMapStyleChosen(tileSourceType: TileSourceType) {
         tileSourceInteractor.setCurrentTileSourceType(tileSourceType)
+    }
+
+    fun onVolumeKeysRatingToggle(enabled: Boolean) {
+        userInfoRepository.setVolumeKeysRatingEnabled(enabled)
+        settingsUiState.value = settingsUiState.value.copy(volumeKeysRatingEnabled = enabled)
     }
 
     fun onCheckNotificationSettingsClick() {

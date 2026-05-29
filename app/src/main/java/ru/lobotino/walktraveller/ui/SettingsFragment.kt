@@ -17,6 +17,7 @@ import android.widget.Button
 import android.widget.Spinner
 import android.widget.Toolbar
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.SwitchCompat
 import androidx.core.content.ContextCompat.getSystemService
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -32,6 +33,7 @@ import ru.lobotino.walktraveller.di.SettingsViewModelFactory
 import ru.lobotino.walktraveller.model.TileSourceType
 import ru.lobotino.walktraveller.repositories.OptimizePathsSettingsRepository
 import ru.lobotino.walktraveller.repositories.TileSourceRepository
+import ru.lobotino.walktraveller.repositories.UserInfoRepository
 import ru.lobotino.walktraveller.repositories.permissions.GeoPermissionsRepository
 import ru.lobotino.walktraveller.repositories.permissions.NotificationsPermissionsRepository
 import ru.lobotino.walktraveller.ui.model.SettingsUiState
@@ -45,6 +47,7 @@ class SettingsFragment : Fragment() {
     private lateinit var toolbar: Toolbar
     private lateinit var optimizePathsSlider: Slider
     private lateinit var mapStyleSpinner: Spinner
+    private lateinit var volumeKeysRatingSwitch: SwitchCompat
     private lateinit var buttonDisableBatteryOptimization: Button
     private lateinit var buttonCheckNotificationSettings: Button
     private lateinit var buttonCheckGeolocationSettings: Button
@@ -83,6 +86,7 @@ class SettingsFragment : Fragment() {
                     this,
                     requireContext().applicationContext
                 ),
+                userInfoRepository = UserInfoRepository(sharedPreferences),
                 geoPermissionsRepository = GeoPermissionsRepository(
                     this,
                     requireContext().applicationContext
@@ -115,6 +119,10 @@ class SettingsFragment : Fragment() {
         mapStyleSpinner.setSelection(
             TileSourceType.values().indexOf(uiState.mapStyleValue)
         )
+
+        if (volumeKeysRatingSwitch.isChecked != uiState.volumeKeysRatingEnabled) {
+            volumeKeysRatingSwitch.isChecked = uiState.volumeKeysRatingEnabled
+        }
     }
 
     private fun initViews(view: View) {
@@ -163,6 +171,13 @@ class SettingsFragment : Fragment() {
                 }
             }
         }
+
+        volumeKeysRatingSwitch =
+            view.findViewById<SwitchCompat>(R.id.volume_keys_rating_switch).apply {
+                setOnCheckedChangeListener { _, isChecked ->
+                    viewModel.onVolumeKeysRatingToggle(isChecked)
+                }
+            }
 
         buttonDisableBatteryOptimization =
             view.findViewById<Button>(R.id.faq_disable_battery_safe_button).apply {

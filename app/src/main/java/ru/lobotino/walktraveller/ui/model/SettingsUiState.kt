@@ -4,5 +4,6 @@ import ru.lobotino.walktraveller.model.TileSourceType
 
 data class SettingsUiState(
     val optimizePathsValue: Float,
-    val mapStyleValue: TileSourceType
+    val mapStyleValue: TileSourceType,
+    val volumeKeysRatingEnabled: Boolean
 )

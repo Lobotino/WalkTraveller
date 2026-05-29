@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.savedstate.SavedStateRegistryOwner
 import ru.lobotino.walktraveller.repositories.interfaces.IOptimizePathsSettingsRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IPermissionsRepository
+import ru.lobotino.walktraveller.repositories.interfaces.IUserInfoRepository
 import ru.lobotino.walktraveller.repositories.permissions.GeoPermissionsRepository
 import ru.lobotino.walktraveller.usecases.interfaces.ITileSourceInteractor
 import ru.lobotino.walktraveller.utils.ResourceManager
@@ -17,6 +18,7 @@ class SettingsViewModelFactory(
     private val tileSourceInteractor: ITileSourceInteractor,
     private val geoPermissionsRepository: GeoPermissionsRepository,
     private val notificationPermissionsRepository: IPermissionsRepository,
+    private val userInfoRepository: IUserInfoRepository,
     private val resourceManager: ResourceManager,
     owner: SavedStateRegistryOwner,
     bundle: Bundle?
@@ -34,6 +36,7 @@ class SettingsViewModelFactory(
                 tileSourceInteractor,
                 geoPermissionsRepository,
                 notificationPermissionsRepository,
+                userInfoRepository,
                 resourceManager
             ) as T
 

@@ -85,6 +85,7 @@
     <string name="error_notifications_permissions_denied">Notifications permissions are denied. It need for correct work of path tracking. Check application settings.</string>
     <string name="error_message_not_allow_access_to_volume_buttons">Special access not permitted. Check application settings.</string>
     <string name="settings_map_style_title">Map style</string>
+    <string name="settings_volume_keys_rating_title">Rating control with volume buttons</string>
     <string name="error_something_went_wrong">Something went wrong :(</string>
     <string name="navigation_title_feedback">Feedback</string>
     <string name="navigation_title_navigation">Navigation</string>
