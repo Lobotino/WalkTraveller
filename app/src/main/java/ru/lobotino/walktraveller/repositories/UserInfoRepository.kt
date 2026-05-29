@@ -12,6 +12,7 @@ class UserInfoRepository(private val sharedPreferences: SharedPreferences) : IUs
         private const val WELCOME_TUTORIAL_STEP_PREFERENCE = "welcome_tutorial_step"
         private const val IS_WELCOME_TUTORIAL_FINISHED_PREFERENCE = "is_welcome_tutorial_finished"
         private const val NEED_TO_SUGGEST_VOLUME_BUTTONS_FEATURE = "need_to_suggest_volume_buttons_feature"
+        private const val VOLUME_KEYS_RATING_ENABLED = "volume_keys_rating_enabled"
     }
 
     override fun saveUserId(id: String) {
@@ -72,5 +73,16 @@ class UserInfoRepository(private val sharedPreferences: SharedPreferences) : IUs
 
     override fun needToSuggestVolumeFeature(): Boolean {
         return sharedPreferences.getBoolean(NEED_TO_SUGGEST_VOLUME_BUTTONS_FEATURE, true)
+    }
+
+    override fun setVolumeKeysRatingEnabled(enabled: Boolean) {
+        sharedPreferences.edit().apply {
+            putBoolean(VOLUME_KEYS_RATING_ENABLED, enabled)
+            apply()
+        }
+    }
+
+    override fun isVolumeKeysRatingEnabled(): Boolean {
+        return sharedPreferences.getBoolean(VOLUME_KEYS_RATING_ENABLED, true)
     }
 }

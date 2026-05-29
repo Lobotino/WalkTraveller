@@ -23,4 +23,8 @@ interface IUserInfoRepository {
     fun setNeedToSuggestVolumeFeature(needToSuggest: Boolean)
 
     fun needToSuggestVolumeFeature(): Boolean
+
+    fun setVolumeKeysRatingEnabled(enabled: Boolean)
+
+    fun isVolumeKeysRatingEnabled(): Boolean
 }
