@@ -2,10 +2,8 @@ package ru.lobotino.walktraveller
 
 import android.app.Application
 import android.os.StrictMode
-import android.preference.PreferenceManager
 import com.google.firebase.analytics.FirebaseAnalytics
 import org.maplibre.android.MapLibre
-import org.osmdroid.config.Configuration
 import ru.lobotino.walktraveller.analytics.AnalyticsTracker
 import ru.lobotino.walktraveller.analytics.DebugLogAnalyticsLogger
 import ru.lobotino.walktraveller.analytics.FirebaseAnalyticsLogger
@@ -21,10 +19,6 @@ class App : Application() {
         super.onCreate()
         MapLibre.getInstance(this)
         StrictMode.setThreadPolicy(StrictMode.ThreadPolicy.Builder().permitAll().build())
-        Configuration.getInstance().load(
-            applicationContext,
-            PreferenceManager.getDefaultSharedPreferences(applicationContext)
-        )
         analyticsTracker = AnalyticsTracker(
             buildList<IAnalyticsLogger> {
                 add(FirebaseAnalyticsLogger(FirebaseAnalytics.getInstance(this@App)))
