@@ -14,6 +14,7 @@ import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Button
+import android.widget.CompoundButton
 import android.widget.Spinner
 import android.widget.Toolbar
 import androidx.appcompat.app.AppCompatActivity
@@ -54,6 +55,11 @@ class SettingsFragment : Fragment() {
     private lateinit var mainView: View
 
     private lateinit var viewModel: SettingsViewModel
+
+    private val volumeKeysRatingToggleListener =
+        CompoundButton.OnCheckedChangeListener { _, isChecked ->
+            viewModel.onVolumeKeysRatingToggle(isChecked)
+        }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -120,9 +126,9 @@ class SettingsFragment : Fragment() {
             TileSourceType.values().indexOf(uiState.mapStyleValue)
         )
 
-        if (volumeKeysRatingSwitch.isChecked != uiState.volumeKeysRatingEnabled) {
-            volumeKeysRatingSwitch.isChecked = uiState.volumeKeysRatingEnabled
-        }
+        volumeKeysRatingSwitch.setOnCheckedChangeListener(null)
+        volumeKeysRatingSwitch.isChecked = uiState.volumeKeysRatingEnabled
+        volumeKeysRatingSwitch.setOnCheckedChangeListener(volumeKeysRatingToggleListener)
     }
 
     private fun initViews(view: View) {
@@ -174,9 +180,7 @@ class SettingsFragment : Fragment() {
 
         volumeKeysRatingSwitch =
             view.findViewById<SwitchCompat>(R.id.volume_keys_rating_switch).apply {
-                setOnCheckedChangeListener { _, isChecked ->
-                    viewModel.onVolumeKeysRatingToggle(isChecked)
-                }
+                setOnCheckedChangeListener(volumeKeysRatingToggleListener)
             }
 
         buttonDisableBatteryOptimization =
