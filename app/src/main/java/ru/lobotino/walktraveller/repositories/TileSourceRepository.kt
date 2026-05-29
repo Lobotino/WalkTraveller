@@ -20,11 +20,15 @@ class TileSourceRepository(
             sharedPreferences.getString(KEY_CURRENT_TILE_SOURCE, DefaultTileSource.name)
                 ?: DefaultTileSource.name
 
-        return TileSourceType.valueOf(savedValue)
+        return try {
+            TileSourceType.valueOf(savedValue)
+        } catch (e: IllegalArgumentException) {
+            DefaultTileSource
+        }
     }
 
     companion object {
         private const val KEY_CURRENT_TILE_SOURCE = "CURRENT_TILE_SOURCE"
-        private val DefaultTileSource = TileSourceType.OSM_MAPNIK
+        private val DefaultTileSource = TileSourceType.LIBERTY
     }
 }

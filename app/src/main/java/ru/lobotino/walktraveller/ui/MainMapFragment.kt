@@ -9,14 +9,15 @@ import android.content.IntentFilter
 import android.content.ServiceConnection
 import android.content.SharedPreferences
 import android.content.res.ColorStateList
-import android.graphics.Paint
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.drawable.Drawable
 import android.hardware.SensorManager
 import android.location.Location
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
-import android.util.ArrayMap
 import android.view.LayoutInflater
 import android.view.View
 import android.view.View.GONE
@@ -26,6 +27,7 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import androidx.annotation.ColorInt
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.startForegroundService
@@ -39,14 +41,10 @@ import com.google.android.material.progressindicator.CircularProgressIndicator
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import org.osmdroid.events.MapListener
-import org.osmdroid.events.ScrollEvent
-import org.osmdroid.events.ZoomEvent
-import org.osmdroid.util.GeoPoint
-import org.osmdroid.views.CustomZoomButtonsController
-import org.osmdroid.views.MapView
-import org.osmdroid.views.overlay.Overlay
-import org.osmdroid.views.overlay.Polyline
+import org.maplibre.android.camera.CameraUpdateFactory
+import org.maplibre.android.maps.MapLibreMap
+import org.maplibre.android.maps.MapView
+import org.maplibre.android.maps.Style
 import ru.lobotino.walktraveller.App
 import ru.lobotino.walktraveller.R
 import ru.lobotino.walktraveller.analytics.AnalyticsEvent
@@ -60,9 +58,6 @@ import ru.lobotino.walktraveller.model.SegmentRating.NONE
 import ru.lobotino.walktraveller.model.SegmentRating.NORMAL
 import ru.lobotino.walktraveller.model.SegmentRating.PERFECT
 import ru.lobotino.walktraveller.model.TileSource
-import ru.lobotino.walktraveller.model.map.MapCommonPath
-import ru.lobotino.walktraveller.model.map.MapPathSegment
-import ru.lobotino.walktraveller.model.map.MapRatingPath
 import ru.lobotino.walktraveller.repositories.CachePathsRepository
 import ru.lobotino.walktraveller.repositories.DatabasePathRepository
 import ru.lobotino.walktraveller.repositories.FilePathsSaverRepositoryV1
@@ -93,6 +88,8 @@ import ru.lobotino.walktraveller.ui.dialog.DeleteConfirmDialog
 import ru.lobotino.walktraveller.ui.dialog.DeleteMultiplePathsConfirmDialog
 import ru.lobotino.walktraveller.ui.dialog.GeoLocationRequiredDialog
 import ru.lobotino.walktraveller.ui.dialog.VolumeButtonsFeatureSuggestDialog
+import ru.lobotino.walktraveller.ui.maplibre.MapLibrePathController
+import ru.lobotino.walktraveller.ui.maplibre.MapLibreUserLocationMarker
 import ru.lobotino.walktraveller.ui.model.BottomMenuState
 import ru.lobotino.walktraveller.ui.model.ConfirmDialogType
 import ru.lobotino.walktraveller.ui.model.MapEvent
@@ -117,7 +114,7 @@ import ru.lobotino.walktraveller.usecases.permissions.NotificationsPermissionsUs
 import ru.lobotino.walktraveller.utils.RATING_CHANGES_BROADCAST
 import ru.lobotino.walktraveller.utils.ResourceManager
 import ru.lobotino.walktraveller.utils.ext.openNavigationMenu
-import ru.lobotino.walktraveller.utils.ext.toGeoPoint
+import ru.lobotino.walktraveller.utils.ext.toLatLng
 import ru.lobotino.walktraveller.utils.ext.toMapPoint
 import ru.lobotino.walktraveller.viewmodels.MapViewModel
 import ru.lobotino.walktraveller.viewmodels.PathsMenuViewModel
@@ -139,6 +136,10 @@ class MainMapFragment : Fragment() {
     }
 
     private lateinit var mapView: MapView
+    private var mapLibreMap: MapLibreMap? = null
+    private var currentStyleUrl: String? = null
+    private lateinit var pathController: MapLibrePathController
+    private lateinit var userLocationMarker: MapLibreUserLocationMarker
     private lateinit var mapViewModel: MapViewModel
     private lateinit var menuViewModel: PathsMenuViewModel
     private lateinit var walkStartButton: CardView
@@ -165,20 +166,12 @@ class MainMapFragment : Fragment() {
 
     private lateinit var findMyLocationButton: FindMyLocationButton
 
-    private lateinit var userLocationOverlay: UserLocationOverlay
-
     private var ratingWhiteColor by Delegates.notNull<Int>()
     private var ratingPerfectColor by Delegates.notNull<Int>()
     private var ratingGoodColor by Delegates.notNull<Int>()
     private var ratingNormalColor by Delegates.notNull<Int>()
     private var ratingBadlyColor by Delegates.notNull<Int>()
     private var ratingNoneColor by Delegates.notNull<Int>()
-    private var commonPathColor by Delegates.notNull<Int>()
-
-    private val showingPathsPolylines = ArrayMap<Long, List<Polyline>>()
-    private val currentPathPolylines = ArrayList<Polyline>()
-    private var currentPathPolyline: Polyline? = null
-    private var lastCurrentPathRating: SegmentRating? = null
 
     private var writingPathService: WritingPathService? = null
     private var userLocationUpdatesService: UserLocationUpdatesService? = null
@@ -252,33 +245,40 @@ class MainMapFragment : Fragment() {
             ratingGoodColor = ContextCompat.getColor(context, R.color.rating_good_color)
             ratingNormalColor = ContextCompat.getColor(context, R.color.rating_normal_color)
             ratingBadlyColor = ContextCompat.getColor(context, R.color.rating_badly_color)
-            commonPathColor = ContextCompat.getColor(context, R.color.common_path_color)
         }
     }
 
     private fun initViews(rootLayout: View) {
         rootLayout.let { view ->
             val mapViewContainer = view.findViewById<FrameLayout>(R.id.map_view_container)
+            val context = context ?: return
 
-            mapView = MapView(context).apply {
-                controller.setZoom(DEFAULT_COMFORT_ZOOM)
-                zoomController.setVisibility(CustomZoomButtonsController.Visibility.NEVER)
-                setMultiTouchControls(true)
-                addMapListener(object : MapListener {
-                    override fun onScroll(event: ScrollEvent): Boolean {
-                        mapViewModel.onMapScrolled(event.source.mapCenter.toMapPoint())
-                        return true
-                    }
+            pathController = MapLibrePathController(
+                ratingColors = mapOf(
+                    SegmentRating.PERFECT to ContextCompat.getColor(context, R.color.rating_perfect),
+                    SegmentRating.GOOD to ContextCompat.getColor(context, R.color.rating_good),
+                    SegmentRating.NORMAL to ContextCompat.getColor(context, R.color.rating_normal),
+                    SegmentRating.BADLY to ContextCompat.getColor(context, R.color.rating_badly),
+                    SegmentRating.NONE to ContextCompat.getColor(context, R.color.rating_none),
+                ),
+                commonPathColor = ContextCompat.getColor(context, R.color.common_path_color),
+            )
+            userLocationMarker = MapLibreUserLocationMarker(
+                AppCompatResources.getDrawable(context, R.drawable.ic_user_marker)!!.toBitmapCompat()
+            )
 
-                    override fun onZoom(event: ZoomEvent): Boolean {
-                        mapViewModel.onMapZoomed()
-                        return true
-                    }
-                })
-            }
+            mapView = MapView(context)
             mapViewContainer.addView(mapView)
-
-            userLocationOverlay = UserLocationOverlay(requireContext())
+            mapView.onCreate(null)
+            mapView.getMapAsync { map ->
+                mapLibreMap = map
+                map.addOnCameraIdleListener {
+                    map.cameraPosition.target?.let { target ->
+                        mapViewModel.onMapScrolled(target.toMapPoint())
+                    }
+                }
+                currentStyleUrl?.let { applyStyle(map, it) }
+            }
 
             ratingButtonsHolder = view.findViewById<CardView>(R.id.rating_buttons_holder)
             ratingNoneButtonHolder = view.findViewById<CardView>(R.id.rating_none_button_holder)
@@ -637,15 +637,15 @@ class MainMapFragment : Fragment() {
                     )
                 )[MapViewModel::class.java].apply {
                     observeNewCurrentPathSegments.onEach { pathSegments ->
-                        paintNewCurrentPathSegments(pathSegments)
+                        pathController.appendCurrentPathSegments(pathSegments)
                     }.launchIn(viewLifecycleOwner.lifecycleScope)
 
                     observeNewCommonPath.onEach { pathList ->
-                        paintNewCommonPaths(pathList, commonPathColor)
+                        pathController.showCommonPaths(pathList)
                     }.launchIn(viewLifecycleOwner.lifecycleScope)
 
                     observeNewRatingPath.onEach { pathList ->
-                        paintNewRatingPaths(pathList)
+                        pathController.showRatingPaths(pathList)
                     }.launchIn(viewLifecycleOwner.lifecycleScope)
 
                     observeMapUiState.onEach { mapUiState ->
@@ -661,33 +661,23 @@ class MainMapFragment : Fragment() {
                     }.launchIn(viewLifecycleOwner.lifecycleScope)
 
                     observeNewMapCenter.onEach { newMapCenter ->
-                        mapView.controller?.let { mapViewController ->
-                            mapViewController.setCenter(newMapCenter.toGeoPoint())
-                            if (mapView.zoomLevelDouble < DEFAULT_COMFORT_ZOOM) {
-                                mapViewController.setZoom(DEFAULT_COMFORT_ZOOM)
-                            }
-                        }
+                        val map = mapLibreMap ?: return@onEach
+                        val targetZoom = maxOf(map.cameraPosition.zoom, DEFAULT_COMFORT_ZOOM)
+                        map.animateCamera(
+                            CameraUpdateFactory.newLatLngZoom(newMapCenter.toLatLng(), targetZoom)
+                        )
                     }.launchIn(viewLifecycleOwner.lifecycleScope)
 
                     observeHidePath.onEach { pathsToHide ->
                         when (pathsToHide) {
-                            PathsToAction.All -> {
-                                this@MainMapFragment.clearMap()
-                            }
-
-                            is PathsToAction.Single -> {
-                                hidePathById(pathsToHide.pathId)
-                            }
-
-                            is PathsToAction.Multiple -> {
-                                hidePathsList(pathsToHide.pathIds)
-                            }
+                            PathsToAction.All -> pathController.clear()
+                            is PathsToAction.Single -> pathController.hidePath(pathsToHide.pathId)
+                            is PathsToAction.Multiple -> pathController.hidePaths(pathsToHide.pathIds)
                         }
                     }.launchIn(viewLifecycleOwner.lifecycleScope)
 
                     observeNewCurrentUserLocation.onEach { newUserLocation ->
-                        userLocationOverlay.setPosition(newUserLocation.toGeoPoint())
-                        refreshMapNow()
+                        userLocationMarker.setPosition(newUserLocation.toLatLng())
                     }.launchIn(viewLifecycleOwner.lifecycleScope)
 
                     observeWritingPathNow.onEach { isWritingPathNow ->
@@ -719,8 +709,7 @@ class MainMapFragment : Fragment() {
                     }.launchIn(viewLifecycleOwner.lifecycleScope)
 
                     observeNewUserRotation().onEach { newUserRotation ->
-                        userLocationOverlay.setRotation(newUserRotation)
-                        refreshMapNow()
+                        userLocationMarker.setRotation(newUserRotation)
                     }.launchIn(viewLifecycleOwner.lifecycleScope)
 
                     onInitFinish()
@@ -733,10 +722,25 @@ class MainMapFragment : Fragment() {
     }
 
     private fun syncTileSource(tileSource: TileSource) {
-        when (tileSource) {
-            is TileSource.OSMTileSource -> mapView.setTileSource(tileSource.tileSource)
-            // TODO 2gis, yandex, google...
+        currentStyleUrl = tileSource.styleUrl
+        mapLibreMap?.let { applyStyle(it, tileSource.styleUrl) }
+    }
+
+    private fun applyStyle(map: MapLibreMap, styleUrl: String) {
+        map.setStyle(Style.Builder().fromUri(styleUrl)) { style ->
+            pathController.onStyleLoaded(style)
+            userLocationMarker.onStyleLoaded(style)
         }
+    }
+
+    private fun Drawable.toBitmapCompat(): Bitmap {
+        val width = intrinsicWidth.takeIf { it > 0 } ?: 1
+        val height = intrinsicHeight.takeIf { it > 0 } ?: 1
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        setBounds(0, 0, canvas.width, canvas.height)
+        draw(canvas)
+        return bitmap
     }
 
     private fun showConfirmDialog(confirmDialogType: ConfirmDialogType) {
@@ -814,6 +818,7 @@ class MainMapFragment : Fragment() {
 
     override fun onStart() {
         super.onStart()
+        mapView.onStart()
         activity?.let {
             it.bindService(
                 Intent(activity, WritingPathService::class.java),
@@ -829,6 +834,7 @@ class MainMapFragment : Fragment() {
     }
 
     override fun onStop() {
+        mapView.onStop()
         activity?.unbindService(serviceConnectionListener)
         super.onStop()
     }
@@ -872,6 +878,26 @@ class MainMapFragment : Fragment() {
         super.onPause()
     }
 
+    override fun onLowMemory() {
+        super.onLowMemory()
+        mapView.onLowMemory()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        if (::mapView.isInitialized) {
+            mapView.onSaveInstanceState(outState)
+        }
+    }
+
+    override fun onDestroyView() {
+        if (::mapView.isInitialized) {
+            mapView.onDestroy()
+        }
+        mapLibreMap = null
+        super.onDestroyView()
+    }
+
     private fun updateMapUiState(mapUiState: MapUiState) {
         if (mapUiState.isPathFinished) {
             setLastPathFinished()
@@ -900,8 +926,6 @@ class MainMapFragment : Fragment() {
         findMyLocationButton.updateState(mapUiState.findMyLocationButtonState)
 
         syncRatingButtons(mapUiState.newRating)
-
-        refreshMapNow()
     }
 
     private fun syncRatingButtons(currentRating: SegmentRating) {
@@ -956,166 +980,7 @@ class MainMapFragment : Fragment() {
         )
     }
 
-    private fun clearMap() {
-        currentPathPolyline = null
-        currentPathPolylines.clear()
-        mapView.overlays.clear()
-        showingPathsPolylines.clear()
-        addUserLocationTracker()
-    }
-
-    private fun paintNewCommonPaths(pathList: List<MapCommonPath>, color: Int) {
-        context ?: return
-
-        val allAddedPolylines = ArrayList<Polyline>()
-        for (path in pathList) {
-            val pathPolyline = Polyline(mapView).apply {
-                outlinePaint.color = color
-
-                setPoints(
-                    path.pathPoints.map { point ->
-                        GeoPoint(
-                            point.latitude,
-                            point.longitude
-                        )
-                    }
-                )
-            }
-            showingPathsPolylines[path.pathId] = listOf(pathPolyline)
-            allAddedPolylines.add(pathPolyline)
-        }
-        mapView.overlays.addAll(allAddedPolylines)
-        refreshMapNow()
-    }
-
-    private fun paintNewRatingPaths(pathList: List<MapRatingPath>) {
-        context ?: return
-
-        val allAddedPolylines = ArrayList<Polyline>()
-        var lastAddedPolyline: Polyline? = null
-        var lastSegment: MapPathSegment? = null
-        for (path in pathList) {
-            val pathPolylines = ArrayList<Polyline>()
-            for (segment in path.pathSegments) {
-                if (lastAddedPolyline == null) {
-                    lastAddedPolyline = createRatingSegmentPolyline(segment)
-                    lastSegment = segment
-                    pathPolylines.add(lastAddedPolyline)
-                } else {
-                    if (lastSegment != null && segment.rating == lastSegment.rating && segment.startPoint == lastSegment.finishPoint) {
-                        lastAddedPolyline.addPoint(segment.finishPoint.toGeoPoint())
-                    } else {
-                        lastAddedPolyline = createRatingSegmentPolyline(segment)
-                        lastSegment = segment
-                        pathPolylines.add(lastAddedPolyline)
-                    }
-                }
-            }
-            showingPathsPolylines[path.pathId] = pathPolylines
-            allAddedPolylines.addAll(pathPolylines)
-        }
-        mapView.overlays.addAll(allAddedPolylines)
-        refreshMapNow()
-    }
-
-    private fun createRatingSegmentPolyline(pathSegment: MapPathSegment): Polyline {
-        return Polyline(mapView).apply {
-            outlinePaint.apply {
-                addPoint(pathSegment.startPoint.toGeoPoint())
-                addPoint(pathSegment.finishPoint.toGeoPoint())
-                getRatingColor(pathSegment.rating)?.let { ratingColor ->
-                    color = ratingColor
-                }
-                strokeCap = Paint.Cap.ROUND
-            }
-        }
-    }
-
-    private fun paintNewCurrentPathSegments(pathSegments: List<MapPathSegment>) {
-        val polylinesToAdd = ArrayList<Polyline>()
-        var currentPathPolyline = currentPathPolyline
-        var lastCurrentPathRating = lastCurrentPathRating
-        for (segment in pathSegments) {
-            if (currentPathPolyline == null) {
-                currentPathPolyline = createRatingSegmentPolyline(segment)
-                lastCurrentPathRating = segment.rating
-                polylinesToAdd.add(currentPathPolyline)
-            } else {
-                if (segment.rating == lastCurrentPathRating) {
-                    currentPathPolyline.addPoint(segment.finishPoint.toGeoPoint())
-                } else {
-                    currentPathPolyline = createRatingSegmentPolyline(segment)
-                    lastCurrentPathRating = segment.rating
-                    polylinesToAdd.add(currentPathPolyline)
-                }
-            }
-        }
-
-        this.currentPathPolyline = currentPathPolyline
-        this.lastCurrentPathRating = lastCurrentPathRating
-
-        if (polylinesToAdd.isNotEmpty()) {
-            mapView.overlays.addAll(polylinesToAdd)
-            currentPathPolylines.addAll(polylinesToAdd)
-        }
-
-        refreshMapNow()
-    }
-
-    private fun hidePathById(pathId: Long) {
-        val hidingPath = showingPathsPolylines[pathId] ?: return
-
-        showingPathsPolylines.remove(pathId)
-        mapView.overlays.removeAll(hidingPath)
-        refreshMapNow()
-    }
-
-    private fun hidePathsList(pathIds: List<Long>) {
-        val segmentsToHide: MutableList<Overlay> = ArrayList()
-        for (pathId in pathIds) {
-            val pathsSegments = showingPathsPolylines[pathId] ?: continue
-            showingPathsPolylines.remove(pathId)
-            segmentsToHide.addAll(pathsSegments)
-        }
-        if (segmentsToHide.isNotEmpty()) {
-            mapView.overlays.removeAll(segmentsToHide)
-            refreshMapNow()
-        }
-    }
-
-    @ColorInt
-    private fun getRatingColor(segmentRating: SegmentRating): Int? {
-        context?.let { context ->
-            when (segmentRating) {
-                PERFECT -> return@getRatingColor ContextCompat.getColor(
-                    context,
-                    R.color.rating_perfect
-                )
-
-                GOOD -> return@getRatingColor ContextCompat.getColor(context, R.color.rating_good)
-                NORMAL -> return@getRatingColor ContextCompat.getColor(
-                    context,
-                    R.color.rating_normal
-                )
-
-                BADLY -> return@getRatingColor ContextCompat.getColor(context, R.color.rating_badly)
-                NONE -> return@getRatingColor ContextCompat.getColor(context, R.color.rating_none)
-            }
-        }
-        return null
-    }
-
     private fun setLastPathFinished() {
-        currentPathPolylines.clear()
-        currentPathPolyline = null
-        lastCurrentPathRating = null
-    }
-
-    private fun refreshMapNow() {
-        mapView.postInvalidate()
-    }
-
-    private fun addUserLocationTracker() {
-        mapView.overlays.add(userLocationOverlay)
+        pathController.finishCurrentPath()
     }
 }
