@@ -2,7 +2,6 @@ package ru.lobotino.walktraveller.viewmodels
 
 import android.location.Location
 import android.util.Log
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
@@ -43,7 +42,6 @@ import ru.lobotino.walktraveller.utils.ext.toMapPoint
 
 class MapViewModel(
     private val notificationsPermissionsUseCase: IPermissionsUseCase,
-    private val volumeKeysListenerPermissionsUseCase: IPermissionsUseCase,
     private val geoPermissionsUseCase: GeoPermissionsUseCase,
     private val finishPathWritingUseCase: IFinishPathWritingUseCase,
     private val userLocationInteractor: IUserLocationInteractor,
@@ -55,13 +53,10 @@ class MapViewModel(
     private val userRotationRepository: IUserRotationRepository,
     private val userInfoRepository: IUserInfoRepository,
     private val resourceManager: IResourceManager,
-    private val handle: SavedStateHandle,
 ) : ViewModel() {
 
     companion object {
         private val TAG = MapViewModel::class.java.canonicalName
-        private const val START_REQUEST_VOLUME_KEYS_PERMISSION_KEY =
-            "START_REQUEST_VOLUME_KEYS_PERMISSION"
     }
 
     private val mapUiStateFlow =
@@ -140,8 +135,8 @@ class MapViewModel(
         }
     }
 
-    private fun needToAskVolumeButtonsPermissions(): Boolean {
-        return userInfoRepository.needToSuggestVolumeFeature() && !volumeKeysListenerPermissionsUseCase.isPermissionsGranted()
+    private fun needToSuggestVolumeFeature(): Boolean {
+        return userInfoRepository.needToSuggestVolumeFeature()
     }
 
     private fun setupMapCenterToLastSeenLocation() {
@@ -171,7 +166,6 @@ class MapViewModel(
                 regularLocationUpdateActionChannel.trySend(true)
                 userRotationRepository.startTrackUserRotation()
             }
-            syncRequestPermissionsState()
             syncMapTileSet()
             updateNewPointsIfNeeded()
         }
@@ -205,7 +199,7 @@ class MapViewModel(
     }
 
     fun onStartPathButtonClicked() {
-        if (needToAskVolumeButtonsPermissions()) {
+        if (needToSuggestVolumeFeature()) {
             newConfirmDialogChannel.trySend(ConfirmDialogType.VolumeButtonsFeatureRequest)
         } else {
             startPathTracking()
@@ -475,37 +469,14 @@ class MapViewModel(
 
     fun onVolumeFeatureSuggestAccepted() {
         userInfoRepository.setNeedToSuggestVolumeFeature(false)
-        newConfirmDialogChannel.trySend(ConfirmDialogType.VolumeButtonsFeatureInfo)
+        userInfoRepository.setVolumeKeysRatingEnabled(true)
+        startPathTracking()
     }
 
     fun onVolumeFeatureSuggestDecline() {
         userInfoRepository.setNeedToSuggestVolumeFeature(false)
+        userInfoRepository.setVolumeKeysRatingEnabled(false)
         startPathTracking()
-    }
-
-    /**
-     * @see syncRequestPermissionsState
-     */
-    fun onVolumeFeaturePermissionsInfoConfirm() {
-        handle[START_REQUEST_VOLUME_KEYS_PERMISSION_KEY] = true
-        volumeKeysListenerPermissionsUseCase.requestPermissions()
-    }
-
-    /**
-     * @see onVolumeFeaturePermissionsInfoConfirm
-     */
-    private fun syncRequestPermissionsState() {
-        if (handle.get<Boolean>(START_REQUEST_VOLUME_KEYS_PERMISSION_KEY) == true) {
-            if (!volumeKeysListenerPermissionsUseCase.isPermissionsGranted()) {
-                showUserError(
-                    resourceManager.getString(R.string.error_message_not_allow_access_to_volume_buttons)
-                )
-            }
-            if (!writingPathStatesRepository.isWritingPathNow()) {
-                startPathTracking()
-            }
-            handle[START_REQUEST_VOLUME_KEYS_PERMISSION_KEY] = false
-        }
     }
 
     private fun showUserError(message: String) {

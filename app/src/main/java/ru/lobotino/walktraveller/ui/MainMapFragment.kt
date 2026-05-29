@@ -79,7 +79,6 @@ import ru.lobotino.walktraveller.repositories.UserInfoRepository
 import ru.lobotino.walktraveller.repositories.UserRotationRepository
 import ru.lobotino.walktraveller.repositories.VibrationRepository
 import ru.lobotino.walktraveller.repositories.WritingPathStatesRepository
-import ru.lobotino.walktraveller.repositories.permissions.AccessibilityPermissionRepository
 import ru.lobotino.walktraveller.repositories.permissions.ExternalStoragePermissionsRepository
 import ru.lobotino.walktraveller.repositories.permissions.GeoPermissionsRepository
 import ru.lobotino.walktraveller.repositories.permissions.NotificationsPermissionsRepository
@@ -93,7 +92,6 @@ import ru.lobotino.walktraveller.ui.dialog.DeleteConfirmDialog
 import ru.lobotino.walktraveller.ui.dialog.DeleteMultiplePathsConfirmDialog
 import ru.lobotino.walktraveller.ui.dialog.GeoLocationRequiredDialog
 import ru.lobotino.walktraveller.ui.dialog.VolumeButtonsFeatureSuggestDialog
-import ru.lobotino.walktraveller.ui.dialog.VolumeButtonsPermissionsInfoDialog
 import ru.lobotino.walktraveller.ui.model.BottomMenuState
 import ru.lobotino.walktraveller.ui.model.ConfirmDialogType
 import ru.lobotino.walktraveller.ui.model.MapEvent
@@ -115,7 +113,6 @@ import ru.lobotino.walktraveller.usecases.UserLocationInteractor
 import ru.lobotino.walktraveller.usecases.permissions.ExternalStoragePermissionsUseCase
 import ru.lobotino.walktraveller.usecases.permissions.GeoPermissionsUseCase
 import ru.lobotino.walktraveller.usecases.permissions.NotificationsPermissionsUseCase
-import ru.lobotino.walktraveller.usecases.permissions.VolumeKeysListenerPermissionsUseCase
 import ru.lobotino.walktraveller.utils.RATING_CHANGES_BROADCAST
 import ru.lobotino.walktraveller.utils.ResourceManager
 import ru.lobotino.walktraveller.utils.ext.openNavigationMenu
@@ -590,11 +587,6 @@ class MainMapFragment : Fragment() {
                                 requireContext().applicationContext
                             )
                         ),
-                        volumeKeysListenerPermissionsInteractor = VolumeKeysListenerPermissionsUseCase(
-                            AccessibilityPermissionRepository(
-                                requireContext().applicationContext
-                            )
-                        ),
                         geoPermissionsUseCase = GeoPermissionsUseCase(
                             GeoPermissionsRepository(
                                 this@MainMapFragment,
@@ -772,13 +764,6 @@ class MainMapFragment : Fragment() {
                         context = context,
                         onYesClicked = { mapViewModel.onVolumeFeatureSuggestAccepted() },
                         onNoClicked = { mapViewModel.onVolumeFeatureSuggestDecline() }
-                    ).show()
-                }
-
-                ConfirmDialogType.VolumeButtonsFeatureInfo -> {
-                    VolumeButtonsPermissionsInfoDialog(
-                        context = context,
-                        onYesClicked = { mapViewModel.onVolumeFeaturePermissionsInfoConfirm() }
                     ).show()
                 }
             }

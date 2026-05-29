@@ -8,6 +8,4 @@ sealed interface ConfirmDialogType {
     object GeoLocationPermissionRequired : ConfirmDialogType
 
     object VolumeButtonsFeatureRequest : ConfirmDialogType
-
-    object VolumeButtonsFeatureInfo : ConfirmDialogType
 }

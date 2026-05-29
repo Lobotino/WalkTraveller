@@ -21,7 +21,6 @@ import ru.lobotino.walktraveller.viewmodels.MapViewModel
 
 class MapViewModelFactory(
     private val notificationsPermissionsInteractor: IPermissionsUseCase,
-    private val volumeKeysListenerPermissionsInteractor: IPermissionsUseCase,
     private val geoPermissionsUseCase: GeoPermissionsUseCase,
     private val finishPathWritingUseCase: IFinishPathWritingUseCase,
     private val userLocationInteractor: IUserLocationInteractor,
@@ -46,7 +45,6 @@ class MapViewModelFactory(
         return when (modelClass) {
             MapViewModel::class.java -> MapViewModel(
                 notificationsPermissionsInteractor,
-                volumeKeysListenerPermissionsInteractor,
                 geoPermissionsUseCase,
                 finishPathWritingUseCase,
                 userLocationInteractor,
@@ -57,8 +55,7 @@ class MapViewModelFactory(
                 pathRatingUseCase,
                 userRotationRepository,
                 userInfoRepository,
-                resourceManager,
-                handle
+                resourceManager
             ) as T
 
             else -> throw IllegalArgumentException("Unknown ViewModel class")
