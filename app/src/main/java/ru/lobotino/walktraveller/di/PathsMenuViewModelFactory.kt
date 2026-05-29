@@ -5,6 +5,7 @@ import androidx.lifecycle.AbstractSavedStateViewModelFactory
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.savedstate.SavedStateRegistryOwner
+import ru.lobotino.walktraveller.analytics.IAnalyticsTracker
 import ru.lobotino.walktraveller.repositories.interfaces.IPathsSaverRepository
 import ru.lobotino.walktraveller.usecases.interfaces.IMapPathsInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IOuterPathsInteractor
@@ -18,6 +19,7 @@ class PathsMenuViewModelFactory(
     private val mapPathsInteractor: IMapPathsInteractor,
     private val outerPathsInteractor: IOuterPathsInteractor,
     private val pathRedactor: IPathRedactor,
+    private val analyticsTracker: IAnalyticsTracker,
     owner: SavedStateRegistryOwner,
     bundle: Bundle?
 ) : AbstractSavedStateViewModelFactory(owner, bundle) {
@@ -30,7 +32,8 @@ class PathsMenuViewModelFactory(
                 externalStoragePermissionsUseCase,
                 mapPathsInteractor,
                 outerPathsInteractor,
-                pathRedactor
+                pathRedactor,
+                analyticsTracker
             ) as T
 
             else -> throw IllegalArgumentException("Unknown ViewModel class")

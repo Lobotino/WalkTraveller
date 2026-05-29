@@ -14,6 +14,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import ru.lobotino.walktraveller.analytics.AnalyticsEvent
+import ru.lobotino.walktraveller.analytics.AnalyticsPathType
+import ru.lobotino.walktraveller.analytics.IAnalyticsTracker
 import ru.lobotino.walktraveller.model.map.MapCommonPath
 import ru.lobotino.walktraveller.model.map.MapPathInfo
 import ru.lobotino.walktraveller.model.map.MapRatingPath
@@ -47,7 +50,8 @@ class PathsMenuViewModel(
     private val externalStoragePermissionsUseCase: IPermissionsUseCase,
     private val mapPathsInteractor: IMapPathsInteractor,
     private val outerPathsInteractor: IOuterPathsInteractor,
-    private val pathRedactor: IPathRedactor
+    private val pathRedactor: IPathRedactor,
+    private val analyticsTracker: IAnalyticsTracker
 ) : ViewModel() {
 
     private val myPathsMenuUiStateFlow =
@@ -322,6 +326,7 @@ class PathsMenuViewModel(
                 }
                 if (loadedPaths.isNotEmpty()) {
                     newMapEventChannel.trySend(MapEvent.ShowRatingPathList(loadedPaths))
+                    analyticsTracker.track(AnalyticsEvent.PathShown(loadedPaths.size, AnalyticsPathType.RATING))
                     newPathInfoListItemStateFlow.tryEmit(
                         NewPathInfoItemState(
                             PathsMenuType.MY_PATHS,
@@ -355,6 +360,7 @@ class PathsMenuViewModel(
                 }
                 if (loadedPaths.isNotEmpty()) {
                     newMapEventChannel.trySend(MapEvent.ShowCommonPathList(loadedPaths))
+                    analyticsTracker.track(AnalyticsEvent.PathShown(loadedPaths.size, AnalyticsPathType.COMMON))
                     newPathInfoListItemStateFlow.tryEmit(
                         NewPathInfoItemState(
                             PathsMenuType.MY_PATHS,
@@ -375,7 +381,8 @@ class PathsMenuViewModel(
     private fun loadAndShowAllRatedPaths() {
         loadPathsJob?.cancel()
         loadPathsJob = viewModelScope.launch {
-            for (path in mapPathsInteractor.getAllSavedRatingPaths(true)) {
+            val allPaths = mapPathsInteractor.getAllSavedRatingPaths(true)
+            for (path in allPaths) {
                 newMapEventChannel.trySend(MapEvent.ShowRatingPath(path))
                 newPathInfoListItemStateFlow.tryEmit(
                     NewPathInfoItemState(
@@ -387,6 +394,9 @@ class PathsMenuViewModel(
                     )
                 )
             }
+            if (allPaths.isNotEmpty()) {
+                analyticsTracker.track(AnalyticsEvent.PathShown(allPaths.size, AnalyticsPathType.RATING))
+            }
             updateMyPathsMenuState(showPathsButtonState = ShowPathsButtonState.HIDE)
         }
     }
@@ -394,7 +404,8 @@ class PathsMenuViewModel(
     private fun loadAndShowAllPathsAsCommon() {
         loadPathsJob?.cancel()
         loadPathsJob = viewModelScope.launch {
-            for (path in mapPathsInteractor.getAllSavedPathsAsCommon()) {
+            val allPaths = mapPathsInteractor.getAllSavedPathsAsCommon()
+            for (path in allPaths) {
                 newMapEventChannel.trySend(MapEvent.ShowCommonPath(path))
                 newPathInfoListItemStateFlow.tryEmit(
                     NewPathInfoItemState(
@@ -405,6 +416,9 @@ class PathsMenuViewModel(
                         )
                     )
                 )
+            }
+            if (allPaths.isNotEmpty()) {
+                analyticsTracker.track(AnalyticsEvent.PathShown(allPaths.size, AnalyticsPathType.COMMON))
             }
             updateMyPathsMenuState(showPathsButtonState = ShowPathsButtonState.HIDE)
         }
@@ -784,7 +798,11 @@ class PathsMenuViewModel(
         selectedPathIdsInMenuList.clear()
 
         viewModelScope.launch {
+            val importedCount = outerPathsInteractor.getCachedOuterPaths().size
             outerPathsInteractor.saveCachedPaths()
+            if (importedCount > 0) {
+                analyticsTracker.track(AnalyticsEvent.OuterPathImported(importedCount))
+            }
         }
 
         updateOuterPathsMenuState(
@@ -835,6 +853,7 @@ class PathsMenuViewModel(
             if (selectedPaths.isNotEmpty()) {
                 try {
                     shareFileChannel.trySend(pathsSaverRepository.saveRatingPathList(selectedPaths))
+                    analyticsTracker.track(AnalyticsEvent.TrackShared(selectedPaths.size))
                 } catch (exception: IOException) {
                     // TODO show toast error
                     Log.w(TAG, exception)
