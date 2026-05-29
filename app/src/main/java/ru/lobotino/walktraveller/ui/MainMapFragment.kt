@@ -43,6 +43,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.maps.MapLibreMap
+import org.maplibre.android.maps.MapLibreMapOptions
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
 import ru.lobotino.walktraveller.App
@@ -267,7 +268,10 @@ class MainMapFragment : Fragment() {
                 AppCompatResources.getDrawable(context, R.drawable.ic_user_marker)!!.toBitmapCompat()
             )
 
-            mapView = MapView(context)
+            // TextureView rendering (not the default SurfaceView) so the navigation
+            // drawer and its scrim composite above the map instead of behind it.
+            val mapOptions = MapLibreMapOptions.createFromAttributes(context).textureMode(true)
+            mapView = MapView(context, mapOptions)
             mapViewContainer.addView(mapView)
             mapView.onCreate(null)
             mapView.getMapAsync { map ->
