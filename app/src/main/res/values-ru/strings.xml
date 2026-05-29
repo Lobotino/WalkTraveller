@@ -235,8 +235,6 @@
     <string name="content_desc_delete_selected_paths_button">Кнопка «удалить выбранные пути»</string>
     <string name="volume_buttons_feature_request_desc">Приложение поддерживает возможность управления рейтингом участка маршрута с помощью кнопок громкости телефона, не доставая телефон из кармана.\n\nХотите попробовать?</string>
     <string name="volume_buttons_feature_request_title">Оценка пути</string>
-    <string name="volume_buttons_feature_info_title">Нужно подтверждение</string>
-    <string name="volume_buttons_feature_info_desc">Чтобы получить доступ к информации о нажатиях кнопок громкости, приложению требуется доступ к специальным возможностям.\n\nПриложение гарантирует, что не будет собирать никакой дополнительной информации, которые предоставляются полученным доступом, кроме нажатия кнопок громкости во время записи трека</string>
     <string name="yes_dialog_button">Да</string>
     <string name="no_dialog_button">Нет</string>
     <string name="content_desc_dropdown_list_button">Кнопка выпадающего списка</string>
@@ -249,7 +247,6 @@
     <string name="volume_feature_tutorial_2_times_down_bad">2 раза вниз - плохо</string>
     <string name="error_permissions_denied">Некоторые разрешения отклонены. Проверьте настройки приложения.</string>
     <string name="error_notifications_permissions_denied">Разрешения на уведомления отклонены. Они необходимы для корректной работы записи пути, проверьте настройки приложения.</string>
-    <string name="error_message_not_allow_access_to_volume_buttons">Доступ к специальным возможностям не предоставлен. Проверьте настройки приложения.</string>
     <string name="settings_map_style_title">Стиль карты</string>
     <string name="settings_volume_keys_rating_title">Оценка пути кнопками громкости</string>
     <string name="error_something_went_wrong">Что-то пошло не так :(</string>

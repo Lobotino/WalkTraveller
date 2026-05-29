@@ -69,8 +69,6 @@
     <string name="content_desc_delete_selected_paths_button">Delete selected paths button</string>
     <string name="volume_buttons_feature_request_desc">The application supports the ability to control the rating of a route section using the phone volume buttons without taking your phone out of your pocket. Want to try?</string>
     <string name="volume_buttons_feature_request_title">Rating management</string>
-    <string name="volume_buttons_feature_info_title">Need confirmation</string>
-    <string name="volume_buttons_feature_info_desc">To access information about volume button presses, an app needs Device Accessibility permission. The application guarantees that it will not collect any additional information other than pressing the volume buttons while recording a track.</string>
     <string name="yes_dialog_button">Yes</string>
     <string name="no_dialog_button">No</string>
     <string name="content_desc_dropdown_list_button">Dropdown list button</string>
@@ -83,7 +81,6 @@
     <string name="volume_feature_tutorial_2_times_down_bad">2 times down - bad</string>
     <string name="error_permissions_denied">Some permissions are denied. Check application settings.</string>
     <string name="error_notifications_permissions_denied">Notifications permissions are denied. It need for correct work of path tracking. Check application settings.</string>
-    <string name="error_message_not_allow_access_to_volume_buttons">Special access not permitted. Check application settings.</string>
     <string name="settings_map_style_title">Map style</string>
     <string name="settings_volume_keys_rating_title">Rating control with volume buttons</string>
     <string name="error_something_went_wrong">Something went wrong :(</string>
