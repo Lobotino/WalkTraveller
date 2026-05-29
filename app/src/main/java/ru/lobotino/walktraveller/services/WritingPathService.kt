@@ -38,7 +38,12 @@ import ru.lobotino.walktraveller.usecases.PathWritingNowNotificationInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.ICurrentPathInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.ILocationMediator
 import ru.lobotino.walktraveller.usecases.interfaces.INotificationInteractor
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import ru.lobotino.walktraveller.repositories.UserInfoRepository
+import ru.lobotino.walktraveller.repositories.interfaces.IUserInfoRepository
+import ru.lobotino.walktraveller.usecases.interfaces.IPathRatingUseCase
 import ru.lobotino.walktraveller.utils.APPLICATION_ID
+import ru.lobotino.walktraveller.utils.RATING_CHANGES_BROADCAST
 import ru.lobotino.walktraveller.utils.ext.toMapPoint
 
 class WritingPathService : Service() {
@@ -51,6 +56,9 @@ class WritingPathService : Service() {
     private lateinit var notificationInteractor: INotificationInteractor
     private lateinit var locationMediator: ILocationMediator
     private lateinit var pathInteractor: ICurrentPathInteractor
+    private lateinit var userInfoRepository: IUserInfoRepository
+    private lateinit var volumeRatingUseCase: IPathRatingUseCase
+    private lateinit var ratingVolumeKeysController: RatingVolumeKeysController
 
     override fun onCreate() {
         super.onCreate()
@@ -60,6 +68,7 @@ class WritingPathService : Service() {
         initWritingPathStatesRepository()
         initLocationUpdatesRepository()
         initLocalPathRepository()
+        initVolumeKeysController()
     }
 
     private fun initSharedPreferences() {
@@ -67,6 +76,19 @@ class WritingPathService : Service() {
             App.SHARED_PREFS_TAG,
             AppCompatActivity.MODE_PRIVATE
         )
+    }
+
+    private fun initVolumeKeysController() {
+        userInfoRepository = UserInfoRepository(sharedPreferences)
+        volumeRatingUseCase = PathRatingUseCase(
+            PathRatingRepository(sharedPreferences),
+            VibrationRepository(applicationContext)
+        )
+        ratingVolumeKeysController = RatingVolumeKeysController(applicationContext) { rating ->
+            volumeRatingUseCase.setCurrentRating(rating)
+            LocalBroadcastManager.getInstance(applicationContext)
+                .sendBroadcast(Intent(RATING_CHANGES_BROADCAST))
+        }
     }
 
     private fun initLocalPathRepository() {
@@ -173,17 +195,22 @@ class WritingPathService : Service() {
     override fun onDestroy() {
         Log.d(TAG, "onDestroy")
         locationUpdatesRepository.stopLocationUpdates()
+        ratingVolumeKeysController.release()
         super.onDestroy()
     }
 
     private fun startWritingPath() {
         locationUpdatesRepository.startLocationUpdates()
         startForegroundNotification()
+        if (userInfoRepository.isVolumeKeysRatingEnabled()) {
+            ratingVolumeKeysController.start()
+        }
     }
 
     fun finishWritingPath() {
         pathInteractor.finishCurrentPath()
         locationUpdatesRepository.stopLocationUpdates()
+        ratingVolumeKeysController.release()
         stopForegroundNotification()
         stopSelf()
     }

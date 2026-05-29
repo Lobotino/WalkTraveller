@@ -87,7 +87,7 @@ import ru.lobotino.walktraveller.services.UserLocationUpdatesService
 import ru.lobotino.walktraveller.services.UserLocationUpdatesService.Companion.ACTION_BROADCAST
 import ru.lobotino.walktraveller.services.UserLocationUpdatesService.Companion.ACTION_START_LOCATION_UPDATES
 import ru.lobotino.walktraveller.services.UserLocationUpdatesService.Companion.EXTRA_LOCATION
-import ru.lobotino.walktraveller.services.VolumeKeysDetectorService.Companion.RATING_CHANGES_BROADCAST
+import ru.lobotino.walktraveller.utils.RATING_CHANGES_BROADCAST
 import ru.lobotino.walktraveller.services.WritingPathService
 import ru.lobotino.walktraveller.services.WritingPathService.Companion.ACTION_START_WRITING_PATH
 import ru.lobotino.walktraveller.ui.dialog.DeleteConfirmDialog
