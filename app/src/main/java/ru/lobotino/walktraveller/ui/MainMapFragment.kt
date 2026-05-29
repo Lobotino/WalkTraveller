@@ -858,7 +858,10 @@ class MainMapFragment : Fragment() {
         mapViewModel.onPause()
         LocalBroadcastManager
             .getInstance(requireContext())
-            .unregisterReceiver(locationChangeReceiver)
+            .apply {
+                unregisterReceiver(locationChangeReceiver)
+                unregisterReceiver(ratingChangeReceiver)
+            }
         super.onPause()
     }
 
