@@ -6,7 +6,7 @@
 
 - **Язык/Платформа**: Kotlin, Android SDK 24–35, Java 17
 - **UI**: AppCompat + Fragments, Material Components
-- **Карта**: osmdroid
+- **Карта**: MapLibre GL Native (векторные стили OpenFreeMap)
 - **DI/Фабрики**: кастомные `*ViewModelFactory`
 - **Асинхронность**: Coroutines + Flow/Channel
 - **Хранилище**: Room (`AppDatabase`), SharedPreferences
@@ -17,7 +17,7 @@
 ## Вершины архитектуры (entry points)
 
 - Приложение: `app/src/main/java/ru/lobotino/walktraveller/App.kt`
-  - Инициализирует osmdroid и StrictMode.
+  - Инициализирует MapLibre и StrictMode.
 - Главная активити/навигация: `ui/MainActivity.kt`
   - Точка входа в экран карты/настроек/онбординга, реализует `IScreenNavigation`.
 - Главный экран: `ui/MainMapFragment.kt`
