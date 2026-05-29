@@ -60,6 +60,12 @@ android {
         baseline file("$rootDir/tools/android-lint-baseline.xml")
         disable 'GradleDependency', 'ObsoleteLayoutParam'
     }
+
+    testOptions {
+        unitTests {
+            returnDefaultValues = true
+        }
+    }
 }
 
 dependencies {
