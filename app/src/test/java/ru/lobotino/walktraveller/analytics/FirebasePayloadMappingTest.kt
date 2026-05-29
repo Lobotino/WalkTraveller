@@ -51,7 +51,7 @@ class FirebasePayloadMappingTest {
     @Test
     fun `screen view maps screen name`() {
         val payload = AnalyticsEvent.ScreenView("map").toFirebasePayload()
-        assertEquals("screen_view", payload.name)
+        assertEquals("app_screen_view", payload.name)
         assertEquals(mapOf("screen_name" to "map"), payload.params)
     }
 

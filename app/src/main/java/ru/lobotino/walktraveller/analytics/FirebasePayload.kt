@@ -28,7 +28,7 @@ fun AnalyticsEvent.toFirebasePayload(): FirebasePayload = when (this) {
         )
 
     is AnalyticsEvent.ScreenView ->
-        FirebasePayload("screen_view", mapOf("screen_name" to screenName))
+        FirebasePayload("app_screen_view", mapOf("screen_name" to screenName))
 
     is AnalyticsEvent.VolumeFeatureSuggest ->
         FirebasePayload("volume_feature_suggest", mapOf("accepted" to accepted.toString()))

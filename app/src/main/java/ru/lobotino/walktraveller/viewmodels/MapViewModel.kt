@@ -242,8 +242,11 @@ class MapViewModel(
     }
 
     fun onStopPathButtonClicked() {
+        val wasWritingPath = writingPathStatesRepository.isWritingPathNow()
         finishPathWritingUseCase.finishPathWriting()
-        analyticsTracker.track(AnalyticsEvent.TrackRecordingFinished)
+        if (wasWritingPath) {
+            analyticsTracker.track(AnalyticsEvent.TrackRecordingFinished)
+        }
         writingPathNowState.tryEmit(false)
         mapUiStateFlow.update { uiState ->
             uiState.copy(
