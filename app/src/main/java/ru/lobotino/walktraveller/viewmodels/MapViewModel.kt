@@ -37,6 +37,8 @@ import ru.lobotino.walktraveller.usecases.interfaces.IPathRatingUseCase
 import ru.lobotino.walktraveller.usecases.interfaces.IPermissionsUseCase
 import ru.lobotino.walktraveller.usecases.interfaces.ITileSourceInteractor
 import ru.lobotino.walktraveller.usecases.permissions.GeoPermissionsUseCase
+import ru.lobotino.walktraveller.analytics.AnalyticsEvent
+import ru.lobotino.walktraveller.analytics.IAnalyticsTracker
 import ru.lobotino.walktraveller.utils.IResourceManager
 import ru.lobotino.walktraveller.utils.ext.toMapPoint
 
@@ -53,6 +55,7 @@ class MapViewModel(
     private val userRotationRepository: IUserRotationRepository,
     private val userInfoRepository: IUserInfoRepository,
     private val resourceManager: IResourceManager,
+    private val analyticsTracker: IAnalyticsTracker,
 ) : ViewModel() {
 
     companion object {
@@ -218,6 +221,7 @@ class MapViewModel(
             clearMap()
             writingPathStatesRepository.setWritingPathNow(true)
             writingPathNowState.tryEmit(true)
+            analyticsTracker.track(AnalyticsEvent.TrackRecordingStarted)
             mapUiStateFlow.update { uiState ->
                 uiState.copy(
                     isPathFinished = false,
@@ -238,6 +242,7 @@ class MapViewModel(
 
     fun onStopPathButtonClicked() {
         finishPathWritingUseCase.finishPathWriting()
+        analyticsTracker.track(AnalyticsEvent.TrackRecordingFinished)
         writingPathNowState.tryEmit(false)
         mapUiStateFlow.update { uiState ->
             uiState.copy(
@@ -248,6 +253,7 @@ class MapViewModel(
     }
 
     fun onRatingButtonClicked(ratingGiven: SegmentRating) {
+        analyticsTracker.track(AnalyticsEvent.RatingGiven(ratingGiven))
         pathRatingUseCase.setCurrentRating(ratingGiven)
         mapUiStateFlow.update { uiState ->
             uiState.copy(newRating = ratingGiven)
@@ -468,12 +474,14 @@ class MapViewModel(
     }
 
     fun onVolumeFeatureSuggestAccepted() {
+        analyticsTracker.track(AnalyticsEvent.VolumeFeatureSuggest(accepted = true))
         userInfoRepository.setNeedToSuggestVolumeFeature(false)
         userInfoRepository.setVolumeKeysRatingEnabled(true)
         startPathTracking()
     }
 
     fun onVolumeFeatureSuggestDecline() {
+        analyticsTracker.track(AnalyticsEvent.VolumeFeatureSuggest(accepted = false))
         userInfoRepository.setNeedToSuggestVolumeFeature(false)
         userInfoRepository.setVolumeKeysRatingEnabled(false)
         startPathTracking()
