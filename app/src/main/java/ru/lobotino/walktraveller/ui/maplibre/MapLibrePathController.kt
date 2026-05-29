@@ -17,13 +17,17 @@ import ru.lobotino.walktraveller.model.map.MapRatingPath
 class MapLibrePathController(
     private val ratingColors: Map<SegmentRating, Int>,
     @ColorInt private val commonPathColor: Int,
-    private val lineWidthDp: Float = 6f,
+    // MapLibre line-width is in density-independent screen pixels, not raw px.
+    private val lineWidth: Float = 6f,
 ) {
     private var style: Style? = null
 
     private val savedRatingFeatures = LinkedHashMap<Long, List<Feature>>()
     private val commonFeatures = LinkedHashMap<Long, Feature>()
     private val currentSegments = ArrayList<MapPathSegment>()
+    private val currentFeatures = ArrayList<Feature>()
+
+    private val ratingColorExpression: Expression = buildRatingColorExpression()
 
     fun onStyleLoaded(style: Style) {
         this.style = style
@@ -32,6 +36,7 @@ class MapLibrePathController(
         style.addSource(GeoJsonSource(SOURCE_SAVED_COMMON))
         style.addSource(GeoJsonSource(SOURCE_CURRENT))
 
+        // current-path layer is added last so the active recording renders above saved paths
         style.addLayer(ratingLineLayer(LAYER_SAVED_RATING, SOURCE_SAVED_RATING))
         style.addLayer(commonLineLayer(LAYER_SAVED_COMMON, SOURCE_SAVED_COMMON))
         style.addLayer(ratingLineLayer(LAYER_CURRENT, SOURCE_CURRENT))
@@ -57,39 +62,42 @@ class MapLibrePathController(
 
     fun appendCurrentPathSegments(segments: List<MapPathSegment>) {
         currentSegments.addAll(segments)
+        currentFeatures.clear()
+        currentFeatures.addAll(PathGeoJsonMapper.segmentsToFeatures(CURRENT_PATH_ID, currentSegments))
         pushCurrent()
     }
 
-    /** Stop accumulating into the current run; leave the drawn line until clear(). */
+    /**
+     * Stop accumulating into the current run. The rendered features are kept so the
+     * finished path stays drawn (even across a style reload) until clear().
+     */
     fun finishCurrentPath() {
         currentSegments.clear()
     }
 
     fun hidePath(pathId: Long) {
-        val removed = (savedRatingFeatures.remove(pathId) != null) or
-            (commonFeatures.remove(pathId) != null)
-        if (removed) {
-            pushSavedRating()
-            pushCommon()
-        }
+        val ratingChanged = savedRatingFeatures.remove(pathId) != null
+        val commonChanged = commonFeatures.remove(pathId) != null
+        if (ratingChanged) pushSavedRating()
+        if (commonChanged) pushCommon()
     }
 
     fun hidePaths(pathIds: List<Long>) {
-        var removed = false
+        var ratingChanged = false
+        var commonChanged = false
         for (id in pathIds) {
-            if (savedRatingFeatures.remove(id) != null) removed = true
-            if (commonFeatures.remove(id) != null) removed = true
+            if (savedRatingFeatures.remove(id) != null) ratingChanged = true
+            if (commonFeatures.remove(id) != null) commonChanged = true
         }
-        if (removed) {
-            pushSavedRating()
-            pushCommon()
-        }
+        if (ratingChanged) pushSavedRating()
+        if (commonChanged) pushCommon()
     }
 
     fun clear() {
         savedRatingFeatures.clear()
         commonFeatures.clear()
         currentSegments.clear()
+        currentFeatures.clear()
         pushSavedRating()
         pushCommon()
         pushCurrent()
@@ -107,17 +115,13 @@ class MapLibrePathController(
 
     private fun pushCurrent() {
         style?.getSourceAs<GeoJsonSource>(SOURCE_CURRENT)
-            ?.setGeoJson(
-                FeatureCollection.fromFeatures(
-                    PathGeoJsonMapper.segmentsToFeatures(CURRENT_PATH_ID, currentSegments)
-                )
-            )
+            ?.setGeoJson(FeatureCollection.fromFeatures(currentFeatures))
     }
 
     private fun ratingLineLayer(layerId: String, sourceId: String): LineLayer =
         LineLayer(layerId, sourceId).withProperties(
-            PropertyFactory.lineColor(ratingColorExpression()),
-            PropertyFactory.lineWidth(lineWidthDp),
+            PropertyFactory.lineColor(ratingColorExpression),
+            PropertyFactory.lineWidth(lineWidth),
             PropertyFactory.lineCap(Property.LINE_CAP_ROUND),
             PropertyFactory.lineJoin(Property.LINE_JOIN_ROUND),
         )
@@ -125,12 +129,12 @@ class MapLibrePathController(
     private fun commonLineLayer(layerId: String, sourceId: String): LineLayer =
         LineLayer(layerId, sourceId).withProperties(
             PropertyFactory.lineColor(commonPathColor),
-            PropertyFactory.lineWidth(lineWidthDp),
+            PropertyFactory.lineWidth(lineWidth),
             PropertyFactory.lineCap(Property.LINE_CAP_ROUND),
             PropertyFactory.lineJoin(Property.LINE_JOIN_ROUND),
         )
 
-    private fun ratingColorExpression(): Expression =
+    private fun buildRatingColorExpression(): Expression =
         Expression.match(
             Expression.get(PathGeoJsonMapper.PROPERTY_RATING),
             Expression.literal(SegmentRating.PERFECT.name), Expression.color(color(SegmentRating.PERFECT)),
