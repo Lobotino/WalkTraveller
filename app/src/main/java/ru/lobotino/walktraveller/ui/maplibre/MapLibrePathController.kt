@@ -145,12 +145,15 @@ class MapLibrePathController(
     }
 
     private fun applyGradientOrFallback(layer: LineLayer, path: MapRatingPath) {
-        val stops = PathGradientStopsBuilder.build(path, blendMeters)
-        if (stops.isEmpty()) {
-            layer.setProperties(PropertyFactory.lineColor(color(SegmentRating.NONE)))
-        } else {
-            layer.setProperties(PropertyFactory.lineGradient(gradientExpression(stops)))
+        val stops = PathGradientStopsBuilder.build(path, blendMeters).ifEmpty {
+            // Synthesize a constant-color "gradient" so a previously-set lineGradient
+            // can never linger and shadow a fallback lineColor (MapLibre prefers gradient).
+            listOf(
+                GradientStop(0f, SegmentRating.NONE),
+                GradientStop(1f, SegmentRating.NONE),
+            )
         }
+        layer.setProperties(PropertyFactory.lineGradient(gradientExpression(stops)))
     }
 
     private fun pushCommon() {
