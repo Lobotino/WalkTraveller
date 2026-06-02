@@ -534,6 +534,10 @@ class MainMapFragment : Fragment() {
                             mapViewModel.hidePathsFromMap(mapEvent.pathsToHide)
                         }
 
+                        is MapEvent.FitCameraToBounds -> {
+                            // Real handler added in Task 5; placeholder keeps `when` exhaustive.
+                        }
+
                         is MapEvent.BottomMenuStateChange -> {
                             mapViewModel.onBottomMenuStateChange(mapEvent.newBottomMenuState)
                         }
