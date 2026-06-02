@@ -144,13 +144,15 @@ class RatingPathFeatureBuilderTest {
         // when
         val result = RatingPathFeatureBuilder.build(path, blendMeters = 12f, colorOf = colorOf)
 
-        // then — both edges intersect the blend region; each gets split into 8 sub-edges = 16 total
-        assertEquals(16, result.size)
-        // first sub-edge should be the GOOD color
+        // then — both edges intersect the blend region. Each emits one solid base
+        // (filling holes at low zoom) plus 8 sub-edges = 9 per edge = 18 total.
+        assertEquals(18, result.size)
+        // first emitted edge is the GOOD solid base spanning the first segment
         assertEquals(colorOf(SegmentRating.GOOD), result.first().color)
-        // last sub-edge should be the BADLY color
+        // last emitted edge is the trailing BADLY sub-edge well outside the blend
         assertEquals(colorOf(SegmentRating.BADLY), result.last().color)
-        // some middle sub-edge should be a non-pure GOOD or BADLY color (blended)
+        // index 8 = last sub-edge of the first segment, midpoint near the junction
+        // and inside the blend region → interpolated color, not pure GOOD/BADLY
         val middle = result[8]
         assertTrue(
             "middle sub-edge should be blended (not pure GOOD or BADLY)",

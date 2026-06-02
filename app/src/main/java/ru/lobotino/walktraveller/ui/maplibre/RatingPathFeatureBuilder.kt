@@ -99,6 +99,13 @@ object RatingPathFeatureBuilder {
                 continue
             }
 
+            // Solid base for the whole edge first. At zoom levels where the
+            // sub-edges below are smaller than a pixel and get culled by the
+            // tile tessellator, this fills the would-be hole. At higher zooms
+            // the sub-edges paint on top (later in the source) and the gradient
+            // wins.
+            out.add(ColoredEdge(edgeStartPt, edgeEndPt, colorOf(rating)))
+
             for (s in 0 until subdivisions) {
                 val t0 = s / subdivisions.toFloat()
                 val t1 = (s + 1) / subdivisions.toFloat()
