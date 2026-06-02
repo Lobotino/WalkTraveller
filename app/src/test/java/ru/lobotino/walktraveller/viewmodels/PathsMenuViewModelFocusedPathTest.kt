@@ -188,6 +188,83 @@ class PathsMenuViewModelFocusedPathTest {
         }
 
     @Test
+    fun `hiding the focused path emits SetFocusedPath null`() =
+        runTest(testDispatcher) {
+            // given: a focused path in MY_PATHS
+            givenShownRatingPath(42L)
+            sut.onPathInListShortTap(42L, PathsMenuType.MY_PATHS)
+            advanceUntilIdle()
+            val collected = mutableListOf<MapEvent>()
+            val job = launch { sut.observeNewMapEvent.toList(collected) }
+            advanceUntilIdle()
+            val snapshot = collected.size
+
+            // when: hide that path via its show button (LOADING/HIDE branch)
+            sut.onPathInListButtonClicked(
+                42L,
+                PathItemButtonType.Show(PathInfoItemShowButtonState.HIDE),
+                PathsMenuType.MY_PATHS,
+            )
+            advanceUntilIdle()
+            job.cancel()
+
+            // then
+            val after = collected.drop(snapshot)
+            val focusEvents = after.filterIsInstance<MapEvent.SetFocusedPath>()
+            assertEquals(listOf<Long?>(null), focusEvents.map { it.pathId })
+        }
+
+    @Test
+    fun `hiding a non-focused path does not emit SetFocusedPath`() =
+        runTest(testDispatcher) {
+            // given: path 42 is focused, path 43 is shown but not focused
+            givenShownRatingPath(42L)
+            givenShownRatingPath(43L)
+            sut.onPathInListShortTap(42L, PathsMenuType.MY_PATHS)
+            advanceUntilIdle()
+            val collected = mutableListOf<MapEvent>()
+            val job = launch { sut.observeNewMapEvent.toList(collected) }
+            advanceUntilIdle()
+            val snapshot = collected.size
+
+            // when: hide the non-focused path 43
+            sut.onPathInListButtonClicked(
+                43L,
+                PathItemButtonType.Show(PathInfoItemShowButtonState.HIDE),
+                PathsMenuType.MY_PATHS,
+            )
+            advanceUntilIdle()
+            job.cancel()
+
+            // then
+            val after = collected.drop(snapshot)
+            assertTrue(after.none { it is MapEvent.SetFocusedPath })
+        }
+
+    @Test
+    fun `deleting the focused path emits SetFocusedPath null`() =
+        runTest(testDispatcher) {
+            // given: path 42 is focused in MY_PATHS
+            givenShownRatingPath(42L)
+            sut.onPathInListShortTap(42L, PathsMenuType.MY_PATHS)
+            advanceUntilIdle()
+            val collected = mutableListOf<MapEvent>()
+            val job = launch { sut.observeNewMapEvent.toList(collected) }
+            advanceUntilIdle()
+            val snapshot = collected.size
+
+            // when: confirm deletion of the focused path
+            sut.onConfirmMyPathDelete(42L)
+            advanceUntilIdle()
+            job.cancel()
+
+            // then
+            val after = collected.drop(snapshot)
+            val focusEvents = after.filterIsInstance<MapEvent.SetFocusedPath>()
+            assertEquals(listOf<Long?>(null), focusEvents.map { it.pathId })
+        }
+
+    @Test
     fun `focus in MY_PATHS does not affect OUTER_PATHS focus state`() =
         runTest(testDispatcher) {
             // given
