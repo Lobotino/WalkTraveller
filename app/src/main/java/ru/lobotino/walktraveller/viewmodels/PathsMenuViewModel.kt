@@ -90,6 +90,22 @@ class PathsMenuViewModel(
 
     private var selectedPathIdsInMenuList: MutableList<Long> = ArrayList()
 
+    private val shownPathIdsByMenu: Map<PathsMenuType, MutableSet<Long>> = mapOf(
+        PathsMenuType.MY_PATHS to mutableSetOf(),
+        PathsMenuType.OUTER_PATHS to mutableSetOf(),
+    )
+
+    private fun markPathShown(type: PathsMenuType, ids: Collection<Long>) {
+        shownPathIdsByMenu[type]?.addAll(ids)
+    }
+
+    private fun markPathHidden(type: PathsMenuType, ids: Collection<Long>) {
+        shownPathIdsByMenu[type]?.removeAll(ids.toSet())
+    }
+
+    private fun isPathShown(type: PathsMenuType, pathId: Long): Boolean =
+        shownPathIdsByMenu[type]?.contains(pathId) == true
+
     private fun updateMyPathsMenuState(
         showPathsButtonState: ShowPathsButtonState? = null,
         showPathsFilterButtonState: ShowPathsFilterButtonState? = null,
@@ -184,6 +200,7 @@ class PathsMenuViewModel(
                 loadPathsJob?.cancel()
                 loadPathsJob = null
                 updateMyPathsMenuState(showPathsButtonState = ShowPathsButtonState.DEFAULT)
+                shownPathIdsByMenu[PathsMenuType.MY_PATHS]?.clear()
                 newPathInfoListItemStateFlow.tryEmit(
                     NewPathInfoItemState(
                         PathsMenuType.MY_PATHS,
@@ -244,6 +261,12 @@ class PathsMenuViewModel(
             PathsToAction.Multiple(selectedPathIds)
         }
 
+        when (pathsToHide) {
+            PathsToAction.All -> shownPathIdsByMenu[pathsMenuType]?.clear()
+            is PathsToAction.Multiple -> markPathHidden(pathsMenuType, pathsToHide.pathIds)
+            is PathsToAction.Single -> markPathHidden(pathsMenuType, listOf(pathsToHide.pathId))
+        }
+
         val hideMapEvent = if (pathsToHide == PathsToAction.All) {
             MapEvent.ClearMap
         } else {
@@ -266,6 +289,7 @@ class PathsMenuViewModel(
         when (outerPathsMenuUiStateFlow.value.showPathsButtonState) {
             ShowPathsButtonState.LOADING -> {
                 updateOuterPathsMenuState(showPathsButtonState = ShowPathsButtonState.DEFAULT)
+                shownPathIdsByMenu[PathsMenuType.OUTER_PATHS]?.clear()
                 newPathInfoListItemStateFlow.tryEmit(
                     NewPathInfoItemState(
                         PathsMenuType.OUTER_PATHS,
@@ -291,6 +315,7 @@ class PathsMenuViewModel(
                 }
 
                 newMapEventChannel.trySend(MapEvent.ShowRatingPathList(outerPathsToShow))
+                markPathShown(PathsMenuType.OUTER_PATHS, outerPathsToShow.map { it.pathId })
                 newPathInfoListItemStateFlow.tryEmit(
                     NewPathInfoItemState(
                         PathsMenuType.OUTER_PATHS,
@@ -326,6 +351,7 @@ class PathsMenuViewModel(
                 }
                 if (loadedPaths.isNotEmpty()) {
                     newMapEventChannel.trySend(MapEvent.ShowRatingPathList(loadedPaths))
+                    markPathShown(PathsMenuType.MY_PATHS, loadedPaths.map { it.pathId })
                     analyticsTracker.track(AnalyticsEvent.PathShown(loadedPaths.size, AnalyticsPathType.RATING))
                     newPathInfoListItemStateFlow.tryEmit(
                         NewPathInfoItemState(
@@ -360,6 +386,7 @@ class PathsMenuViewModel(
                 }
                 if (loadedPaths.isNotEmpty()) {
                     newMapEventChannel.trySend(MapEvent.ShowCommonPathList(loadedPaths))
+                    markPathShown(PathsMenuType.MY_PATHS, loadedPaths.map { it.pathId })
                     analyticsTracker.track(AnalyticsEvent.PathShown(loadedPaths.size, AnalyticsPathType.COMMON))
                     newPathInfoListItemStateFlow.tryEmit(
                         NewPathInfoItemState(
@@ -384,6 +411,7 @@ class PathsMenuViewModel(
             val allPaths = mapPathsInteractor.getAllSavedRatingPaths(true)
             for (path in allPaths) {
                 newMapEventChannel.trySend(MapEvent.ShowRatingPath(path))
+                markPathShown(PathsMenuType.MY_PATHS, listOf(path.pathId))
                 newPathInfoListItemStateFlow.tryEmit(
                     NewPathInfoItemState(
                         PathsMenuType.MY_PATHS,
@@ -407,6 +435,7 @@ class PathsMenuViewModel(
             val allPaths = mapPathsInteractor.getAllSavedPathsAsCommon()
             for (path in allPaths) {
                 newMapEventChannel.trySend(MapEvent.ShowCommonPath(path))
+                markPathShown(PathsMenuType.MY_PATHS, listOf(path.pathId))
                 newPathInfoListItemStateFlow.tryEmit(
                     NewPathInfoItemState(
                         PathsMenuType.MY_PATHS,
@@ -516,6 +545,7 @@ class PathsMenuViewModel(
             is PathItemButtonType.Show -> {
                 when (clickedButtonType.currentState) {
                     PathInfoItemShowButtonState.LOADING, PathInfoItemShowButtonState.HIDE -> {
+                        markPathHidden(PathsMenuType.MY_PATHS, listOf(pathId))
                         newMapEventChannel.trySend(MapEvent.HidePath(PathsToAction.Single(pathId)))
                         newPathInfoListItemStateFlow.tryEmit(
                             NewPathInfoItemState(
@@ -545,6 +575,7 @@ class PathsMenuViewModel(
                                 isOptimized = true
                             )
                             if (savedRatingPath != null) {
+                                markPathShown(PathsMenuType.MY_PATHS, listOf(pathId))
                                 newMapEventChannel.trySend(MapEvent.ShowRatingPath(savedRatingPath))
                                 newPathInfoListItemStateFlow.tryEmit(
                                     NewPathInfoItemState(
@@ -583,6 +614,7 @@ class PathsMenuViewModel(
             is PathItemButtonType.Show -> {
                 when (clickedButtonType.currentState) {
                     PathInfoItemShowButtonState.LOADING, PathInfoItemShowButtonState.HIDE -> {
+                        markPathHidden(PathsMenuType.OUTER_PATHS, listOf(tempPathId))
                         newMapEventChannel.trySend(MapEvent.HidePath(PathsToAction.Single(tempPathId)))
                         newPathInfoListItemStateFlow.tryEmit(
                             NewPathInfoItemState(
@@ -598,6 +630,7 @@ class PathsMenuViewModel(
                     PathInfoItemShowButtonState.DEFAULT -> {
                         val cachedPath = outerPathsInteractor.getCachedOuterPath(tempPathId)
                         if (cachedPath != null) {
+                            markPathShown(PathsMenuType.OUTER_PATHS, listOf(tempPathId))
                             newPathInfoListItemStateFlow.tryEmit(
                                 NewPathInfoItemState(
                                     PathsMenuType.OUTER_PATHS,
@@ -675,6 +708,7 @@ class PathsMenuViewModel(
     }
 
     fun onConfirmMyPathDelete(pathId: Long) {
+        markPathHidden(PathsMenuType.MY_PATHS, listOf(pathId))
         MainScope().launch {
             pathRedactor.deletePath(pathId)
             checkSavedPathsListNotEmptyNow()
@@ -687,6 +721,7 @@ class PathsMenuViewModel(
     }
 
     fun onConfirmMyPathListDelete(pathIds: List<Long>) {
+        markPathHidden(PathsMenuType.MY_PATHS, pathIds)
         MainScope().launch {
             pathRedactor.deletePaths(pathIds)
             checkSavedPathsListNotEmptyNow()
@@ -701,6 +736,7 @@ class PathsMenuViewModel(
     }
 
     private fun deleteOuterPathFromList(tempPathId: Long) {
+        markPathHidden(PathsMenuType.OUTER_PATHS, listOf(tempPathId))
         outerPathsInteractor.removeCachedPath(tempPathId)
         newMapEventChannel.trySend(MapEvent.HidePath(PathsToAction.Single(tempPathId)))
         deletePathInfoItemChannel.trySend(
@@ -718,6 +754,7 @@ class PathsMenuViewModel(
     }
 
     private fun deleteSelectedOuterPathsFromList() {
+        markPathHidden(PathsMenuType.OUTER_PATHS, selectedPathIdsInMenuList.toList())
         val selectedPathIds = selectedPathIdsInMenuList.toList()
 
         for (pathId in selectedPathIds) {
