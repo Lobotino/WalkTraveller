@@ -173,13 +173,49 @@ class PathsMenuViewModelShortTapTest {
         val collectedEvents = mutableListOf<MapEvent>()
         val job = launch { sut.observeNewMapEvent.toList(collectedEvents) }
 
+        val collectedItemStates = mutableListOf<ru.lobotino.walktraveller.ui.model.NewPathInfoItemState>()
+        val itemStateJob = launch { sut.observeNewPathInfoListItemState.toList(collectedItemStates) }
+
         // when — short tap другого элемента в select mode → должен ТОЛЬКО переключить выделение, без FitCamera
         sut.onPathInListShortTap(6L, PathsMenuType.MY_PATHS)
         advanceUntilIdle()
         job.cancel()
+        itemStateJob.cancel()
 
         // then — событие FitCamera не отправлено
         assertNull(collectedEvents.firstOrNull { it is MapEvent.FitCameraToBounds })
+
+        // and — элемент 6L теперь выделен
+        val itemState = collectedItemStates.firstOrNull { it.pathsMenuType == PathsMenuType.MY_PATHS }
+        assertTrue("Expected PathInfoItemState to be emitted", itemState != null)
+        assertTrue("Expected item 6L to be selected", itemState?.pathInfoItemState?.isSelected == true)
+    }
+
+    @Test
+    fun `onPathInListShortTap in OUTER select mode keeps existing toggle behavior`() = runTest(testDispatcher) {
+        // given — long-tap включает select mode, выделяет элемент 5L
+        sut.onPathInListLongTap(5L, PathsMenuType.OUTER_PATHS)
+        advanceUntilIdle()
+
+        val collectedEvents = mutableListOf<MapEvent>()
+        val job = launch { sut.observeNewMapEvent.toList(collectedEvents) }
+
+        val collectedItemStates = mutableListOf<ru.lobotino.walktraveller.ui.model.NewPathInfoItemState>()
+        val itemStateJob = launch { sut.observeNewPathInfoListItemState.toList(collectedItemStates) }
+
+        // when — short tap другого элемента в select mode → должен ТОЛЬКО переключить выделение, без FitCamera
+        sut.onPathInListShortTap(6L, PathsMenuType.OUTER_PATHS)
+        advanceUntilIdle()
+        job.cancel()
+        itemStateJob.cancel()
+
+        // then — событие FitCamera не отправлено
+        assertNull(collectedEvents.firstOrNull { it is MapEvent.FitCameraToBounds })
+
+        // and — элемент 6L теперь выделен
+        val itemState = collectedItemStates.firstOrNull { it.pathsMenuType == PathsMenuType.OUTER_PATHS }
+        assertTrue("Expected PathInfoItemState to be emitted", itemState != null)
+        assertTrue("Expected item 6L to be selected", itemState?.pathInfoItemState?.isSelected == true)
     }
 
     @Test

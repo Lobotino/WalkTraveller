@@ -21,6 +21,7 @@ import ru.lobotino.walktraveller.model.map.MapCommonPath
 import ru.lobotino.walktraveller.model.map.MapPathInfo
 import ru.lobotino.walktraveller.model.map.MapRatingPath
 import ru.lobotino.walktraveller.repositories.interfaces.IPathsSaverRepository
+import ru.lobotino.walktraveller.ui.maplibre.pathBounds
 import ru.lobotino.walktraveller.ui.model.BottomMenuState
 import ru.lobotino.walktraveller.ui.model.ConfirmDialogType
 import ru.lobotino.walktraveller.ui.model.DeletePathInfoItemEvent
@@ -38,7 +39,6 @@ import ru.lobotino.walktraveller.ui.model.PathItemButtonType
 import ru.lobotino.walktraveller.ui.model.PathsMenuType
 import ru.lobotino.walktraveller.ui.model.PathsToAction
 import ru.lobotino.walktraveller.ui.model.ShowPathsButtonState
-import ru.lobotino.walktraveller.ui.maplibre.pathBounds
 import ru.lobotino.walktraveller.ui.model.ShowPathsFilterButtonState
 import ru.lobotino.walktraveller.usecases.interfaces.IMapPathsInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IOuterPathsInteractor
