@@ -6,7 +6,6 @@ import org.maplibre.android.style.expressions.Expression
 import org.maplibre.android.style.layers.LineLayer
 import org.maplibre.android.style.layers.Property
 import org.maplibre.android.style.layers.PropertyFactory
-import org.maplibre.android.style.sources.GeoJsonOptions
 import org.maplibre.android.style.sources.GeoJsonSource
 import org.maplibre.geojson.Feature
 import org.maplibre.geojson.FeatureCollection
@@ -20,43 +19,44 @@ class MapLibrePathController(
     @ColorInt private val commonPathColor: Int,
     // MapLibre line-width is in density-independent screen pixels, not raw px.
     private val lineWidth: Float = 6f,
-    // Length over which two adjacent rating colors blend at a junction.
+    // Minimum length over which two adjacent rating colors blend at a junction.
+    // The actual blend may grow up to 30% of the shorter adjacent run so the
+    // transition stays visible on sparse / optimized paths.
     private val blendMeters: Float = 12f,
 ) {
     private var style: Style? = null
 
-    private val savedRatingPaths = LinkedHashMap<Long, MapRatingPath>()
+    private val savedRatingFeatures = LinkedHashMap<Long, List<Feature>>()
     private val commonFeatures = LinkedHashMap<Long, Feature>()
     private val currentSegments = ArrayList<MapPathSegment>()
+    private val currentFeatures = ArrayList<Feature>()
+
+    private val colorOf: (SegmentRating) -> Int = { rating ->
+        ratingColors[rating] ?: ratingColors.getValue(SegmentRating.NONE)
+    }
 
     fun onStyleLoaded(style: Style) {
         this.style = style
 
+        style.addSource(GeoJsonSource(SOURCE_SAVED_RATING))
         style.addSource(GeoJsonSource(SOURCE_SAVED_COMMON))
-        style.addSource(GeoJsonSource(SOURCE_CURRENT, GeoJsonOptions().withLineMetrics(true)))
+        style.addSource(GeoJsonSource(SOURCE_CURRENT))
 
-        // Saved rating layers are inserted below the common layer per-path; ordering: saved-rating < saved-common < current.
+        // current-path layer is added last so the active recording renders above saved paths
+        style.addLayer(coloredLineLayer(LAYER_SAVED_RATING, SOURCE_SAVED_RATING))
         style.addLayer(commonLineLayer(LAYER_SAVED_COMMON, SOURCE_SAVED_COMMON))
-        style.addLayer(gradientLineLayer(LAYER_CURRENT, SOURCE_CURRENT))
+        style.addLayer(coloredLineLayer(LAYER_CURRENT, SOURCE_CURRENT))
 
-        for ((pathId, path) in savedRatingPaths) {
-            installRatingLayer(style, pathId, path)
-        }
+        pushSavedRating()
         pushCommon()
         pushCurrent()
     }
 
     fun showRatingPaths(paths: List<MapRatingPath>) {
-        val style = this.style
         for (path in paths) {
-            val existed = savedRatingPaths.put(path.pathId, path) != null
-            if (style == null) continue
-            if (existed) {
-                updateRatingLayer(style, path)
-            } else {
-                installRatingLayer(style, path.pathId, path)
-            }
+            savedRatingFeatures[path.pathId] = PathGeoJsonMapper.ratingPathToFeatures(path, blendMeters, colorOf)
         }
+        pushSavedRating()
     }
 
     fun showCommonPaths(paths: List<MapCommonPath>) {
@@ -68,6 +68,10 @@ class MapLibrePathController(
 
     fun appendCurrentPathSegments(segments: List<MapPathSegment>) {
         currentSegments.addAll(segments)
+        currentFeatures.clear()
+        currentFeatures.addAll(
+            PathGeoJsonMapper.segmentsToFeatures(CURRENT_PATH_ID, currentSegments, blendMeters, colorOf)
+        )
         pushCurrent()
     }
 
@@ -80,80 +84,36 @@ class MapLibrePathController(
     }
 
     fun hidePath(pathId: Long) {
-        val ratingRemoved = savedRatingPaths.remove(pathId) != null
-        val commonRemoved = commonFeatures.remove(pathId) != null
-        if (ratingRemoved) removeRatingLayer(pathId)
-        if (commonRemoved) pushCommon()
+        val ratingChanged = savedRatingFeatures.remove(pathId) != null
+        val commonChanged = commonFeatures.remove(pathId) != null
+        if (ratingChanged) pushSavedRating()
+        if (commonChanged) pushCommon()
     }
 
     fun hidePaths(pathIds: List<Long>) {
+        var ratingChanged = false
         var commonChanged = false
         for (id in pathIds) {
-            if (savedRatingPaths.remove(id) != null) removeRatingLayer(id)
+            if (savedRatingFeatures.remove(id) != null) ratingChanged = true
             if (commonFeatures.remove(id) != null) commonChanged = true
         }
+        if (ratingChanged) pushSavedRating()
         if (commonChanged) pushCommon()
     }
 
     fun clear() {
-        val ratingIds = savedRatingPaths.keys.toList()
-        savedRatingPaths.clear()
+        savedRatingFeatures.clear()
         commonFeatures.clear()
         currentSegments.clear()
-        for (id in ratingIds) removeRatingLayer(id)
+        currentFeatures.clear()
+        pushSavedRating()
         pushCommon()
         pushCurrent()
     }
 
-    private fun installRatingLayer(style: Style, pathId: Long, path: MapRatingPath) {
-        val sourceId = ratingSourceId(pathId)
-        val layerId = ratingLayerId(pathId)
-        val feature = PathGeoJsonMapper.ratingPathToFeature(path)
-        val collection = if (feature != null) {
-            FeatureCollection.fromFeature(feature)
-        } else {
-            FeatureCollection.fromFeatures(emptyArray())
-        }
-        style.addSource(GeoJsonSource(sourceId, collection, GeoJsonOptions().withLineMetrics(true)))
-        val layer = LineLayer(layerId, sourceId).withProperties(
-            PropertyFactory.lineWidth(lineWidth),
-            PropertyFactory.lineCap(Property.LINE_CAP_ROUND),
-            PropertyFactory.lineJoin(Property.LINE_JOIN_ROUND),
-        )
-        applyGradientOrFallback(layer, path)
-        style.addLayerBelow(layer, LAYER_SAVED_COMMON)
-    }
-
-    private fun updateRatingLayer(style: Style, path: MapRatingPath) {
-        val sourceId = ratingSourceId(path.pathId)
-        val layerId = ratingLayerId(path.pathId)
-        val feature = PathGeoJsonMapper.ratingPathToFeature(path)
-        val collection = if (feature != null) {
-            FeatureCollection.fromFeature(feature)
-        } else {
-            FeatureCollection.fromFeatures(emptyArray())
-        }
-        style.getSourceAs<GeoJsonSource>(sourceId)?.setGeoJson(collection)
-        val layer = style.getLayerAs<LineLayer>(layerId) ?: return
-        applyGradientOrFallback(layer, path)
-    }
-
-    private fun removeRatingLayer(pathId: Long) {
-        val style = this.style ?: return
-        style.removeLayer(ratingLayerId(pathId))
-        style.removeSource(ratingSourceId(pathId))
-    }
-
-    private fun applyGradientOrFallback(layer: LineLayer, path: MapRatingPath) {
-        val stops = PathGradientStopsBuilder.build(path, blendMeters).ifEmpty {
-            // Synthesize a constant-color "gradient" so a previously-set lineGradient
-            // can never linger and shadow a fallback lineColor (MapLibre prefers gradient).
-            listOf(
-                GradientStop(0f, SegmentRating.NONE),
-                GradientStop(1f, SegmentRating.NONE),
-            )
-        }
-        layer.setProperties(PropertyFactory.lineGradient(gradientExpression(stops)))
+    private fun pushSavedRating() {
+        style?.getSourceAs<GeoJsonSource>(SOURCE_SAVED_RATING)
+            ?.setGeoJson(FeatureCollection.fromFeatures(savedRatingFeatures.values.flatten()))
     }
 
     private fun pushCommon() {
@@ -162,22 +122,15 @@ class MapLibrePathController(
     }
 
     private fun pushCurrent() {
-        val feature = PathGeoJsonMapper.segmentsToFeature(CURRENT_PATH_ID, currentSegments)
-        val collection = if (feature != null) {
-            FeatureCollection.fromFeature(feature)
-        } else {
-            FeatureCollection.fromFeatures(emptyArray())
-        }
-        style?.getSourceAs<GeoJsonSource>(SOURCE_CURRENT)?.setGeoJson(collection)
-        val style = this.style ?: return
-        val layer = style.getLayerAs<LineLayer>(LAYER_CURRENT) ?: return
-        val currentPath = MapRatingPath(pathId = CURRENT_PATH_ID, pathSegments = currentSegments.toList())
-        applyGradientOrFallback(layer, currentPath)
+        style?.getSourceAs<GeoJsonSource>(SOURCE_CURRENT)
+            ?.setGeoJson(FeatureCollection.fromFeatures(currentFeatures))
     }
 
-    private fun gradientLineLayer(layerId: String, sourceId: String): LineLayer =
+    private fun coloredLineLayer(layerId: String, sourceId: String): LineLayer =
         LineLayer(layerId, sourceId).withProperties(
-            PropertyFactory.lineColor(color(SegmentRating.NONE)),
+            PropertyFactory.lineColor(
+                Expression.toColor(Expression.get(PathGeoJsonMapper.PROPERTY_COLOR))
+            ),
             PropertyFactory.lineWidth(lineWidth),
             PropertyFactory.lineCap(Property.LINE_CAP_ROUND),
             PropertyFactory.lineJoin(Property.LINE_JOIN_ROUND),
@@ -191,32 +144,12 @@ class MapLibrePathController(
             PropertyFactory.lineJoin(Property.LINE_JOIN_ROUND),
         )
 
-    private fun gradientExpression(stops: List<GradientStop>): Expression {
-        val colorStops = ArrayList<Expression>(stops.size * 2)
-        for (stop in stops) {
-            colorStops.add(Expression.literal(stop.progress))
-            colorStops.add(Expression.color(color(stop.rating)))
-        }
-        return Expression.interpolate(
-            Expression.linear(),
-            Expression.lineProgress(),
-            *colorStops.toTypedArray(),
-        )
-    }
-
-    @ColorInt
-    private fun color(rating: SegmentRating): Int =
-        ratingColors[rating] ?: ratingColors.getValue(SegmentRating.NONE)
-
-    private fun ratingSourceId(pathId: Long): String = "$SOURCE_SAVED_RATING_PREFIX$pathId"
-    private fun ratingLayerId(pathId: Long): String = "$LAYER_SAVED_RATING_PREFIX$pathId"
-
     companion object {
         private const val CURRENT_PATH_ID = -1L
-        private const val SOURCE_SAVED_RATING_PREFIX = "wt-saved-rating-source-"
+        private const val SOURCE_SAVED_RATING = "wt-saved-rating-source"
         private const val SOURCE_SAVED_COMMON = "wt-saved-common-source"
         private const val SOURCE_CURRENT = "wt-current-source"
-        private const val LAYER_SAVED_RATING_PREFIX = "wt-saved-rating-layer-"
+        private const val LAYER_SAVED_RATING = "wt-saved-rating-layer"
         private const val LAYER_SAVED_COMMON = "wt-saved-common-layer"
         private const val LAYER_CURRENT = "wt-current-layer"
     }

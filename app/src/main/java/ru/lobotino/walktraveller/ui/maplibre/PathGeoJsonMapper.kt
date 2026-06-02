@@ -3,6 +3,7 @@ package ru.lobotino.walktraveller.ui.maplibre
 import org.maplibre.geojson.Feature
 import org.maplibre.geojson.LineString
 import org.maplibre.geojson.Point
+import ru.lobotino.walktraveller.model.SegmentRating
 import ru.lobotino.walktraveller.model.map.MapCommonPath
 import ru.lobotino.walktraveller.model.map.MapPathSegment
 import ru.lobotino.walktraveller.model.map.MapPoint
@@ -11,9 +12,24 @@ import ru.lobotino.walktraveller.model.map.MapRatingPath
 object PathGeoJsonMapper {
 
     const val PROPERTY_PATH_ID = "path_id"
+    const val PROPERTY_COLOR = "color"
 
-    fun ratingPathToFeature(path: MapRatingPath): Feature? =
-        segmentsToFeature(path.pathId, path.pathSegments)
+    fun ratingPathToFeatures(
+        path: MapRatingPath,
+        blendMeters: Float,
+        colorOf: (SegmentRating) -> Int,
+    ): List<Feature> =
+        RatingPathFeatureBuilder.build(path, blendMeters, colorOf)
+            .map { it.toFeature(path.pathId) }
+
+    fun segmentsToFeatures(
+        pathId: Long,
+        segments: List<MapPathSegment>,
+        blendMeters: Float,
+        colorOf: (SegmentRating) -> Int,
+    ): List<Feature> =
+        RatingPathFeatureBuilder.build(MapRatingPath(pathId, segments), blendMeters, colorOf)
+            .map { it.toFeature(pathId) }
 
     fun commonPathToFeature(path: MapCommonPath): Feature =
         Feature.fromGeometry(
@@ -22,30 +38,18 @@ object PathGeoJsonMapper {
             addNumberProperty(PROPERTY_PATH_ID, path.pathId)
         }
 
-    /**
-     * Concatenates rating segments into a single deduplicated LineString feature.
-     * Returns null when fewer than two distinct points are available.
-     */
-    fun segmentsToFeature(pathId: Long, segments: List<MapPathSegment>): Feature? {
-        if (segments.isEmpty()) return null
-        val points = ArrayList<MapPoint>(segments.size + 1)
-        for ((index, seg) in segments.withIndex()) {
-            if (index == 0) {
-                points.add(seg.startPoint)
-            } else if (seg.startPoint != points.last()) {
-                points.add(seg.startPoint)
-            }
-            if (seg.finishPoint != points.last()) {
-                points.add(seg.finishPoint)
-            }
-        }
-        if (points.size < 2) return null
-        return Feature.fromGeometry(
-            LineString.fromLngLats(points.map { it.toPoint() })
+    private fun ColoredEdge.toFeature(pathId: Long): Feature =
+        Feature.fromGeometry(
+            LineString.fromLngLats(listOf(start.toPoint(), end.toPoint()))
         ).apply {
             addNumberProperty(PROPERTY_PATH_ID, pathId)
+            addStringProperty(PROPERTY_COLOR, toHexColorString(color))
         }
-    }
 
     private fun MapPoint.toPoint(): Point = Point.fromLngLat(longitude, latitude)
+
+    private fun toHexColorString(@androidx.annotation.ColorInt color: Int): String {
+        // MapLibre accepts "#RRGGBB" or "#AARRGGBB". Emit AARRGGBB so alpha is explicit.
+        return String.format("#%08X", color)
+    }
 }
