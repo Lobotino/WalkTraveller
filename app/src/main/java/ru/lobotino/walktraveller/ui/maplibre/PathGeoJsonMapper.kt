@@ -18,10 +18,11 @@ object PathGeoJsonMapper {
         path: MapRatingPath,
         blendMeters: Float,
         colorOf: (SegmentRating) -> Int,
+        subdivisions: Int = 8,
     ): List<Feature> =
         edgesToFeatures(
             pathId = path.pathId,
-            edges = RatingPathFeatureBuilder.build(path, blendMeters, colorOf),
+            edges = RatingPathFeatureBuilder.build(path, blendMeters, colorOf, subdivisions),
         )
 
     fun segmentsToFeatures(
@@ -29,10 +30,11 @@ object PathGeoJsonMapper {
         segments: List<MapPathSegment>,
         blendMeters: Float,
         colorOf: (SegmentRating) -> Int,
+        subdivisions: Int = 8,
     ): List<Feature> =
         edgesToFeatures(
             pathId = pathId,
-            edges = RatingPathFeatureBuilder.build(MapRatingPath(pathId, segments), blendMeters, colorOf),
+            edges = RatingPathFeatureBuilder.build(MapRatingPath(pathId, segments), blendMeters, colorOf, subdivisions),
         )
 
     fun commonPathToFeature(path: MapCommonPath): Feature =

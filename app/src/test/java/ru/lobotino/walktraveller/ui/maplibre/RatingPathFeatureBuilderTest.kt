@@ -205,6 +205,33 @@ class RatingPathFeatureBuilderTest {
     }
 
     @Test
+    fun `build with subdivisions zero skips blending and emits one solid edge per non-degenerate segment`() {
+        // given — two adjacent rating runs with one junction; at low LOD we want no
+        // subdivided sub-edges and no blended colors at all.
+        val path = MapRatingPath(
+            pathId = 1L,
+            pathSegments = listOf(
+                segment(0.0, 0.0, 0.0, 0.001, SegmentRating.GOOD),
+                segment(0.0, 0.001, 0.0, 0.002, SegmentRating.BADLY),
+                segment(0.0, 0.002, 0.0, 0.002, SegmentRating.BADLY), // degenerate, dropped
+            ),
+        )
+
+        // when
+        val result = RatingPathFeatureBuilder.build(
+            path = path,
+            blendMeters = 12f,
+            colorOf = colorOf,
+            subdivisions = 0,
+        )
+
+        // then — exactly two non-degenerate edges, no blended colors.
+        assertEquals(2, result.size)
+        assertEquals(colorOf(SegmentRating.GOOD), result[0].color)
+        assertEquals(colorOf(SegmentRating.BADLY), result[1].color)
+    }
+
+    @Test
     fun `build handles degenerate path with zero total length`() {
         // given
         val path = MapRatingPath(

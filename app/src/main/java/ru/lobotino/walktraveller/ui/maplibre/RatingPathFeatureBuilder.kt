@@ -23,6 +23,7 @@ object RatingPathFeatureBuilder {
     ): List<ColoredEdge> {
         val segments = path.pathSegments
         if (segments.isEmpty()) return emptyList()
+        if (subdivisions <= 0) return buildSolidEdges(segments, colorOf)
 
         // Deduplicated polyline (points, per-edge ratings). MapRatingPath is expected
         // to be continuous (start of segment N+1 == finish of segment N). For tolerant
@@ -118,6 +119,25 @@ object RatingPathFeatureBuilder {
             }
         }
 
+        return out
+    }
+
+    /**
+     * Low-LOD fast path: skip the junction blending entirely. Each non-degenerate
+     * input segment becomes one solid ColoredEdge with its run color. Consecutive
+     * same-color contiguous edges are collapsed into multi-point LineStrings later
+     * by PathGeoJsonMapper.edgesToFeatures.
+     */
+    private fun buildSolidEdges(
+        segments: List<ru.lobotino.walktraveller.model.map.MapPathSegment>,
+        colorOf: (SegmentRating) -> Int,
+    ): List<ColoredEdge> {
+        val out = ArrayList<ColoredEdge>(segments.size)
+        for (seg in segments) {
+            if (seg.startPoint != seg.finishPoint) {
+                out.add(ColoredEdge(seg.startPoint, seg.finishPoint, colorOf(seg.rating)))
+            }
+        }
         return out
     }
 

@@ -282,6 +282,7 @@ class MainMapFragment : Fragment() {
                     map.cameraPosition.target?.let { target ->
                         mapViewModel.onMapScrolled(target.toMapPoint())
                     }
+                    pathController.onMapZoomChanged(map.cameraPosition.zoom.toFloat())
                 }
                 currentStyleUrl?.let { applyStyle(map, it) }
             }

@@ -23,17 +23,27 @@ class MapLibrePathController(
     // The actual blend may grow up to 30% of the shorter adjacent run so the
     // transition stays visible on sparse / optimized paths.
     private val blendMeters: Float = 12f,
+    // Subdivision-based junction smoothing kicks in only at this zoom level and
+    // above. At wider views each path occupies few pixels and gradient detail
+    // wouldn't be visible — emitting solid edges there keeps the feature count
+    // bounded so MapLibre's native renderer doesn't choke on many paths at once.
+    private val subdivisionsZoomThreshold: Float = 13.5f,
+    private val maxSubdivisions: Int = 8,
 ) {
     private var style: Style? = null
 
-    private val savedRatingFeatures = LinkedHashMap<Long, List<Feature>>()
+    private val savedRatingPaths = LinkedHashMap<Long, MapRatingPath>()
     private val commonFeatures = LinkedHashMap<Long, Feature>()
     private val currentSegments = ArrayList<MapPathSegment>()
-    private val currentFeatures = ArrayList<Feature>()
+
+    private var lastReportedZoom: Float = subdivisionsZoomThreshold
 
     private val colorOf: (SegmentRating) -> Int = { rating ->
         ratingColors[rating] ?: ratingColors.getValue(SegmentRating.NONE)
     }
+
+    private val currentSubdivisions: Int
+        get() = if (lastReportedZoom >= subdivisionsZoomThreshold) maxSubdivisions else 0
 
     fun onStyleLoaded(style: Style) {
         this.style = style
@@ -54,7 +64,7 @@ class MapLibrePathController(
 
     fun showRatingPaths(paths: List<MapRatingPath>) {
         for (path in paths) {
-            savedRatingFeatures[path.pathId] = PathGeoJsonMapper.ratingPathToFeatures(path, blendMeters, colorOf)
+            savedRatingPaths[path.pathId] = path
         }
         pushSavedRating()
     }
@@ -68,10 +78,6 @@ class MapLibrePathController(
 
     fun appendCurrentPathSegments(segments: List<MapPathSegment>) {
         currentSegments.addAll(segments)
-        currentFeatures.clear()
-        currentFeatures.addAll(
-            PathGeoJsonMapper.segmentsToFeatures(CURRENT_PATH_ID, currentSegments, blendMeters, colorOf)
-        )
         pushCurrent()
     }
 
@@ -85,7 +91,7 @@ class MapLibrePathController(
     }
 
     fun hidePath(pathId: Long) {
-        val ratingChanged = savedRatingFeatures.remove(pathId) != null
+        val ratingChanged = savedRatingPaths.remove(pathId) != null
         val commonChanged = commonFeatures.remove(pathId) != null
         if (ratingChanged) pushSavedRating()
         if (commonChanged) pushCommon()
@@ -95,7 +101,7 @@ class MapLibrePathController(
         var ratingChanged = false
         var commonChanged = false
         for (id in pathIds) {
-            if (savedRatingFeatures.remove(id) != null) ratingChanged = true
+            if (savedRatingPaths.remove(id) != null) ratingChanged = true
             if (commonFeatures.remove(id) != null) commonChanged = true
         }
         if (ratingChanged) pushSavedRating()
@@ -103,18 +109,36 @@ class MapLibrePathController(
     }
 
     fun clear() {
-        savedRatingFeatures.clear()
+        savedRatingPaths.clear()
         commonFeatures.clear()
         currentSegments.clear()
-        currentFeatures.clear()
         pushSavedRating()
         pushCommon()
         pushCurrent()
     }
 
+    /**
+     * Wire this to MapView's camera-idle listener. When the zoom crosses the
+     * subdivisions threshold, rating + current features get rebuilt at the new LOD.
+     * Zoom changes that don't cross the threshold are a no-op.
+     */
+    fun onMapZoomChanged(zoom: Float) {
+        val prevSubs = currentSubdivisions
+        lastReportedZoom = zoom
+        if (currentSubdivisions != prevSubs) {
+            pushSavedRating()
+            pushCurrent()
+        }
+    }
+
     private fun pushSavedRating() {
-        style?.getSourceAs<GeoJsonSource>(SOURCE_SAVED_RATING)
-            ?.setGeoJson(FeatureCollection.fromFeatures(savedRatingFeatures.values.flatten()))
+        val style = this.style ?: return
+        val subs = currentSubdivisions
+        val features = savedRatingPaths.values.flatMap {
+            PathGeoJsonMapper.ratingPathToFeatures(it, blendMeters, colorOf, subs)
+        }
+        style.getSourceAs<GeoJsonSource>(SOURCE_SAVED_RATING)
+            ?.setGeoJson(FeatureCollection.fromFeatures(features))
     }
 
     private fun pushCommon() {
@@ -123,8 +147,12 @@ class MapLibrePathController(
     }
 
     private fun pushCurrent() {
-        style?.getSourceAs<GeoJsonSource>(SOURCE_CURRENT)
-            ?.setGeoJson(FeatureCollection.fromFeatures(currentFeatures))
+        val style = this.style ?: return
+        val features = PathGeoJsonMapper.segmentsToFeatures(
+            CURRENT_PATH_ID, currentSegments, blendMeters, colorOf, currentSubdivisions
+        )
+        style.getSourceAs<GeoJsonSource>(SOURCE_CURRENT)
+            ?.setGeoJson(FeatureCollection.fromFeatures(features))
     }
 
     private fun coloredLineLayer(layerId: String, sourceId: String): LineLayer =
