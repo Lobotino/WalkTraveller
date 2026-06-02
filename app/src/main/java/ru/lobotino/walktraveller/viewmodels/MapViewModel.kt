@@ -26,6 +26,7 @@ import ru.lobotino.walktraveller.model.map.MapRatingPath
 import ru.lobotino.walktraveller.repositories.interfaces.IUserInfoRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IUserRotationRepository
 import ru.lobotino.walktraveller.repositories.interfaces.IWritingPathStatesRepository
+import ru.lobotino.walktraveller.ui.maplibre.PathBounds
 import ru.lobotino.walktraveller.ui.model.BottomMenuState
 import ru.lobotino.walktraveller.ui.model.ConfirmDialogType
 import ru.lobotino.walktraveller.ui.model.FindMyLocationButtonState
@@ -84,6 +85,8 @@ class MapViewModel(
         MutableSharedFlow<MapPoint>(1, 0, BufferOverflow.DROP_OLDEST)
     private val newCurrentUserLocationFlow =
         MutableSharedFlow<MapPoint>(1, 0, BufferOverflow.DROP_OLDEST)
+    private val fitCameraToBoundsFlow =
+        MutableSharedFlow<PathBounds>(1, 0, BufferOverflow.DROP_OLDEST)
 
     private val newConfirmDialogChannel = Channel<ConfirmDialogType>()
     private val userErrorChannel = Channel<String>()
@@ -102,6 +105,7 @@ class MapViewModel(
     val observeNewMapCenter: Flow<MapPoint> = newMapCenterFlow
     val observeHidePath: Flow<PathsToAction> = hidePathFlow
     val observeNewCurrentUserLocation: Flow<MapPoint> = newCurrentUserLocationFlow
+    val observeFitCameraToBounds: Flow<PathBounds> = fitCameraToBoundsFlow
     val observeWritingPathNow: Flow<Boolean> = writingPathNowState
     val observeNewConfirmDialog: Flow<ConfirmDialogType> = newConfirmDialogChannel.consumeAsFlow()
     val observeNewUserError: Flow<String> = userErrorChannel.consumeAsFlow()
@@ -356,6 +360,10 @@ class MapViewModel(
     fun clearMap() {
         showedPathIdsSet.clear()
         hidePathFlow.tryEmit(PathsToAction.All)
+    }
+
+    fun fitCameraToBounds(bounds: PathBounds) {
+        fitCameraToBoundsFlow.tryEmit(bounds)
     }
 
     private fun startBackgroundCachingPaths() {
