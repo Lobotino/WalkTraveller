@@ -26,12 +26,15 @@
 3. ViewModel решает:
    - в select-mode → старая логика выделения;
    - иначе и трек скрыт → no-op;
-   - иначе → отправляет `MapEvent.FitCameraToPath(pathId)` в
+   - иначе → запускает корутину, резолвит `MapRatingPath` (синхронно для
+     outer через `outerPathsInteractor.getCachedOuterPath`, асинхронно для
+     saved через `mapPathsInteractor.getSavedRatingPath`), считает
+     `pathBounds(path)` и отправляет `MapEvent.FitCameraToBounds(bounds)` в
      `newMapEventChannel`.
 4. `MainMapFragment.observeNewMapEvent` пересылает в
-   `MapViewModel.fitCameraToPath(pathId)`.
-5. `MapViewModel` подгружает `MapRatingPath`, считает `PathBounds` и эмиттит в
-   новый `observeFitCameraToBounds`.
+   `MapViewModel.fitCameraToBounds(bounds)`.
+5. `MapViewModel.fitCameraToBounds` эмиттит `bounds` в новый
+   `observeFitCameraToBounds`.
 6. `MainMapFragment` подписан на флоу: считает padding (10% от размеров
    `mapView` + высота видимого меню снизу) и вызывает
    `map.animateCamera(CameraUpdateFactory.newLatLngBounds(...))` со
@@ -44,8 +47,14 @@
 Добавить новый sealed-вариант:
 
 ```kotlin
-class FitCameraToPath(val pathId: Long) : MapEvent()
+class FitCameraToBounds(val bounds: PathBounds) : MapEvent()
 ```
+
+Решение «передаём готовые `PathBounds`, а не `pathId`» обосновано тем, что
+`MapViewModel` сейчас не имеет в зависимостях `IOuterPathsInteractor` и не
+умеет резолвить outer-путь по id. `PathsMenuViewModel` уже владеет обоими
+интеракторами (`IMapPathsInteractor`, `IOuterPathsInteractor`), поэтому
+вычисление `PathBounds` естественно отдать ему.
 
 ### `PathsMenuViewModel`
 
@@ -98,32 +107,19 @@ fun onPathInListShortTap(pathId: Long, pathsMenuType: PathsMenuType) {
     if (pathId !in (shownPathIdsByMenu[pathsMenuType] ?: emptySet())) {
         return
     }
-    newMapEventChannel.trySend(MapEvent.FitCameraToPath(pathId))
-}
-```
-
-### `MapViewModel`
-
-Добавить:
-
-```kotlin
-private val fitCameraToBoundsFlow =
-    MutableSharedFlow<PathBounds>(1, 0, BufferOverflow.DROP_OLDEST)
-
-val observeFitCameraToBounds: Flow<PathBounds> = fitCameraToBoundsFlow
-
-fun fitCameraToPath(pathId: Long) {
-    if (pathId !in showedPathIdsSet) return
     viewModelScope.launch {
-        val path = loadRatingPathForFit(pathId) ?: return@launch
+        val path = resolveShownPath(pathId, pathsMenuType) ?: return@launch
         val bounds = pathBounds(path) ?: return@launch
-        fitCameraToBoundsFlow.tryEmit(bounds)
+        newMapEventChannel.trySend(MapEvent.FitCameraToBounds(bounds))
     }
 }
 
-private suspend fun loadRatingPathForFit(pathId: Long): MapRatingPath? {
-    outerPathsInteractor.getCachedOuterPath(pathId)?.let { return it }
-    return mapPathsInteractor.getSavedRatingPath(
+private suspend fun resolveShownPath(
+    pathId: Long,
+    pathsMenuType: PathsMenuType,
+): MapRatingPath? = when (pathsMenuType) {
+    PathsMenuType.OUTER_PATHS -> outerPathsInteractor.getCachedOuterPath(pathId)
+    PathsMenuType.MY_PATHS -> mapPathsInteractor.getSavedRatingPath(
         pathId,
         withRatingOnly = false,
         isOptimized = true,
@@ -131,16 +127,32 @@ private suspend fun loadRatingPathForFit(pathId: Long): MapRatingPath? {
 }
 ```
 
-Источник пути и параметры (`withRatingOnly = false`, `isOptimized = true`)
-совпадают с уже работающей загрузкой для отображения — мы используем тот же
-кэшированный путь, который сейчас на карте.
+### `MapViewModel`
+
+Добавить тонкий relay-канал, чтобы фрагмент управлял камерой через тот же
+паттерн «команда → Flow», что и `observeNewMapCenter`/`observeHidePath`:
+
+```kotlin
+private val fitCameraToBoundsFlow =
+    MutableSharedFlow<PathBounds>(1, 0, BufferOverflow.DROP_OLDEST)
+
+val observeFitCameraToBounds: Flow<PathBounds> = fitCameraToBoundsFlow
+
+fun fitCameraToBounds(bounds: PathBounds) {
+    fitCameraToBoundsFlow.tryEmit(bounds)
+}
+```
+
+Никакой бизнес-логики и резолва пути в `MapViewModel` нет — это сознательный
+выбор, см. комментарий в секции `MapEvent`. Источник истины «показан ли трек»
+уже на стороне `PathsMenuViewModel` (`shownPathIdsByMenu`).
 
 ### `MainMapFragment`
 
 В `observeNewMapEvent`:
 
 ```kotlin
-is MapEvent.FitCameraToPath -> mapViewModel.fitCameraToPath(mapEvent.pathId)
+is MapEvent.FitCameraToBounds -> mapViewModel.fitCameraToBounds(mapEvent.bounds)
 ```
 
 Новая подписка после `observeNewMapCenter`:
@@ -217,14 +229,20 @@ private fun fitMapCameraToBounds(bounds: PathBounds) {
 
 ### `MapViewModelTest`
 
-- `fitCameraToPath`: `pathId !in showedPathIdsSet` → `observeFitCameraToBounds`
-  не эмиттит.
-- `fitCameraToPath` для показанного outer-пути → эмиттит ожидаемый
-  `PathBounds` (фейк `IOuterPathsInteractor` отдаёт заранее заданный
-  `MapRatingPath`).
-- `fitCameraToPath` для показанного saved-пути → эмиттит ожидаемый
-  `PathBounds` (фейк `IMapPathsInteractor.getSavedRatingPath`).
-- Пустой/null путь → эмиссии нет.
+- `fitCameraToBounds(bounds)` → `observeFitCameraToBounds` эмиттит ровно эти
+  `bounds`. Регрессия тонкого relay не нужна сверх этого.
+
+### `PathsMenuViewModelTest` — дополнительно
+
+- `onPathInListShortTap` для MY-пути в показанном состоянии → во флоу
+  `observeNewMapEvent` приходит `MapEvent.FitCameraToBounds(bounds)`, где
+  `bounds = pathBounds(returnedRatingPath)`. Фейк
+  `IMapPathsInteractor.getSavedRatingPath(pathId, false, true)` возвращает
+  тестовый `MapRatingPath`.
+- `onPathInListShortTap` для OUTER-пути в показанном состоянии → тот же
+  результат, но через `IOuterPathsInteractor.getCachedOuterPath(pathId)`.
+- `onPathInListShortTap` когда interactor вернул `null` или пустой путь →
+  событие НЕ отправлено.
 
 ### Что не тестируется
 
