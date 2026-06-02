@@ -38,6 +38,7 @@ import ru.lobotino.walktraveller.ui.model.PathItemButtonType
 import ru.lobotino.walktraveller.ui.model.PathsMenuType
 import ru.lobotino.walktraveller.ui.model.PathsToAction
 import ru.lobotino.walktraveller.ui.model.ShowPathsButtonState
+import ru.lobotino.walktraveller.ui.maplibre.pathBounds
 import ru.lobotino.walktraveller.ui.model.ShowPathsFilterButtonState
 import ru.lobotino.walktraveller.usecases.interfaces.IMapPathsInteractor
 import ru.lobotino.walktraveller.usecases.interfaces.IOuterPathsInteractor
@@ -660,13 +661,34 @@ class PathsMenuViewModel(
         pathId: Long,
         pathsMenuType: PathsMenuType
     ) {
-        if ((pathsMenuType == PathsMenuType.MY_PATHS && !myPathsMenuUiStateFlow.value.inSelectMode) ||
-            (pathsMenuType == PathsMenuType.OUTER_PATHS && !outerPathsMenuUiStateFlow.value.inSelectMode)
-        ) {
-            return // ignore short tap without select mode
+        val inSelectMode = when (pathsMenuType) {
+            PathsMenuType.MY_PATHS -> myPathsMenuUiStateFlow.value.inSelectMode
+            PathsMenuType.OUTER_PATHS -> outerPathsMenuUiStateFlow.value.inSelectMode
         }
+        if (inSelectMode) {
+            toggleMenuItemSelect(pathId, pathsMenuType)
+            return
+        }
+        if (!isPathShown(pathsMenuType, pathId)) {
+            return
+        }
+        viewModelScope.launch {
+            val path = resolveShownPath(pathId, pathsMenuType) ?: return@launch
+            val bounds = pathBounds(path) ?: return@launch
+            newMapEventChannel.trySend(MapEvent.FitCameraToBounds(bounds))
+        }
+    }
 
-        toggleMenuItemSelect(pathId, pathsMenuType)
+    private suspend fun resolveShownPath(
+        pathId: Long,
+        pathsMenuType: PathsMenuType,
+    ): MapRatingPath? = when (pathsMenuType) {
+        PathsMenuType.OUTER_PATHS -> outerPathsInteractor.getCachedOuterPath(pathId)
+        PathsMenuType.MY_PATHS -> mapPathsInteractor.getSavedRatingPath(
+            pathId,
+            withRatingOnly = false,
+            isOptimized = true,
+        )
     }
 
     fun onPathInListLongTap(
