@@ -540,6 +540,10 @@ class MainMapFragment : Fragment() {
                             mapViewModel.fitCameraToBounds(mapEvent.bounds)
                         }
 
+                        is MapEvent.SetFocusedPath -> {
+                            // wired up in Task 9
+                        }
+
                         is MapEvent.BottomMenuStateChange -> {
                             mapViewModel.onBottomMenuStateChange(mapEvent.newBottomMenuState)
                         }

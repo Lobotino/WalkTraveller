@@ -20,4 +20,6 @@ sealed class MapEvent {
     class BottomMenuStateChange(val newBottomMenuState: BottomMenuState) : MapEvent()
 
     class FitCameraToBounds(val bounds: PathBounds) : MapEvent()
+
+    class SetFocusedPath(val pathId: Long?) : MapEvent()
 }
