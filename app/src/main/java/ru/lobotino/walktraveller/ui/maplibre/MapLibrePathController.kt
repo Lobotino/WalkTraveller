@@ -76,8 +76,9 @@ class MapLibrePathController(
     }
 
     /**
-     * Stop accumulating into the current run. The rendered features are kept so the
-     * finished path stays drawn (even across a style reload) until clear().
+     * Stop accumulating into the current run. The rendered features stay drawn (and
+     * survive a style reload) until either clear() is called or the next
+     * appendCurrentPathSegments() starts a new recording.
      */
     fun finishCurrentPath() {
         currentSegments.clear()

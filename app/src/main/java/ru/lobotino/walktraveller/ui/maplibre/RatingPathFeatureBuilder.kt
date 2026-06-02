@@ -24,7 +24,11 @@ object RatingPathFeatureBuilder {
         val segments = path.pathSegments
         if (segments.isEmpty()) return emptyList()
 
-        // Deduplicated polyline (points, per-edge ratings).
+        // Deduplicated polyline (points, per-edge ratings). MapRatingPath is expected
+        // to be continuous (start of segment N+1 == finish of segment N). For tolerant
+        // input where it isn't, the implicit gap edge inherits the next segment's
+        // rating and lengthens that run for the adaptive-blend calculation; visually
+        // it draws as a straight bridge in that rating's color.
         val points = ArrayList<MapPoint>(segments.size + 1)
         val ratings = ArrayList<SegmentRating>(segments.size)
         for ((index, seg) in segments.withIndex()) {
