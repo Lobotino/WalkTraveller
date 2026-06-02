@@ -2,6 +2,7 @@ package ru.lobotino.walktraveller.ui.model
 
 import ru.lobotino.walktraveller.model.map.MapCommonPath
 import ru.lobotino.walktraveller.model.map.MapRatingPath
+import ru.lobotino.walktraveller.ui.maplibre.PathBounds
 
 sealed class MapEvent {
     object ClearMap : MapEvent()
@@ -17,4 +18,6 @@ sealed class MapEvent {
     class HidePath(val pathsToHide: PathsToAction) : MapEvent()
 
     class BottomMenuStateChange(val newBottomMenuState: BottomMenuState) : MapEvent()
+
+    class FitCameraToBounds(val bounds: PathBounds) : MapEvent()
 }
