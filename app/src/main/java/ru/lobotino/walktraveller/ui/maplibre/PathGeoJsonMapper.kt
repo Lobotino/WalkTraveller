@@ -88,10 +88,26 @@ object PathGeoJsonMapper {
     private fun MapPoint.toPoint(): Point = Point.fromLngLat(longitude, latitude)
 
     /**
-     * MapLibre's color parser follows CSS: `#RRGGBB` (or `#RRGGBBAA`), not the
-     * `#AARRGGBB` ordering of Android color ints. Rating colors are always opaque,
-     * so we drop alpha and emit `#RRGGBB`.
+     * MapLibre's color parser follows CSS: `#RRGGBB`, not the `#AARRGGBB` ordering
+     * of Android color ints. Rating colors are always opaque so we drop alpha.
+     *
+     * Hand-rolled to avoid `String.format` allocating a `Formatter` per call —
+     * this runs once per feature and adds up under bulk loads.
      */
-    private fun toHexColorString(@androidx.annotation.ColorInt color: Int): String =
-        String.format("#%06X", color and 0xFFFFFF)
+    private val HEX_DIGITS = "0123456789ABCDEF".toCharArray()
+
+    private fun toHexColorString(@androidx.annotation.ColorInt color: Int): String {
+        val buf = CharArray(7)
+        buf[0] = '#'
+        val r = (color ushr 16) and 0xFF
+        val g = (color ushr 8) and 0xFF
+        val b = color and 0xFF
+        buf[1] = HEX_DIGITS[r ushr 4]
+        buf[2] = HEX_DIGITS[r and 0xF]
+        buf[3] = HEX_DIGITS[g ushr 4]
+        buf[4] = HEX_DIGITS[g and 0xF]
+        buf[5] = HEX_DIGITS[b ushr 4]
+        buf[6] = HEX_DIGITS[b and 0xF]
+        return String(buf)
+    }
 }

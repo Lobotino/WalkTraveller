@@ -1,6 +1,11 @@
 package ru.lobotino.walktraveller.ui.maplibre
 
 import androidx.annotation.ColorInt
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.maplibre.android.maps.Style
 import org.maplibre.android.style.expressions.Expression
 import org.maplibre.android.style.layers.LineLayer
@@ -17,6 +22,9 @@ import ru.lobotino.walktraveller.model.map.MapRatingPath
 class MapLibrePathController(
     private val ratingColors: Map<SegmentRating, Int>,
     @ColorInt private val commonPathColor: Int,
+    // Scope whose dispatcher is the UI/Main thread; used to launch off-main
+    // feature-building jobs and resume on Main for setGeoJson.
+    private val scope: CoroutineScope,
     // MapLibre line-width is in density-independent screen pixels, not raw px.
     private val lineWidth: Float = 6f,
     // Minimum length over which two adjacent rating colors blend at a junction.
@@ -35,6 +43,9 @@ class MapLibrePathController(
     private val savedRatingPaths = LinkedHashMap<Long, MapRatingPath>()
     private val commonFeatures = LinkedHashMap<Long, Feature>()
     private val currentSegments = ArrayList<MapPathSegment>()
+
+    private var ratingPushJob: Job? = null
+    private var currentPushJob: Job? = null
 
     private var lastReportedZoom: Float = subdivisionsZoomThreshold
 
@@ -132,13 +143,20 @@ class MapLibrePathController(
     }
 
     private fun pushSavedRating() {
-        val style = this.style ?: return
+        if (style == null) return
         val subs = currentSubdivisions
-        val features = savedRatingPaths.values.flatMap {
-            PathGeoJsonMapper.ratingPathToFeatures(it, blendMeters, colorOf, subs)
+        val snapshot = savedRatingPaths.values.toList()
+        ratingPushJob?.cancel()
+        ratingPushJob = scope.launch {
+            val collection = withContext(Dispatchers.Default) {
+                FeatureCollection.fromFeatures(
+                    snapshot.flatMap {
+                        PathGeoJsonMapper.ratingPathToFeatures(it, blendMeters, colorOf, subs)
+                    }
+                )
+            }
+            style?.getSourceAs<GeoJsonSource>(SOURCE_SAVED_RATING)?.setGeoJson(collection)
         }
-        style.getSourceAs<GeoJsonSource>(SOURCE_SAVED_RATING)
-            ?.setGeoJson(FeatureCollection.fromFeatures(features))
     }
 
     private fun pushCommon() {
@@ -147,12 +165,20 @@ class MapLibrePathController(
     }
 
     private fun pushCurrent() {
-        val style = this.style ?: return
-        val features = PathGeoJsonMapper.segmentsToFeatures(
-            CURRENT_PATH_ID, currentSegments, blendMeters, colorOf, currentSubdivisions
-        )
-        style.getSourceAs<GeoJsonSource>(SOURCE_CURRENT)
-            ?.setGeoJson(FeatureCollection.fromFeatures(features))
+        if (style == null) return
+        val subs = currentSubdivisions
+        val snapshot = ArrayList(currentSegments)
+        currentPushJob?.cancel()
+        currentPushJob = scope.launch {
+            val collection = withContext(Dispatchers.Default) {
+                FeatureCollection.fromFeatures(
+                    PathGeoJsonMapper.segmentsToFeatures(
+                        CURRENT_PATH_ID, snapshot, blendMeters, colorOf, subs
+                    )
+                )
+            }
+            style?.getSourceAs<GeoJsonSource>(SOURCE_CURRENT)?.setGeoJson(collection)
+        }
     }
 
     private fun coloredLineLayer(layerId: String, sourceId: String): LineLayer =

@@ -263,6 +263,7 @@ class MainMapFragment : Fragment() {
                     SegmentRating.NONE to ContextCompat.getColor(context, R.color.rating_none),
                 ),
                 commonPathColor = ContextCompat.getColor(context, R.color.common_path_color),
+                scope = viewLifecycleOwner.lifecycleScope,
             )
             userLocationMarker = MapLibreUserLocationMarker(
                 AppCompatResources.getDrawable(context, R.drawable.ic_user_marker)!!.toBitmapCompat()
