@@ -6,5 +6,6 @@ data class PathInfoItemModel(
     val pathInfo: MapPathInfo,
     var showButtonState: PathInfoItemShowButtonState = PathInfoItemShowButtonState.DEFAULT,
     var shareButtonState: PathInfoItemShareButtonState = PathInfoItemShareButtonState.DEFAULT,
-    var isSelected: Boolean = false
+    var isSelected: Boolean = false,
+    var isFocused: Boolean = false,
 )

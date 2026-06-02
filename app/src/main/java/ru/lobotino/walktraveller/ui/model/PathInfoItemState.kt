@@ -7,5 +7,6 @@ data class PathInfoItemState(
     val pathsToAction: PathsToAction,
     val showButtonState: PathInfoItemShowButtonState? = null,
     val shareButtonState: PathInfoItemShareButtonState? = null,
-    val isSelected: Boolean? = null
+    val isSelected: Boolean? = null,
+    val isFocused: Boolean? = null,
 )
