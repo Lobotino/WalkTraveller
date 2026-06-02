@@ -31,12 +31,10 @@ class MapLibrePathController(
     // The actual blend may grow up to 30% of the shorter adjacent run so the
     // transition stays visible on sparse / optimized paths.
     private val blendMeters: Float = 12f,
-    // Subdivision-based junction smoothing kicks in only at this zoom level and
-    // above. At wider views each path occupies few pixels and gradient detail
-    // wouldn't be visible — emitting solid edges there keeps the feature count
-    // bounded so MapLibre's native renderer doesn't choke on many paths at once.
-    private val subdivisionsZoomThreshold: Float = 13.5f,
-    private val maxSubdivisions: Int = 8,
+    // How many sub-edges to emit across each blend region. Higher = smoother
+    // gradient, more features. With the MapLibre 13.x Vulkan backend feature
+    // counts in the tens of thousands render comfortably.
+    private val subdivisions: Int = 8,
 ) {
     private var style: Style? = null
 
@@ -47,14 +45,9 @@ class MapLibrePathController(
     private var ratingPushJob: Job? = null
     private var currentPushJob: Job? = null
 
-    private var lastReportedZoom: Float = subdivisionsZoomThreshold
-
     private val colorOf: (SegmentRating) -> Int = { rating ->
         ratingColors[rating] ?: ratingColors.getValue(SegmentRating.NONE)
     }
-
-    private val currentSubdivisions: Int
-        get() = if (lastReportedZoom >= subdivisionsZoomThreshold) maxSubdivisions else 0
 
     fun onStyleLoaded(style: Style) {
         this.style = style
@@ -128,30 +121,15 @@ class MapLibrePathController(
         pushCurrent()
     }
 
-    /**
-     * Wire this to MapView's camera-idle listener. When the zoom crosses the
-     * subdivisions threshold, rating + current features get rebuilt at the new LOD.
-     * Zoom changes that don't cross the threshold are a no-op.
-     */
-    fun onMapZoomChanged(zoom: Float) {
-        val prevSubs = currentSubdivisions
-        lastReportedZoom = zoom
-        if (currentSubdivisions != prevSubs) {
-            pushSavedRating()
-            pushCurrent()
-        }
-    }
-
     private fun pushSavedRating() {
         if (style == null) return
-        val subs = currentSubdivisions
         val snapshot = savedRatingPaths.values.toList()
         ratingPushJob?.cancel()
         ratingPushJob = scope.launch {
             val collection = withContext(Dispatchers.Default) {
                 FeatureCollection.fromFeatures(
                     snapshot.flatMap {
-                        PathGeoJsonMapper.ratingPathToFeatures(it, blendMeters, colorOf, subs)
+                        PathGeoJsonMapper.ratingPathToFeatures(it, blendMeters, colorOf, subdivisions)
                     }
                 )
             }
@@ -166,14 +144,13 @@ class MapLibrePathController(
 
     private fun pushCurrent() {
         if (style == null) return
-        val subs = currentSubdivisions
         val snapshot = ArrayList(currentSegments)
         currentPushJob?.cancel()
         currentPushJob = scope.launch {
             val collection = withContext(Dispatchers.Default) {
                 FeatureCollection.fromFeatures(
                     PathGeoJsonMapper.segmentsToFeatures(
-                        CURRENT_PATH_ID, snapshot, blendMeters, colorOf, subs
+                        CURRENT_PATH_ID, snapshot, blendMeters, colorOf, subdivisions
                     )
                 )
             }
