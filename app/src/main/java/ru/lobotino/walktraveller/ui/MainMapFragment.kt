@@ -42,6 +42,8 @@ import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import org.maplibre.android.camera.CameraUpdateFactory
+import org.maplibre.android.geometry.LatLng
+import org.maplibre.android.geometry.LatLngBounds
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapLibreMapOptions
 import org.maplibre.android.maps.MapView
@@ -535,7 +537,7 @@ class MainMapFragment : Fragment() {
                         }
 
                         is MapEvent.FitCameraToBounds -> {
-                            // Real handler added in Task 5; placeholder keeps `when` exhaustive.
+                            mapViewModel.fitCameraToBounds(mapEvent.bounds)
                         }
 
                         is MapEvent.BottomMenuStateChange -> {
@@ -687,6 +689,10 @@ class MainMapFragment : Fragment() {
                         map.animateCamera(
                             CameraUpdateFactory.newLatLngZoom(newMapCenter.toLatLng(), targetZoom)
                         )
+                    }.launchIn(viewLifecycleOwner.lifecycleScope)
+
+                    observeFitCameraToBounds.onEach { bounds ->
+                        fitMapCameraToBounds(bounds)
                     }.launchIn(viewLifecycleOwner.lifecycleScope)
 
                     observeHidePath.onEach { pathsToHide ->
@@ -1003,5 +1009,34 @@ class MainMapFragment : Fragment() {
 
     private fun setLastPathFinished() {
         pathController.finishCurrentPath()
+    }
+
+    private fun fitMapCameraToBounds(bounds: PathBounds) {
+        val map = mapLibreMap ?: return
+        if (mapView.width == 0 || mapView.height == 0) return
+
+        val horizontalPad = (mapView.width * 0.10f).toInt()
+        val verticalPad = (mapView.height * 0.10f).toInt()
+
+        val menuHeight = when {
+            myPathsMenu.visibility == VISIBLE -> myPathsMenu.height
+            outerPathsMenu.visibility == VISIBLE -> outerPathsMenu.height
+            else -> 0
+        }
+
+        val latLngBounds = LatLngBounds.Builder()
+            .include(LatLng(bounds.minLat, bounds.minLng))
+            .include(LatLng(bounds.maxLat, bounds.maxLng))
+            .build()
+
+        map.animateCamera(
+            CameraUpdateFactory.newLatLngBounds(
+                latLngBounds,
+                horizontalPad,
+                verticalPad,
+                horizontalPad,
+                verticalPad + menuHeight
+            )
+        )
     }
 }
