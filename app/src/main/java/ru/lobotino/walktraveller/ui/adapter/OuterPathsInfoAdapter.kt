@@ -40,15 +40,17 @@ class OuterPathsInfoAdapter(
                     false
                 ),
             defaultItemBackgroundColor,
-            selectedItemBackgroundColor
+            selectedItemBackgroundColor,
+            focusedItemBackgroundColor
         )
     }
 
     class OuterPathInfoItem(
         view: View,
         @ColorInt private val defaultItemBackgroundColor: Int,
-        @ColorInt private val selectedItemBackgroundColor: Int
-    ) : PathInfoItem(view, defaultItemBackgroundColor, selectedItemBackgroundColor) {
+        @ColorInt private val selectedItemBackgroundColor: Int,
+        @ColorInt private val focusedItemBackgroundColor: Int
+    ) : PathInfoItem(view, defaultItemBackgroundColor, selectedItemBackgroundColor, focusedItemBackgroundColor) {
 
         private lateinit var itemBackground: CardView
         private lateinit var pathLength: TextView
@@ -105,10 +107,10 @@ class OuterPathsInfoAdapter(
                 else -> View.GONE
             }
             itemBackground.setBackgroundColor(
-                if (path.isSelected) {
-                    selectedItemBackgroundColor
-                } else {
-                    defaultItemBackgroundColor
+                when {
+                    path.isSelected -> selectedItemBackgroundColor
+                    path.isFocused  -> focusedItemBackgroundColor
+                    else            -> defaultItemBackgroundColor
                 }
             )
             itemBackground.setOnLongClickListener {

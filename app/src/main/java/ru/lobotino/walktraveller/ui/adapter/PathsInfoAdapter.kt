@@ -38,10 +38,12 @@ open class PathsInfoAdapter(
 
     protected var defaultItemBackgroundColor by Delegates.notNull<Int>()
     protected var selectedItemBackgroundColor by Delegates.notNull<Int>()
+    protected var focusedItemBackgroundColor by Delegates.notNull<Int>()
 
     init {
         defaultItemBackgroundColor = ContextCompat.getColor(context, R.color.white)
         selectedItemBackgroundColor = ContextCompat.getColor(context, R.color.primary_green_light)
+        focusedItemBackgroundColor = ContextCompat.getColor(context, R.color.focused_path_background)
     }
 
     fun getAllPathsItemsIds(): List<Long> {
@@ -83,6 +85,9 @@ open class PathsInfoAdapter(
                 if (pathInfoItemState.isSelected != null) {
                     item.isSelected = pathInfoItemState.isSelected
                 }
+                if (pathInfoItemState.isFocused != null) {
+                    item.isFocused = pathInfoItemState.isFocused
+                }
                 notifyItemChanged(index)
                 return
             }
@@ -102,6 +107,9 @@ open class PathsInfoAdapter(
                 }
                 if (pathInfoItemState.isSelected != null) {
                     item.isSelected = pathInfoItemState.isSelected
+                }
+                if (pathInfoItemState.isFocused != null) {
+                    item.isFocused = pathInfoItemState.isFocused
                 }
                 notifyItemChanged(index)
                 updatedPathsCount++
@@ -125,6 +133,11 @@ open class PathsInfoAdapter(
         if (pathInfoItemState.isSelected != null) {
             for (path in pathsItems) {
                 path.isSelected = pathInfoItemState.isSelected
+            }
+        }
+        if (pathInfoItemState.isFocused != null) {
+            for (path in pathsItems) {
+                path.isFocused = pathInfoItemState.isFocused
             }
         }
         notifyItemRangeChanged(0, pathsItems.size)
@@ -169,7 +182,8 @@ open class PathsInfoAdapter(
                     false
                 ),
             defaultItemBackgroundColor,
-            selectedItemBackgroundColor
+            selectedItemBackgroundColor,
+            focusedItemBackgroundColor
         )
     }
 
@@ -191,7 +205,8 @@ open class PathsInfoAdapter(
     open class PathInfoItem(
         view: View,
         @ColorInt private val defaultItemBackgroundColor: Int,
-        @ColorInt private val selectedItemBackgroundColor: Int
+        @ColorInt private val selectedItemBackgroundColor: Int,
+        @ColorInt private val focusedItemBackgroundColor: Int
     ) : RecyclerView.ViewHolder(view) {
 
         companion object {
@@ -284,10 +299,10 @@ open class PathsInfoAdapter(
                 View.GONE
             }
             itemBackground.setBackgroundColor(
-                if (path.isSelected) {
-                    selectedItemBackgroundColor
-                } else {
-                    defaultItemBackgroundColor
+                when {
+                    path.isSelected -> selectedItemBackgroundColor
+                    path.isFocused  -> focusedItemBackgroundColor
+                    else            -> defaultItemBackgroundColor
                 }
             )
             itemBackground.setOnLongClickListener {
