@@ -1013,16 +1013,18 @@ class MainMapFragment : Fragment() {
 
     private fun fitMapCameraToBounds(bounds: PathBounds) {
         val map = mapLibreMap ?: return
-        if (mapView.width == 0 || mapView.height == 0) return
+        val mapWidth = mapView.width
+        val mapHeight = mapView.height
+        if (mapWidth == 0 || mapHeight == 0) return
 
-        val horizontalPad = (mapView.width * 0.10f).toInt()
-        val verticalPad = (mapView.height * 0.10f).toInt()
-
+        val horizontalPad = (mapWidth * 0.10f).toInt()
+        val verticalPad = (mapHeight * 0.10f).toInt()
         val menuHeight = when {
             myPathsMenu.visibility == VISIBLE -> myPathsMenu.height
             outerPathsMenu.visibility == VISIBLE -> outerPathsMenu.height
             else -> 0
         }
+        val bottomPad = verticalPad + menuHeight
 
         val latLngBounds = LatLngBounds.Builder()
             .include(LatLng(bounds.minLat, bounds.minLng))
@@ -1035,7 +1037,7 @@ class MainMapFragment : Fragment() {
                 horizontalPad,
                 verticalPad,
                 horizontalPad,
-                verticalPad + menuHeight
+                bottomPad,
             )
         )
     }
