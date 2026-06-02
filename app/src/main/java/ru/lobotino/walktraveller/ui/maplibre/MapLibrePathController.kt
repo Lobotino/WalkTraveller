@@ -42,9 +42,14 @@ class MapLibrePathController(
     private var style: Style? = null
 
     private val savedRatingPaths = LinkedHashMap<Long, MapRatingPath>()
+    private val ratingBoundsCache = HashMap<Long, PathBounds>()
     private val installedRatingIds = LinkedHashSet<Long>()
     private val commonFeatures = LinkedHashMap<Long, Feature>()
     private val currentSegments = ArrayList<MapPathSegment>()
+
+    // Latest viewport seen via onCameraIdle. Null until first camera-idle event.
+    // When null, viewport culling is disabled and all saved rating paths are installed.
+    private var lastVisibleBounds: PathBounds? = null
 
     private var ratingPushJob: Job? = null
     private var currentPushJob: Job? = null
@@ -53,8 +58,8 @@ class MapLibrePathController(
         this.style = style
         installedRatingIds.clear()
 
-        style.addSource(GeoJsonSource(SOURCE_SAVED_COMMON))
-        style.addSource(GeoJsonSource(SOURCE_CURRENT, GeoJsonOptions().withLineMetrics(true)))
+        style.addSource(GeoJsonSource(SOURCE_SAVED_COMMON, ratingSourceOptions(withMetrics = false)))
+        style.addSource(GeoJsonSource(SOURCE_CURRENT, ratingSourceOptions(withMetrics = true)))
 
         // Order: per-path rating layers (added below LAYER_SAVED_COMMON) <
         // common layer < current layer. Current sits on top so the active
@@ -70,7 +75,22 @@ class MapLibrePathController(
     fun showRatingPaths(paths: List<MapRatingPath>) {
         for (path in paths) {
             savedRatingPaths[path.pathId] = path
+            val bounds = pathBounds(path)
+            if (bounds != null) ratingBoundsCache[path.pathId] = bounds
+            else ratingBoundsCache.remove(path.pathId)
         }
+        pushSavedRating()
+    }
+
+    /**
+     * Notify the controller that the camera has settled at a new viewport.
+     * Triggers a re-evaluation of which saved rating paths overlap the visible
+     * region (with margin) and installs/removes per-path layers accordingly.
+     * Must be called on Main.
+     */
+    fun onCameraIdle(bounds: PathBounds) {
+        if (lastVisibleBounds == bounds) return
+        lastVisibleBounds = bounds
         pushSavedRating()
     }
 
@@ -97,6 +117,7 @@ class MapLibrePathController(
 
     fun hidePath(pathId: Long) {
         val ratingChanged = savedRatingPaths.remove(pathId) != null
+        if (ratingChanged) ratingBoundsCache.remove(pathId)
         val commonChanged = commonFeatures.remove(pathId) != null
         if (ratingChanged) pushSavedRating()
         if (commonChanged) pushCommon()
@@ -106,7 +127,10 @@ class MapLibrePathController(
         var ratingChanged = false
         var commonChanged = false
         for (id in pathIds) {
-            if (savedRatingPaths.remove(id) != null) ratingChanged = true
+            if (savedRatingPaths.remove(id) != null) {
+                ratingBoundsCache.remove(id)
+                ratingChanged = true
+            }
             if (commonFeatures.remove(id) != null) commonChanged = true
         }
         if (ratingChanged) pushSavedRating()
@@ -115,6 +139,7 @@ class MapLibrePathController(
 
     fun clear() {
         savedRatingPaths.clear()
+        ratingBoundsCache.clear()
         commonFeatures.clear()
         currentSegments.clear()
         pushSavedRating()
@@ -126,7 +151,10 @@ class MapLibrePathController(
 
     private fun pushSavedRating() {
         if (style == null) return
-        val snapshot = LinkedHashMap(savedRatingPaths)
+        val desiredIds = desiredRatingIds()
+        val snapshot = LinkedHashMap<Long, MapRatingPath>(desiredIds.size).apply {
+            for (id in desiredIds) savedRatingPaths[id]?.let { put(id, it) }
+        }
         ratingPushJob?.cancel()
         ratingPushJob = scope.launch {
             val payloads = withContext(Dispatchers.Default) {
@@ -143,14 +171,14 @@ class MapLibrePathController(
                 }
             }
             val style = this@MapLibrePathController.style ?: return@launch
-            // Remove layers/sources for paths no longer in the snapshot.
+            // Remove layers/sources for paths no longer desired (off-screen or removed).
             val toRemove = installedRatingIds - payloads.keys
             for (id in toRemove) {
                 style.removeLayer(ratingLayerId(id))
                 style.removeSource(ratingSourceId(id))
-                installedRatingIds.remove(id)
             }
-            // Install or update layers/sources for paths in the snapshot.
+            installedRatingIds.removeAll(toRemove)
+            // Install or update layers/sources for desired paths.
             for ((id, payload) in payloads) {
                 if (installedRatingIds.contains(id)) {
                     updateRatingLayer(style, id, payload)
@@ -159,6 +187,24 @@ class MapLibrePathController(
                     installedRatingIds.add(id)
                 }
             }
+        }
+    }
+
+    /**
+     * IDs of saved rating paths to render right now. If no camera viewport has
+     * been reported yet, returns all known paths (safe fallback). Otherwise
+     * returns paths whose bounding box overlaps the viewport expanded by
+     * [VIEWPORT_MARGIN_FRACTION] of its size on each side — the margin gives
+     * the user some pan room before a new layer needs to install.
+     */
+    private fun desiredRatingIds(): Set<Long> {
+        val viewport = lastVisibleBounds ?: return savedRatingPaths.keys.toSet()
+        val latMargin = (viewport.maxLat - viewport.minLat) * VIEWPORT_MARGIN_FRACTION
+        val lngMargin = (viewport.maxLng - viewport.minLng) * VIEWPORT_MARGIN_FRACTION
+        val expanded = viewport.expand(latMargin = latMargin, lngMargin = lngMargin)
+        return savedRatingPaths.keys.filterTo(LinkedHashSet(savedRatingPaths.size)) { id ->
+            val bounds = ratingBoundsCache[id] ?: return@filterTo false
+            bounds.intersects(expanded)
         }
     }
 
@@ -189,7 +235,7 @@ class MapLibrePathController(
         val sourceId = ratingSourceId(pathId)
         val layerId = ratingLayerId(pathId)
         style.addSource(
-            GeoJsonSource(sourceId, payload.feature.toCollection(), GeoJsonOptions().withLineMetrics(true))
+            GeoJsonSource(sourceId, payload.feature.toCollection(), ratingSourceOptions(withMetrics = true))
         )
         val layer = LineLayer(layerId, sourceId).withProperties(
             PropertyFactory.lineWidth(lineWidth),
@@ -262,6 +308,12 @@ class MapLibrePathController(
         if (this != null) FeatureCollection.fromFeature(this)
         else FeatureCollection.fromFeatures(emptyArray())
 
+    private fun ratingSourceOptions(withMetrics: Boolean): GeoJsonOptions {
+        var opts = GeoJsonOptions().withTolerance(SIMPLIFICATION_TOLERANCE)
+        if (withMetrics) opts = opts.withLineMetrics(true)
+        return opts
+    }
+
     companion object {
         private const val CURRENT_PATH_ID = -1L
         private const val SOURCE_SAVED_RATING_PREFIX = "wt-saved-rating-source-"
@@ -270,5 +322,15 @@ class MapLibrePathController(
         private const val LAYER_SAVED_RATING_PREFIX = "wt-saved-rating-layer-"
         private const val LAYER_SAVED_COMMON = "wt-saved-common-layer"
         private const val LAYER_CURRENT = "wt-current-layer"
+
+        // Viewport expansion ratio for culling (fraction of viewport span on each side).
+        // 0.5 means user can pan up to ~half a viewport before an off-screen path
+        // needs to install — keeps install/remove churn low during normal gestures.
+        private const val VIEWPORT_MARGIN_FRACTION = 0.5
+
+        // Douglas-Peucker simplification tolerance applied to all rating / current /
+        // common sources. MapLibre default is 0.375 (tile pixels); 1.0 simplifies more
+        // aggressively at low zoom while staying visually identical for typical paths.
+        private const val SIMPLIFICATION_TOLERANCE = 1.0f
     }
 }

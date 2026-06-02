@@ -90,6 +90,7 @@ import ru.lobotino.walktraveller.ui.dialog.DeleteMultiplePathsConfirmDialog
 import ru.lobotino.walktraveller.ui.dialog.GeoLocationRequiredDialog
 import ru.lobotino.walktraveller.ui.dialog.VolumeButtonsFeatureSuggestDialog
 import ru.lobotino.walktraveller.ui.maplibre.MapLibrePathController
+import ru.lobotino.walktraveller.ui.maplibre.PathBounds
 import ru.lobotino.walktraveller.ui.maplibre.MapLibreUserLocationMarker
 import ru.lobotino.walktraveller.ui.model.BottomMenuState
 import ru.lobotino.walktraveller.ui.model.ConfirmDialogType
@@ -283,6 +284,15 @@ class MainMapFragment : Fragment() {
                     map.cameraPosition.target?.let { target ->
                         mapViewModel.onMapScrolled(target.toMapPoint())
                     }
+                    val bounds = map.projection.visibleRegion.latLngBounds
+                    pathController.onCameraIdle(
+                        PathBounds(
+                            minLat = bounds.latitudeSouth,
+                            maxLat = bounds.latitudeNorth,
+                            minLng = bounds.longitudeWest,
+                            maxLng = bounds.longitudeEast,
+                        )
+                    )
                 }
                 currentStyleUrl?.let { applyStyle(map, it) }
             }
