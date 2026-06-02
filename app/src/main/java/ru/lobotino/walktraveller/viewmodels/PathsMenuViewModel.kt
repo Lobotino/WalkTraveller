@@ -217,6 +217,7 @@ class PathsMenuViewModel(
                 val selectedPathIds = selectedPathIdsInMenuList.toList()
                 if (selectedPathIds.isEmpty()) {
                     newMapEventChannel.trySend(MapEvent.ClearMap)
+                    shownPathIdsByMenu[PathsMenuType.MY_PATHS]?.clear()
                 }
 
                 updateMyPathsMenuState(showPathsButtonState = ShowPathsButtonState.LOADING)
