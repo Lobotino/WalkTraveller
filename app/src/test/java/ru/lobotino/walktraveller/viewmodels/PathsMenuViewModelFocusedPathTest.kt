@@ -165,6 +165,29 @@ class PathsMenuViewModelFocusedPathTest {
         }
 
     @Test
+    fun `long-tap entering multi-select clears focus and emits SetFocusedPath null`() =
+        runTest(testDispatcher) {
+            // given: a focused path
+            givenShownRatingPath(42L)
+            sut.onPathInListShortTap(42L, PathsMenuType.MY_PATHS)
+            advanceUntilIdle()
+            val collected = mutableListOf<MapEvent>()
+            val job = launch { sut.observeNewMapEvent.toList(collected) }
+            advanceUntilIdle()
+            val snapshot = collected.size
+
+            // when: long-tap on the same (or any) path enters select mode
+            sut.onPathInListLongTap(42L, PathsMenuType.MY_PATHS)
+            advanceUntilIdle()
+            job.cancel()
+
+            // then
+            val after = collected.drop(snapshot)
+            val focusEvents = after.filterIsInstance<MapEvent.SetFocusedPath>()
+            assertEquals(listOf<Long?>(null), focusEvents.map { it.pathId })
+        }
+
+    @Test
     fun `focus in MY_PATHS does not affect OUTER_PATHS focus state`() =
         runTest(testDispatcher) {
             // given

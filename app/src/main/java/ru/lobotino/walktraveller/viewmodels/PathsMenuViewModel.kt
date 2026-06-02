@@ -732,6 +732,7 @@ class PathsMenuViewModel(
         pathId: Long,
         pathsMenuType: PathsMenuType
     ) {
+        setFocusedPath(pathsMenuType, null)
         toggleMenuItemSelect(pathId, pathsMenuType)
     }
 
