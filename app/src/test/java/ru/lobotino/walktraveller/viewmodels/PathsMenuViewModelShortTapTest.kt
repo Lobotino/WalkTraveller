@@ -120,7 +120,10 @@ class PathsMenuViewModelShortTapTest {
         advanceUntilIdle()
 
         // отбросить эмит ShowRatingPath, который пришёл от показа
-        assertTrue("Expected ShowRatingPath as first event", collectedEvents.firstOrNull() is MapEvent.ShowRatingPath)
+        assertTrue(
+            "Expected ShowRatingPath emitted by show flow",
+            collectedEvents.any { it is MapEvent.ShowRatingPath },
+        )
 
         // when
         sut.onPathInListShortTap(pathId, PathsMenuType.MY_PATHS)
@@ -128,9 +131,9 @@ class PathsMenuViewModelShortTapTest {
         job.cancel()
 
         // then
-        val fitEvent = collectedEvents.getOrNull(1)
-        assertTrue("Expected FitCameraToBounds as second event, got: $fitEvent", fitEvent is MapEvent.FitCameraToBounds)
-        assertEquals(expectedBounds, (fitEvent as MapEvent.FitCameraToBounds).bounds)
+        val fitEvent = collectedEvents.filterIsInstance<MapEvent.FitCameraToBounds>().singleOrNull()
+        assertTrue("Expected exactly one FitCameraToBounds, got: $fitEvent", fitEvent != null)
+        assertEquals(expectedBounds, fitEvent!!.bounds)
     }
 
     @Test
@@ -139,11 +142,7 @@ class PathsMenuViewModelShortTapTest {
         val pathId = 11L
         val path = ratingPath(pathId)
         val expectedBounds = pathBounds(path)!!
-        // getCachedOuterPath is called twice: once synchronously during show, once inside resolveShownPath coroutine
         coEvery { outerPathsInteractor.getCachedOuterPath(pathId) } returns path
-        // Outer show is synchronous (no viewModelScope.launch), so markPathShown is called immediately;
-        // start the collector AFTER the show to avoid needing to drain the ShowRatingPath event
-        // (which was sent synchronously before any collector existed and was dropped by the rendezvous channel)
         sut.onPathInListButtonClicked(
             pathId,
             PathItemButtonType.Show(PathInfoItemShowButtonState.DEFAULT),
@@ -158,10 +157,10 @@ class PathsMenuViewModelShortTapTest {
         advanceUntilIdle()
         job.cancel()
 
-        // then — FitCameraToBounds should be the first (and only) collected event
-        val fitEvent = collectedEvents.firstOrNull()
-        assertTrue("Expected FitCameraToBounds, got: $fitEvent", fitEvent is MapEvent.FitCameraToBounds)
-        assertEquals(expectedBounds, (fitEvent as MapEvent.FitCameraToBounds).bounds)
+        // then — FitCameraToBounds should be among the collected events
+        val fitEvent = collectedEvents.filterIsInstance<MapEvent.FitCameraToBounds>().singleOrNull()
+        assertTrue("Expected exactly one FitCameraToBounds, got: $fitEvent", fitEvent != null)
+        assertEquals(expectedBounds, fitEvent!!.bounds)
     }
 
     @Test

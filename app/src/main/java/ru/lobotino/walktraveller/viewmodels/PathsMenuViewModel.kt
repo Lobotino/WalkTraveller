@@ -96,6 +96,11 @@ class PathsMenuViewModel(
         PathsMenuType.OUTER_PATHS to mutableSetOf(),
     )
 
+    private val focusedPathByMenu: MutableMap<PathsMenuType, Long?> = mutableMapOf(
+        PathsMenuType.MY_PATHS to null,
+        PathsMenuType.OUTER_PATHS to null,
+    )
+
     private fun markPathShown(type: PathsMenuType, ids: Collection<Long>) {
         shownPathIdsByMenu[type]?.addAll(ids)
     }
@@ -106,6 +111,27 @@ class PathsMenuViewModel(
 
     private fun isPathShown(type: PathsMenuType, pathId: Long): Boolean =
         shownPathIdsByMenu[type]?.contains(pathId) == true
+
+    private fun emitListItemFocus(type: PathsMenuType, pathId: Long, isFocused: Boolean) {
+        newPathInfoListItemStateFlow.tryEmit(
+            NewPathInfoItemState(
+                type,
+                PathInfoItemState(
+                    pathsToAction = PathsToAction.Single(pathId),
+                    isFocused = isFocused,
+                ),
+            )
+        )
+    }
+
+    private fun setFocusedPath(type: PathsMenuType, newId: Long?) {
+        val oldId = focusedPathByMenu[type]
+        if (oldId == newId) return
+        focusedPathByMenu[type] = newId
+        if (oldId != null) emitListItemFocus(type, oldId, isFocused = false)
+        if (newId != null) emitListItemFocus(type, newId, isFocused = true)
+        newMapEventChannel.trySend(MapEvent.SetFocusedPath(newId))
+    }
 
     private fun updateMyPathsMenuState(
         showPathsButtonState: ShowPathsButtonState? = null,
@@ -673,6 +699,16 @@ class PathsMenuViewModel(
         if (!isPathShown(pathsMenuType, pathId)) {
             return
         }
+
+        val currentFocused = focusedPathByMenu[pathsMenuType]
+        if (currentFocused == pathId) {
+            // toggle off — no camera move
+            setFocusedPath(pathsMenuType, null)
+            return
+        }
+
+        setFocusedPath(pathsMenuType, pathId)
+
         viewModelScope.launch {
             val path = resolveShownPath(pathId, pathsMenuType) ?: return@launch
             val bounds = pathBounds(path) ?: return@launch
