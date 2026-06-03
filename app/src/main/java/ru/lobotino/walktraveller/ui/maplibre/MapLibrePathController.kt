@@ -66,12 +66,12 @@ class MapLibrePathController(
         style.addSource(GeoJsonSource(SOURCE_SAVED_COMMON, ratingSourceOptions(withMetrics = false)))
         style.addSource(GeoJsonSource(SOURCE_CURRENT, ratingSourceOptions(withMetrics = true)))
 
-        // Order: focused-halo (bottom) < per-path rating layers (added below
-        // LAYER_SAVED_COMMON) < common layer < current layer. Current sits on
-        // top so the active recording renders above saved paths.
+        // Z-order top→bottom: LAYER_CURRENT > LAYER_FOCUSED_TOP > LAYER_FOCUSED_HALO >
+        // LAYER_SAVED_COMMON > per-path rating layers. Focused-top and halo sit just
+        // above the saved group so the focused path is visible over other paths.
         style.addLayer(commonLineLayer(LAYER_SAVED_COMMON, SOURCE_SAVED_COMMON))
         style.addLayer(gradientLineLayer(LAYER_CURRENT, SOURCE_CURRENT))
-        installHaloLayer(style)
+        installFocusedLayers(style)
 
         pushSavedRating()
         pushCommon()
@@ -182,30 +182,59 @@ class MapLibrePathController(
 
         val ratingPath = savedRatingPaths[pathId]
         val commonPath = savedCommonPaths[pathId]
-        val feature: Feature? = when {
-            ratingPath != null -> PathGeoJsonMapper.ratingPathToFeature(ratingPath)
-            commonPath != null -> PathGeoJsonMapper.commonPathToFeature(commonPath)
-            else -> null
+
+        val feature: Feature?
+        val gradientExpr: Expression
+        when {
+            ratingPath != null -> {
+                feature = PathGeoJsonMapper.ratingPathToFeature(ratingPath)
+                val stops = PathGradientStopsBuilder.build(ratingPath, blendMeters).ifEmpty {
+                    listOf(
+                        GradientStop(0f, SegmentRating.NONE),
+                        GradientStop(1f, SegmentRating.NONE),
+                    )
+                }
+                gradientExpr = gradientExpression(stops)
+            }
+            commonPath != null -> {
+                feature = PathGeoJsonMapper.commonPathToFeature(commonPath)
+                gradientExpr = uniformGradientExpression(commonPathColor)
+            }
+            else -> return  // unknown id — leave source/layer untouched
         }
         if (feature == null) return
 
         source.setGeoJson(feature)
+        style.getLayerAs<LineLayer>(LAYER_FOCUSED_TOP)?.setProperties(
+            PropertyFactory.lineGradient(gradientExpr)
+        )
         currentFocusedPathId = pathId
     }
 
-    private fun installHaloLayer(style: Style) {
+    private fun installFocusedLayers(style: Style) {
         if (style.getSource(SOURCE_FOCUSED_HALO) != null) return
         style.addSource(
-            GeoJsonSource(SOURCE_FOCUSED_HALO, FeatureCollection.fromFeatures(emptyArray()))
+            GeoJsonSource(
+                SOURCE_FOCUSED_HALO,
+                FeatureCollection.fromFeatures(emptyArray()),
+                ratingSourceOptions(withMetrics = true),
+            )
         )
-        val layer = LineLayer(LAYER_FOCUSED_HALO, SOURCE_FOCUSED_HALO).withProperties(
+        val haloLayer = LineLayer(LAYER_FOCUSED_HALO, SOURCE_FOCUSED_HALO).withProperties(
             PropertyFactory.lineWidth(lineWidth * 2f),
             PropertyFactory.lineColor(Color.parseColor("#FFFFFF")),
             PropertyFactory.lineOpacity(0.9f),
             PropertyFactory.lineCap(Property.LINE_CAP_ROUND),
             PropertyFactory.lineJoin(Property.LINE_JOIN_ROUND),
         )
-        style.addLayerBelow(layer, LAYER_SAVED_COMMON)
+        style.addLayerAbove(haloLayer, LAYER_SAVED_COMMON)
+
+        val topLayer = LineLayer(LAYER_FOCUSED_TOP, SOURCE_FOCUSED_HALO).withProperties(
+            PropertyFactory.lineWidth(lineWidth),
+            PropertyFactory.lineCap(Property.LINE_CAP_ROUND),
+            PropertyFactory.lineJoin(Property.LINE_JOIN_ROUND),
+        )
+        style.addLayerAbove(topLayer, LAYER_FOCUSED_HALO)
     }
 
     private data class RatingPayload(val feature: Feature?, val stops: List<GradientStop>)
@@ -342,6 +371,14 @@ class MapLibrePathController(
         )
     }
 
+    private fun uniformGradientExpression(@ColorInt argb: Int): Expression =
+        Expression.interpolate(
+            Expression.linear(),
+            Expression.lineProgress(),
+            Expression.literal(0f), Expression.color(argb),
+            Expression.literal(1f), Expression.color(argb),
+        )
+
     private fun gradientLineLayer(layerId: String, sourceId: String): LineLayer =
         LineLayer(layerId, sourceId).withProperties(
             PropertyFactory.lineColor(color(SegmentRating.NONE)),
@@ -385,6 +422,7 @@ class MapLibrePathController(
         private const val LAYER_SAVED_COMMON = "wt-saved-common-layer"
         private const val LAYER_CURRENT = "wt-current-layer"
         private const val LAYER_FOCUSED_HALO = "wt-focused-halo-layer"
+        private const val LAYER_FOCUSED_TOP = "wt-focused-top-layer"
 
         // Viewport expansion ratio for culling (fraction of viewport span on each side).
         // 0.5 means user can pan up to ~half a viewport before an off-screen path
