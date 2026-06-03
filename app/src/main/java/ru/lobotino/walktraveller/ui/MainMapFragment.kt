@@ -11,6 +11,8 @@ import android.content.SharedPreferences
 import android.content.res.ColorStateList
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.PointF
+import android.graphics.RectF
 import android.graphics.drawable.Drawable
 import android.hardware.SensorManager
 import android.location.Location
@@ -117,6 +119,7 @@ import ru.lobotino.walktraveller.usecases.permissions.GeoPermissionsUseCase
 import ru.lobotino.walktraveller.usecases.permissions.NotificationsPermissionsUseCase
 import ru.lobotino.walktraveller.utils.RATING_CHANGES_BROADCAST
 import ru.lobotino.walktraveller.utils.ResourceManager
+import ru.lobotino.walktraveller.utils.Utils
 import ru.lobotino.walktraveller.utils.ext.openNavigationMenu
 import ru.lobotino.walktraveller.utils.ext.toLatLng
 import ru.lobotino.walktraveller.utils.ext.toMapPoint
@@ -129,6 +132,7 @@ class MainMapFragment : Fragment() {
     companion object {
         private const val DEFAULT_COMFORT_ZOOM = 15.0
         private const val EXTRA_DATA_URI = "EXTRA_DATA_URI"
+        private const val MAP_TAP_TOLERANCE_DP = 24f
 
         fun newInstance(extraData: Uri? = null): MainMapFragment {
             return MainMapFragment().apply {
@@ -295,6 +299,23 @@ class MainMapFragment : Fragment() {
                             maxLng = bounds.longitudeEast,
                         )
                     )
+                }
+                map.addOnMapClickListener { latLng ->
+                    val ctx = context ?: return@addOnMapClickListener false
+                    val screenPoint = map.projection.toScreenLocation(latLng)
+                    val tolerancePx = Utils.convertDpToPixel(ctx, MAP_TAP_TOLERANCE_DP)
+                    val pathId = pathController.findClosestPathAt(
+                        screenPoint = screenPoint,
+                        tolerancePx = tolerancePx,
+                        projection = map.projection,
+                        queryRenderedFeatures = { hitRect, layerIds ->
+                            map.queryRenderedFeatures(hitRect, *layerIds.toTypedArray())
+                        },
+                    )
+                    if (pathId != null) {
+                        menuViewModel.onPathTappedOnMap(pathId)
+                    }
+                    false
                 }
                 currentStyleUrl?.let { applyStyle(map, it) }
             }
@@ -545,7 +566,10 @@ class MainMapFragment : Fragment() {
                         }
 
                         is MapEvent.ScrollListToPath -> {
-                            // wired up when OnMapClickListener is added
+                            when (mapEvent.pathsMenuType) {
+                                PathsMenuType.MY_PATHS -> myPathsMenu.scrollToPath(mapEvent.pathId)
+                                PathsMenuType.OUTER_PATHS -> outerPathsMenu.scrollToPath(mapEvent.pathId)
+                            }
                         }
 
                         is MapEvent.BottomMenuStateChange -> {
