@@ -299,6 +299,7 @@ class PathsMenuViewModelFocusedPathTest {
             val after = collected.drop(snapshot)
             val focusEvents = after.filterIsInstance<MapEvent.SetFocusedPath>()
             assertEquals(listOf<Long?>(null), focusEvents.map { it.pathId })
+            assertTrue(after.any { it is MapEvent.ClearMap })
         }
 
     @Test

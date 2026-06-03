@@ -75,7 +75,7 @@ class PathsMenuViewModel(
     private val shareFileChannel = Channel<Uri>()
     private val deletePathInfoItemChannel = Channel<DeletePathInfoItemEvent>()
     private val newConfirmDialogChannel = Channel<ConfirmDialogType>()
-    private val newMapEventChannel = Channel<MapEvent>()
+    private val newMapEventChannel = Channel<MapEvent>(Channel.UNLIMITED)
 
     val observeShareFileChannel = shareFileChannel.consumeAsFlow()
     val observeDeletePathInfoItemChannel = deletePathInfoItemChannel.consumeAsFlow()
@@ -242,9 +242,9 @@ class PathsMenuViewModel(
             ShowPathsButtonState.DEFAULT -> {
                 val selectedPathIds = selectedPathIdsInMenuList.toList()
                 if (selectedPathIds.isEmpty()) {
-                    setFocusedPath(PathsMenuType.MY_PATHS, null)
                     newMapEventChannel.trySend(MapEvent.ClearMap)
                     shownPathIdsByMenu[PathsMenuType.MY_PATHS]?.clear()
+                    setFocusedPath(PathsMenuType.MY_PATHS, null)
                 }
 
                 updateMyPathsMenuState(showPathsButtonState = ShowPathsButtonState.LOADING)
