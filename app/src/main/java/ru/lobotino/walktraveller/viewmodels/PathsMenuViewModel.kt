@@ -75,7 +75,7 @@ class PathsMenuViewModel(
     private val shareFileChannel = Channel<Uri>()
     private val deletePathInfoItemChannel = Channel<DeletePathInfoItemEvent>()
     private val newConfirmDialogChannel = Channel<ConfirmDialogType>()
-    private val newMapEventChannel = Channel<MapEvent>(Channel.UNLIMITED)
+    private val newMapEventChannel = Channel<MapEvent>(64, BufferOverflow.DROP_OLDEST)
 
     val observeShareFileChannel = shareFileChannel.consumeAsFlow()
     val observeDeletePathInfoItemChannel = deletePathInfoItemChannel.consumeAsFlow()
