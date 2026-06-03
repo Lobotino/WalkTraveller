@@ -22,4 +22,6 @@ sealed class MapEvent {
     class FitCameraToBounds(val bounds: PathBounds) : MapEvent()
 
     class SetFocusedPath(val pathId: Long?) : MapEvent()
+
+    class ScrollListToPath(val pathsMenuType: PathsMenuType, val pathId: Long) : MapEvent()
 }

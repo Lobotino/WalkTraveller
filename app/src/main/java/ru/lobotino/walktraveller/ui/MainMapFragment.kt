@@ -544,6 +544,10 @@ class MainMapFragment : Fragment() {
                             mapViewModel.setFocusedPathOnMap(mapEvent.pathId)
                         }
 
+                        is MapEvent.ScrollListToPath -> {
+                            // wired up when OnMapClickListener is added
+                        }
+
                         is MapEvent.BottomMenuStateChange -> {
                             mapViewModel.onBottomMenuStateChange(mapEvent.newBottomMenuState)
                         }
