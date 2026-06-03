@@ -93,8 +93,12 @@ class TrackRecordingAnimationView @JvmOverloads constructor(
         }
     }
 
-    private fun drawTrack(canvas: Canvas, w: Float, h: Float) {
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
         trackPaint.strokeWidth = h * 0.02f
+    }
+
+    private fun drawTrack(canvas: Canvas, w: Float, h: Float) {
         val visible = WelcomeTrackGeometry.visibleSegmentCount(progress)
         val points = WelcomeTrackGeometry.trackPoints
         for (i in 0 until visible) {
@@ -112,26 +116,30 @@ class TrackRecordingAnimationView @JvmOverloads constructor(
         val r = h * 0.03f
         fillPaint.color = whiteColor
         canvas.drawCircle(cx, cy, r * 1.45f, fillPaint)
+        // Inner dot is a fixed "you are here" marker, not a per-segment rating color.
         fillPaint.color = ratingColors.getValue(SegmentRating.PERFECT)
         canvas.drawCircle(cx, cy, r, fillPaint)
     }
 
     private fun drawLegend(canvas: Canvas, w: Float, h: Float) {
-        val order = listOf(
+        val r = h * 0.022f
+        val cy = h * 0.95f
+        var cx = w * 0.12f
+        val step = w * 0.08f
+        for (rating in LEGEND_ORDER) {
+            fillPaint.color = ratingColors.getValue(rating)
+            canvas.drawCircle(cx, cy, r, fillPaint)
+            cx += step
+        }
+    }
+
+    companion object {
+        private val LEGEND_ORDER = listOf(
             SegmentRating.BADLY,
             SegmentRating.NORMAL,
             SegmentRating.GOOD,
             SegmentRating.PERFECT,
         )
-        val r = h * 0.022f
-        val cy = h * 0.95f
-        var cx = w * 0.12f
-        val step = w * 0.08f
-        for (rating in order) {
-            fillPaint.color = ratingColors.getValue(rating)
-            canvas.drawCircle(cx, cy, r, fillPaint)
-            cx += step
-        }
     }
 
     private fun drawVolumeKeys(canvas: Canvas, w: Float, h: Float) {
