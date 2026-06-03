@@ -1,83 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     android:background="@drawable/first_welcome_background">
 
-    <ScrollView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:layout_marginBottom="28dp">
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/welcome_pager"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
 
-        <LinearLayout
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="20dp"
+        android:paddingTop="8dp">
+
+        <Button
+            android:id="@+id/welcome_skip_button"
+            style="?android:attr/borderlessButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:text="@string/welcome_skip_button"
+            android:textColor="@color/black"
+            android:textAllCaps="false" />
 
-            <TextView
-                android:id="@+id/welcome_title"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:layout_marginStart="24dp"
-                android:layout_marginTop="20dp"
-                android:layout_marginEnd="24dp"
-                android:text="@string/welcome_title"
-                android:textColor="@color/black"
-                android:textSize="26sp"
-                android:textStyle="bold" />
+        <LinearLayout
+            android:id="@+id/welcome_dots_container"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="horizontal" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="24dp"
-                android:layout_marginTop="12dp"
-                android:layout_marginEnd="24dp"
-                android:gravity="center"
-                android:text="@string/welcome_subtitle"
-                android:textColor="@color/black"
-                android:textSize="18sp" />
+        <Button
+            android:id="@+id/welcome_primary_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minWidth="120dp"
+            android:text="@string/welcome_next_button"
+            android:textAllCaps="false" />
 
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="24dp"
-                android:layout_marginTop="48dp"
-                android:layout_marginEnd="24dp"
-                android:orientation="horizontal">
+    </LinearLayout>
 
-                <TextView
-                    android:id="@+id/privacy_policy_text"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_vertical"
-                    android:layout_weight="1"
-                    android:text="@string/welcome_privacy_policy_accepting"
-                    android:textColor="@color/black"
-                    android:textSize="15sp" />
-
-                <CheckBox
-                    android:id="@+id/privacy_policy_check_box"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_vertical"
-                    tools:checked="true" />
-
-            </LinearLayout>
-
-            <Button
-                android:id="@+id/continue_button"
-                android:layout_width="match_parent"
-                android:layout_height="52dp"
-                android:layout_gravity="center"
-                android:layout_marginStart="24dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginEnd="24dp"
-                android:layout_marginBottom="12dp"
-                android:enabled="true"
-                android:text="@string/welcome_continue_button_default_text" />
-        </LinearLayout>
-    </ScrollView>
-</FrameLayout>
+</LinearLayout>
