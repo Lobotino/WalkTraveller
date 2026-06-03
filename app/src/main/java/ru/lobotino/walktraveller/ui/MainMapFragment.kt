@@ -286,6 +286,12 @@ class MainMapFragment : Fragment() {
                 mapLibreMap = map
                 // onCameraIdle also resets the find-my-location button out of its
                 // "center on current location" state, so this must fire after camera moves.
+                mapViewModel.observeRestoreCameraState.onEach { state ->
+                    map.moveCamera(
+                        CameraUpdateFactory.newLatLngZoom(state.center.toLatLng(), state.zoom)
+                    )
+                }.launchIn(viewLifecycleOwner.lifecycleScope)
+
                 map.addOnCameraIdleListener {
                     map.cameraPosition.target?.let { target ->
                         mapViewModel.onCameraIdle(target.toMapPoint(), map.cameraPosition.zoom)
@@ -713,13 +719,6 @@ class MainMapFragment : Fragment() {
                         } else {
                             sendStopLocationUpdatesAction()
                         }
-                    }.launchIn(viewLifecycleOwner.lifecycleScope)
-
-                    observeRestoreCameraState.onEach { state ->
-                        val map = mapLibreMap ?: return@onEach
-                        map.moveCamera(
-                            CameraUpdateFactory.newLatLngZoom(state.center.toLatLng(), state.zoom)
-                        )
                     }.launchIn(viewLifecycleOwner.lifecycleScope)
 
                     observeNewMapCenter.onEach { newMapCenter ->

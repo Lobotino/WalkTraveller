@@ -3,8 +3,12 @@ package ru.lobotino.walktraveller.viewmodels
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -27,11 +31,14 @@ import ru.lobotino.walktraveller.utils.IResourceManager
 
 class MapViewModelCameraStateTest {
 
+    private val testDispatcher = StandardTestDispatcher()
+
     private lateinit var mapStateInteractor: IMapStateInteractor
     private lateinit var sut: MapViewModel
 
     @Before
     fun setUp() {
+        Dispatchers.setMain(testDispatcher)
         mapStateInteractor = mockk(relaxed = true)
         sut = MapViewModel(
             notificationsPermissionsUseCase = mockk<IPermissionsUseCase>(relaxed = true),
@@ -52,7 +59,7 @@ class MapViewModelCameraStateTest {
 
     @After
     fun tearDown() {
-        // mockk state is per-instance; nothing global to clear
+        Dispatchers.resetMain()
     }
 
     @Test
@@ -68,5 +75,19 @@ class MapViewModelCameraStateTest {
         verify(exactly = 1) {
             mapStateInteractor.setLastCameraState(MapCameraState(center, zoom))
         }
+    }
+
+    @Test
+    fun `onInitFinish emits last camera state to observeRestoreCameraState`() = runTest(testDispatcher) {
+        // given
+        val expected = MapCameraState(MapPoint(55.0, 37.0), 14.0)
+        every { mapStateInteractor.getLastCameraState() } returns expected
+
+        // when
+        sut.onInitFinish()
+        val emitted = sut.observeRestoreCameraState.first()
+
+        // then
+        assertEquals(expected, emitted)
     }
 }
