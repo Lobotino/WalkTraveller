@@ -5,58 +5,65 @@ import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.verify
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
+import ru.lobotino.walktraveller.model.map.MapCameraState
 import ru.lobotino.walktraveller.model.map.MapPoint
-import ru.lobotino.walktraveller.repositories.LastSeenPointRepository
+import ru.lobotino.walktraveller.repositories.interfaces.IMapCameraStateRepository
 
 class MapStateInteractorTest {
 
-    private lateinit var lastSeenPointRepository: LastSeenPointRepository
+    private lateinit var mapCameraStateRepository: IMapCameraStateRepository
     private lateinit var sut: MapStateInteractor
 
     @Before
     fun setUp() {
-        lastSeenPointRepository = mockk()
-        sut = MapStateInteractor(lastSeenPointRepository)
+        mapCameraStateRepository = mockk()
+        sut = MapStateInteractor(mapCameraStateRepository)
+    }
+
+    @After
+    fun tearDown() {
+        // mockk state is per-instance; nothing global to clear
     }
 
     @Test
-    fun `getLastSeenPoint returns stored point when present`() {
+    fun `getLastCameraState returns stored state when present`() {
         // given
-        val storedPoint = MapPoint(10.0, 20.0)
-        every { lastSeenPointRepository.getLastSeenPoint() } returns storedPoint
+        val stored = MapCameraState(MapPoint(10.0, 20.0), 17.5)
+        every { mapCameraStateRepository.getLastCameraState() } returns stored
 
         // when
-        val result = sut.getLastSeenPoint()
+        val result = sut.getLastCameraState()
 
         // then
-        assertEquals(storedPoint, result)
+        assertEquals(stored, result)
     }
 
     @Test
-    fun `getLastSeenPoint falls back to Moscow when nothing stored`() {
+    fun `getLastCameraState falls back to Moscow with default zoom when nothing stored`() {
         // given
-        every { lastSeenPointRepository.getLastSeenPoint() } returns null
+        every { mapCameraStateRepository.getLastCameraState() } returns null
 
         // when
-        val result = sut.getLastSeenPoint()
+        val result = sut.getLastCameraState()
 
         // then
-        assertEquals(MapPoint(55.7522200, 37.6155600), result)
+        assertEquals(MapCameraState(MapPoint(55.7522200, 37.6155600), 15.0), result)
     }
 
     @Test
-    fun `setLastSeenPoint delegates to repository`() {
+    fun `setLastCameraState delegates to repository`() {
         // given
-        val point = MapPoint(1.0, 2.0)
-        every { lastSeenPointRepository.setLastSeenPoint(any()) } just Runs
+        val state = MapCameraState(MapPoint(1.0, 2.0), 14.0)
+        every { mapCameraStateRepository.setLastCameraState(any()) } just Runs
 
         // when
-        sut.setLastSeenPoint(point)
+        sut.setLastCameraState(state)
 
         // then
-        verify(exactly = 1) { lastSeenPointRepository.setLastSeenPoint(point) }
+        verify(exactly = 1) { mapCameraStateRepository.setLastCameraState(state) }
     }
 }

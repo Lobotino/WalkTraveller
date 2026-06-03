@@ -1,22 +1,26 @@
 package ru.lobotino.walktraveller.usecases
 
+import ru.lobotino.walktraveller.model.map.MapCameraState
 import ru.lobotino.walktraveller.model.map.MapPoint
-import ru.lobotino.walktraveller.repositories.LastSeenPointRepository
+import ru.lobotino.walktraveller.repositories.interfaces.IMapCameraStateRepository
 import ru.lobotino.walktraveller.usecases.interfaces.IMapStateInteractor
 
-class MapStateInteractor(private val lastSeenPointRepository: LastSeenPointRepository) :
+class MapStateInteractor(private val mapCameraStateRepository: IMapCameraStateRepository) :
     IMapStateInteractor {
 
     companion object {
+        const val DEFAULT_ZOOM = 15.0
+
         // Moscow city coordinates
         private val defaultLastSeenPoint = MapPoint(55.7522200, 37.6155600)
+        private val defaultCameraState = MapCameraState(defaultLastSeenPoint, DEFAULT_ZOOM)
     }
 
-    override fun getLastSeenPoint(): MapPoint {
-        return lastSeenPointRepository.getLastSeenPoint() ?: defaultLastSeenPoint
+    override fun getLastCameraState(): MapCameraState {
+        return mapCameraStateRepository.getLastCameraState() ?: defaultCameraState
     }
 
-    override fun setLastSeenPoint(point: MapPoint) {
-        lastSeenPointRepository.setLastSeenPoint(point)
+    override fun setLastCameraState(state: MapCameraState) {
+        mapCameraStateRepository.setLastCameraState(state)
     }
 }

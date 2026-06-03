@@ -151,7 +151,8 @@ class MapViewModel(
     }
 
     private fun setupMapCenterToLastSeenLocation() {
-        newMapCenterFlow.tryEmit(mapStateInteractor.getLastSeenPoint())
+        val cameraState = mapStateInteractor.getLastCameraState()
+        newMapCenterFlow.tryEmit(cameraState.center)
     }
 
     private fun syncWritingPathState() {
@@ -414,7 +415,13 @@ class MapViewModel(
     }
 
     fun onMapScrolled(mapPoint: MapPoint) {
-        mapStateInteractor.setLastSeenPoint(mapPoint)
+        // TODO: Task 5 will update this to capture camera zoom as well
+        mapStateInteractor.setLastCameraState(
+            ru.lobotino.walktraveller.model.map.MapCameraState(
+                mapPoint,
+                15.0
+            )
+        )
 
         if (mapUiStateFlow.value.findMyLocationButtonState == FindMyLocationButtonState.CENTER_ON_CURRENT_LOCATION) {
             mapUiStateFlow.update { mapUiState ->

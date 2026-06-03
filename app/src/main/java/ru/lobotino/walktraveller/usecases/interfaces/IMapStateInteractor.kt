@@ -1,10 +1,10 @@
 package ru.lobotino.walktraveller.usecases.interfaces
 
-import ru.lobotino.walktraveller.model.map.MapPoint
+import ru.lobotino.walktraveller.model.map.MapCameraState
 
 interface IMapStateInteractor {
 
-    fun setLastSeenPoint(point: MapPoint)
+    fun setLastCameraState(state: MapCameraState)
 
-    fun getLastSeenPoint(): MapPoint
+    fun getLastCameraState(): MapCameraState
 }

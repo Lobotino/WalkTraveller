@@ -67,7 +67,7 @@ import ru.lobotino.walktraveller.repositories.CachePathsRepository
 import ru.lobotino.walktraveller.repositories.DatabasePathRepository
 import ru.lobotino.walktraveller.repositories.FilePathsSaverRepositoryV1
 import ru.lobotino.walktraveller.repositories.LastCreatedPathIdRepository
-import ru.lobotino.walktraveller.repositories.LastSeenPointRepository
+import ru.lobotino.walktraveller.repositories.MapCameraStateRepository
 import ru.lobotino.walktraveller.repositories.LocationUpdatesRepository
 import ru.lobotino.walktraveller.repositories.LocationsDistanceRepository
 import ru.lobotino.walktraveller.repositories.OptimizePathsSettingsRepository
@@ -664,7 +664,7 @@ class MainMapFragment : Fragment() {
                         ),
                         mapPathsInteractor = mapPathsInteractor,
                         mapStateInteractor = MapStateInteractor(
-                            LastSeenPointRepository(
+                            MapCameraStateRepository(
                                 sharedPreferences
                             )
                         ),
