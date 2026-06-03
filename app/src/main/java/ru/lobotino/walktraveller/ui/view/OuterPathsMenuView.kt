@@ -221,4 +221,9 @@ class OuterPathsMenuView : ConstraintLayout {
     fun syncPathInfoItemState(pathInfoState: PathInfoItemState) {
         pathsInfoListAdapter.updatePaths(pathInfoState)
     }
+
+    fun scrollToPath(pathId: Long) {
+        val index = pathsInfoListAdapter.indexOfPath(pathId)
+        if (index >= 0) pathsInfoList.smoothScrollToPosition(index)
+    }
 }
