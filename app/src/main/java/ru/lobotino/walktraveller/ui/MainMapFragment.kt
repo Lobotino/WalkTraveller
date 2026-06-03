@@ -288,7 +288,7 @@ class MainMapFragment : Fragment() {
                 // "center on current location" state, so this must fire after camera moves.
                 map.addOnCameraIdleListener {
                     map.cameraPosition.target?.let { target ->
-                        mapViewModel.onMapScrolled(target.toMapPoint())
+                        mapViewModel.onCameraIdle(target.toMapPoint(), map.cameraPosition.zoom)
                     }
                     val bounds = map.projection.visibleRegion.latLngBounds
                     pathController.onCameraIdle(
