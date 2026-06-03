@@ -101,6 +101,8 @@ class PathsMenuViewModel(
         PathsMenuType.OUTER_PATHS to null,
     )
 
+    private var currentBottomMenuState: BottomMenuState? = null
+
     private fun markPathShown(type: PathsMenuType, ids: Collection<Long>) {
         shownPathIdsByMenu[type]?.addAll(ids)
     }
@@ -143,6 +145,7 @@ class PathsMenuViewModel(
     }
 
     private fun emitBottomMenuStateChange(newState: BottomMenuState) {
+        currentBottomMenuState = newState
         val leavingMyPaths = focusedPathByMenu[PathsMenuType.MY_PATHS] != null &&
             newState != BottomMenuState.MY_PATHS_MENU
         val leavingOuter = focusedPathByMenu[PathsMenuType.OUTER_PATHS] != null &&
