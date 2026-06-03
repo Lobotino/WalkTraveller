@@ -50,6 +50,9 @@ open class PathsInfoAdapter(
         return pathsItems.map { it.pathInfo.pathId }
     }
 
+    fun indexOfPath(pathId: Long): Int =
+        pathsItems.indexOfFirst { it.pathInfo.pathId == pathId }
+
     @SuppressLint("NotifyDataSetChanged")
     fun setPathsInfoItems(pathInfoItems: List<MapPathInfo>) {
         pathsItems = pathInfoItems.map { PathInfoItemModel(pathInfo = it) }.toMutableList()
