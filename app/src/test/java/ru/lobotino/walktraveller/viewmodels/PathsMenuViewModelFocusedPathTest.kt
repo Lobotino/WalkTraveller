@@ -18,7 +18,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import ru.lobotino.walktraveller.analytics.IAnalyticsTracker
+import ru.lobotino.walktraveller.model.MostCommonRating
 import ru.lobotino.walktraveller.model.SegmentRating
+import ru.lobotino.walktraveller.model.map.MapPathInfo
 import ru.lobotino.walktraveller.model.map.MapPathSegment
 import ru.lobotino.walktraveller.model.map.MapPoint
 import ru.lobotino.walktraveller.model.map.MapRatingPath
@@ -255,6 +257,41 @@ class PathsMenuViewModelFocusedPathTest {
 
             // when: confirm deletion of the focused path
             sut.onConfirmMyPathDelete(42L)
+            advanceUntilIdle()
+            job.cancel()
+
+            // then
+            val after = collected.drop(snapshot)
+            val focusEvents = after.filterIsInstance<MapEvent.SetFocusedPath>()
+            assertEquals(listOf<Long?>(null), focusEvents.map { it.pathId })
+        }
+
+    @Test
+    fun `ClearMap emit for MY_PATHS also clears focus`() =
+        runTest(testDispatcher) {
+            // given: a focused path in MY_PATHS and the show-paths button in DEFAULT state
+            givenShownRatingPath(42L)
+            sut.onPathInListShortTap(42L, PathsMenuType.MY_PATHS)
+            advanceUntilIdle()
+            // put showPathsButtonState into DEFAULT so the ClearMap branch is reachable
+            coEvery { mapPathsInteractor.getAllSavedPathsInfo() } returns listOf(
+                MapPathInfo(
+                    pathId = 42L,
+                    timestamp = 0L,
+                    mostCommonRating = MostCommonRating.NONE,
+                    length = 0f,
+                    isOuterPath = false,
+                ),
+            )
+            sut.onShowPathsMenuButtonClick()
+            advanceUntilIdle()
+            val collected = mutableListOf<MapEvent>()
+            val job = launch { sut.observeNewMapEvent.toList(collected) }
+            advanceUntilIdle()
+            val snapshot = collected.size
+
+            // when: trigger ClearMap for MY_PATHS via show-selected-paths with no selection
+            sut.onShowSelectedPathsButtonClicked(PathsMenuType.MY_PATHS)
             advanceUntilIdle()
             job.cancel()
 

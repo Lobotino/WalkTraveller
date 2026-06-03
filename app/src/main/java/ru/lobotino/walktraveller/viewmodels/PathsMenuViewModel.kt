@@ -242,6 +242,7 @@ class PathsMenuViewModel(
             ShowPathsButtonState.DEFAULT -> {
                 val selectedPathIds = selectedPathIdsInMenuList.toList()
                 if (selectedPathIds.isEmpty()) {
+                    setFocusedPath(PathsMenuType.MY_PATHS, null)
                     newMapEventChannel.trySend(MapEvent.ClearMap)
                     shownPathIdsByMenu[PathsMenuType.MY_PATHS]?.clear()
                 }
