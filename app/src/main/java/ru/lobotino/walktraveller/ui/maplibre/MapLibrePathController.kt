@@ -78,10 +78,9 @@ class MapLibrePathController(
         pushCurrent()
 
         val pending = pendingFocusedPathId
-        if (pending != null) {
-            pendingFocusedPathId = null
-            setFocusedPath(pending)
-        }
+        val replay = pending ?: currentFocusedPathId
+        if (pending != null) pendingFocusedPathId = null
+        if (replay != null) setFocusedPath(replay)
     }
 
     fun showRatingPaths(paths: List<MapRatingPath>) {
