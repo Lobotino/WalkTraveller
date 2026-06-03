@@ -770,6 +770,28 @@ class PathsMenuViewModel(
         toggleMenuItemSelect(pathId, pathsMenuType)
     }
 
+    fun onPathTappedOnMap(pathId: Long) {
+        val menuType = activeMenuTypeForFocus() ?: return
+        if (!isPathShown(menuType, pathId)) return
+
+        val currentFocused = focusedPathByMenu[menuType]
+        if (currentFocused == pathId) {
+            // toggle off — no scroll
+            setFocusedPath(menuType, null)
+            return
+        }
+
+        setFocusedPath(menuType, pathId)
+        newMapEventChannel.trySend(MapEvent.ScrollListToPath(menuType, pathId))
+    }
+
+    private fun activeMenuTypeForFocus(): PathsMenuType? = when (currentBottomMenuState) {
+        BottomMenuState.MY_PATHS_MENU -> PathsMenuType.MY_PATHS
+        BottomMenuState.OUTER_PATHS_MENU -> PathsMenuType.OUTER_PATHS
+        BottomMenuState.DEFAULT -> null
+        null -> null
+    }
+
     private fun toggleMenuItemSelect(pathId: Long, pathsMenuType: PathsMenuType) {
         val isItemSelected = if (selectedPathIdsInMenuList.contains(pathId)) {
             selectedPathIdsInMenuList.remove(pathId)
