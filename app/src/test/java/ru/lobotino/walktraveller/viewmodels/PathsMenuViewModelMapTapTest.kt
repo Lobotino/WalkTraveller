@@ -86,4 +86,59 @@ class PathsMenuViewModelMapTapTest {
         assertTrue(after.none { it is MapEvent.SetFocusedPath })
         assertTrue(after.none { it is MapEvent.ScrollListToPath })
     }
+
+    @Test
+    fun `map-tap on shown MY path with MY menu open emits SetFocusedPath then ScrollListToPath`() =
+        runTest(testDispatcher) {
+            // given
+            givenShownRatingPathInOpenMyMenu(42L)
+            val collected = mutableListOf<MapEvent>()
+            val job = launch { sut.observeNewMapEvent.toList(collected) }
+            advanceUntilIdle()
+            val snapshot = collected.size
+
+            // when
+            sut.onPathTappedOnMap(42L)
+            advanceUntilIdle()
+            job.cancel()
+
+            // then
+            val after = collected.drop(snapshot)
+            val focusEvent = after.filterIsInstance<MapEvent.SetFocusedPath>().single()
+            val scrollEvent = after.filterIsInstance<MapEvent.ScrollListToPath>().single()
+            assertEquals(42L, focusEvent.pathId)
+            assertEquals(PathsMenuType.MY_PATHS, scrollEvent.pathsMenuType)
+            assertEquals(42L, scrollEvent.pathId)
+            assertTrue(
+                "Expected SetFocusedPath before ScrollListToPath",
+                after.indexOf(focusEvent) < after.indexOf(scrollEvent),
+            )
+            assertTrue(
+                "Expected no FitCameraToBounds on map-tap",
+                after.none { it is MapEvent.FitCameraToBounds },
+            )
+        }
+
+    private fun ratingPath(pathId: Long): MapRatingPath = MapRatingPath(
+        pathId = pathId,
+        pathSegments = listOf(
+            MapPathSegment(MapPoint(10.0, 20.0), MapPoint(30.0, 40.0), SegmentRating.GOOD),
+        ),
+    )
+
+    /** Opens MY_PATHS_MENU and marks `pathId` as shown by routing through the
+     *  standard show-button flow (same arrangement as PathsMenuViewModelFocusedPathTest). */
+    private fun TestScope.givenShownRatingPathInOpenMyMenu(pathId: Long) {
+        sut.onShowPathsMenuButtonClick()
+        val path = ratingPath(pathId)
+        coEvery {
+            mapPathsInteractor.getSavedRatingPath(pathId, false, true)
+        } returns path
+        sut.onPathInListButtonClicked(
+            pathId,
+            PathItemButtonType.Show(PathInfoItemShowButtonState.DEFAULT),
+            PathsMenuType.MY_PATHS,
+        )
+        advanceUntilIdle()
+    }
 }
