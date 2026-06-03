@@ -141,4 +141,31 @@ class PathsMenuViewModelMapTapTest {
         )
         advanceUntilIdle()
     }
+
+    @Test
+    fun `map-tap on already-focused path clears focus and does not scroll`() =
+        runTest(testDispatcher) {
+            // given: path 42 is focused via a prior map-tap
+            givenShownRatingPathInOpenMyMenu(42L)
+            sut.onPathTappedOnMap(42L)
+            advanceUntilIdle()
+            val collected = mutableListOf<MapEvent>()
+            val job = launch { sut.observeNewMapEvent.toList(collected) }
+            advanceUntilIdle()
+            val snapshot = collected.size
+
+            // when: tap again on the same path
+            sut.onPathTappedOnMap(42L)
+            advanceUntilIdle()
+            job.cancel()
+
+            // then
+            val after = collected.drop(snapshot)
+            val focusEvents = after.filterIsInstance<MapEvent.SetFocusedPath>()
+            assertEquals(listOf<Long?>(null), focusEvents.map { it.pathId })
+            assertTrue(
+                "Expected no ScrollListToPath on toggle-off",
+                after.none { it is MapEvent.ScrollListToPath },
+            )
+        }
 }
