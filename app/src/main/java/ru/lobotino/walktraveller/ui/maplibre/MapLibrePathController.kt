@@ -1,12 +1,16 @@
 package ru.lobotino.walktraveller.ui.maplibre
 
 import android.graphics.Color
+import android.graphics.PointF
+import android.graphics.RectF
 import androidx.annotation.ColorInt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.maplibre.android.geometry.LatLng
+import org.maplibre.android.maps.Projection
 import org.maplibre.android.maps.Style
 import org.maplibre.android.style.expressions.Expression
 import org.maplibre.android.style.layers.LineLayer
@@ -209,6 +213,97 @@ class MapLibrePathController(
             PropertyFactory.lineGradient(gradientExpr)
         )
         currentFocusedPathId = pathId
+    }
+
+    /**
+     * Returns the pathId of the saved rating or common path whose rendered polyline
+     * is closest to [screenPoint], within [tolerancePx] (screen pixels). Returns null
+     * if no candidate is within tolerance or no style is loaded yet.
+     *
+     * [queryRenderedFeatures] is a function (typically `map::queryRenderedFeatures`
+     * with the layer-id list curried in by the caller) that returns the features
+     * MapLibre considers intersected within the hit rectangle. The controller knows
+     * the candidate layer ids and passes them; the caller supplies the live map
+     * reference because it lives on MapLibreMap, not Style.
+     *
+     * Must be called on Main (touches Style + Projection).
+     */
+    fun findClosestPathAt(
+        screenPoint: PointF,
+        tolerancePx: Float,
+        projection: Projection,
+        queryRenderedFeatures: (hitRect: RectF, layerIds: List<String>) -> List<Feature>,
+    ): Long? {
+        if (this.style == null) return null
+
+        val candidateLayerIds = buildList {
+            for (id in installedRatingIds) add(ratingLayerId(id))
+            add(LAYER_SAVED_COMMON)
+            add(LAYER_FOCUSED_TOP)
+        }
+        if (candidateLayerIds.isEmpty()) return null
+
+        val hitRect = RectF(
+            screenPoint.x - tolerancePx,
+            screenPoint.y - tolerancePx,
+            screenPoint.x + tolerancePx,
+            screenPoint.y + tolerancePx,
+        )
+
+        val featureIds = LinkedHashSet<Long>()
+        for (feature in queryRenderedFeatures(hitRect, candidateLayerIds)) {
+            val id = feature.getNumberProperty(PathGeoJsonMapper.PROPERTY_PATH_ID)
+                ?.toLong() ?: continue
+            featureIds.add(id)
+        }
+        if (featureIds.isEmpty()) return null
+
+        val candidates = ArrayList<PolylineHitTest.Candidate>(featureIds.size)
+        for (id in featureIds) {
+            val vertices = pathVerticesInScreenSpace(id, projection) ?: continue
+            if (vertices.size >= 2) {
+                candidates.add(PolylineHitTest.Candidate(pathId = id, vertices = vertices))
+            }
+        }
+
+        return PolylineHitTest.closestPathIdWithin(
+            tap = screenPoint,
+            candidates = candidates,
+            tolerancePx = tolerancePx,
+        )
+    }
+
+    private fun pathVerticesInScreenSpace(
+        pathId: Long,
+        projection: Projection,
+    ): List<PointF>? {
+        val rating = savedRatingPaths[pathId]
+        if (rating != null) {
+            val points = ArrayList<PointF>(rating.pathSegments.size + 1)
+            for ((index, seg) in rating.pathSegments.withIndex()) {
+                val start = projection.toScreenLocation(
+                    LatLng(seg.startPoint.latitude, seg.startPoint.longitude)
+                )
+                if (index == 0) {
+                    points.add(start)
+                } else if (points.isEmpty() || start != points.last()) {
+                    points.add(start)
+                }
+                val finish = projection.toScreenLocation(
+                    LatLng(seg.finishPoint.latitude, seg.finishPoint.longitude)
+                )
+                if (points.isEmpty() || finish != points.last()) {
+                    points.add(finish)
+                }
+            }
+            return points
+        }
+        val common = savedCommonPaths[pathId] ?: return null
+        val points = ArrayList<PointF>(common.pathPoints.size)
+        for (p in common.pathPoints) {
+            points.add(projection.toScreenLocation(LatLng(p.latitude, p.longitude)))
+        }
+        return points
     }
 
     private fun installFocusedLayers(style: Style) {
