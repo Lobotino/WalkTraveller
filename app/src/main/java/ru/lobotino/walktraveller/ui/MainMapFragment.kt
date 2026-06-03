@@ -541,7 +541,7 @@ class MainMapFragment : Fragment() {
                         }
 
                         is MapEvent.SetFocusedPath -> {
-                            // wired up in Task 9
+                            mapViewModel.setFocusedPathOnMap(mapEvent.pathId)
                         }
 
                         is MapEvent.BottomMenuStateChange -> {
@@ -697,6 +697,10 @@ class MainMapFragment : Fragment() {
 
                     observeFitCameraToBounds.onEach { bounds ->
                         fitMapCameraToBounds(bounds)
+                    }.launchIn(viewLifecycleOwner.lifecycleScope)
+
+                    observeFocusedPath.onEach { pathId ->
+                        pathController.setFocusedPath(pathId)
                     }.launchIn(viewLifecycleOwner.lifecycleScope)
 
                     observeHidePath.onEach { pathsToHide ->

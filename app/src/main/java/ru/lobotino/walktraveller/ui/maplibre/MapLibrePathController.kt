@@ -1,5 +1,6 @@
 package ru.lobotino.walktraveller.ui.maplibre
 
+import android.graphics.Color
 import androidx.annotation.ColorInt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -45,7 +46,11 @@ class MapLibrePathController(
     private val ratingBoundsCache = HashMap<Long, PathBounds>()
     private val installedRatingIds = LinkedHashSet<Long>()
     private val commonFeatures = LinkedHashMap<Long, Feature>()
+    private val savedCommonPaths = LinkedHashMap<Long, MapCommonPath>()
     private val currentSegments = ArrayList<MapPathSegment>()
+
+    private var pendingFocusedPathId: Long? = null
+    private var currentFocusedPathId: Long? = null
 
     // Latest viewport seen via onCameraIdle. Null until first camera-idle event.
     // When null, viewport culling is disabled and all saved rating paths are installed.
@@ -61,15 +66,22 @@ class MapLibrePathController(
         style.addSource(GeoJsonSource(SOURCE_SAVED_COMMON, ratingSourceOptions(withMetrics = false)))
         style.addSource(GeoJsonSource(SOURCE_CURRENT, ratingSourceOptions(withMetrics = true)))
 
-        // Order: per-path rating layers (added below LAYER_SAVED_COMMON) <
-        // common layer < current layer. Current sits on top so the active
-        // recording renders above saved paths.
+        // Order: focused-halo (bottom) < per-path rating layers (added below
+        // LAYER_SAVED_COMMON) < common layer < current layer. Current sits on
+        // top so the active recording renders above saved paths.
         style.addLayer(commonLineLayer(LAYER_SAVED_COMMON, SOURCE_SAVED_COMMON))
         style.addLayer(gradientLineLayer(LAYER_CURRENT, SOURCE_CURRENT))
+        installHaloLayer(style)
 
         pushSavedRating()
         pushCommon()
         pushCurrent()
+
+        val pending = pendingFocusedPathId
+        if (pending != null) {
+            pendingFocusedPathId = null
+            setFocusedPath(pending)
+        }
     }
 
     fun showRatingPaths(paths: List<MapRatingPath>) {
@@ -97,6 +109,7 @@ class MapLibrePathController(
     fun showCommonPaths(paths: List<MapCommonPath>) {
         for (path in paths) {
             commonFeatures[path.pathId] = PathGeoJsonMapper.commonPathToFeature(path)
+            savedCommonPaths[path.pathId] = path
         }
         pushCommon()
     }
@@ -119,6 +132,7 @@ class MapLibrePathController(
         val ratingChanged = savedRatingPaths.remove(pathId) != null
         if (ratingChanged) ratingBoundsCache.remove(pathId)
         val commonChanged = commonFeatures.remove(pathId) != null
+        if (commonChanged) savedCommonPaths.remove(pathId)
         if (ratingChanged) pushSavedRating()
         if (commonChanged) pushCommon()
     }
@@ -131,7 +145,10 @@ class MapLibrePathController(
                 ratingBoundsCache.remove(id)
                 ratingChanged = true
             }
-            if (commonFeatures.remove(id) != null) commonChanged = true
+            if (commonFeatures.remove(id) != null) {
+                savedCommonPaths.remove(id)
+                commonChanged = true
+            }
         }
         if (ratingChanged) pushSavedRating()
         if (commonChanged) pushCommon()
@@ -141,10 +158,55 @@ class MapLibrePathController(
         savedRatingPaths.clear()
         ratingBoundsCache.clear()
         commonFeatures.clear()
+        savedCommonPaths.clear()
         currentSegments.clear()
+        style?.getSourceAs<GeoJsonSource>(SOURCE_FOCUSED_HALO)
+            ?.setGeoJson(FeatureCollection.fromFeatures(emptyArray()))
+        currentFocusedPathId = null
         pushSavedRating()
         pushCommon()
         pushCurrent()
+    }
+
+    fun setFocusedPath(pathId: Long?) {
+        val style = this.style ?: run {
+            pendingFocusedPathId = pathId
+            return
+        }
+        val source = style.getSourceAs<GeoJsonSource>(SOURCE_FOCUSED_HALO) ?: return
+
+        if (pathId == null) {
+            source.setGeoJson(FeatureCollection.fromFeatures(emptyArray()))
+            currentFocusedPathId = null
+            return
+        }
+
+        val ratingPath = savedRatingPaths[pathId]
+        val commonPath = savedCommonPaths[pathId]
+        val feature: Feature? = when {
+            ratingPath != null -> PathGeoJsonMapper.ratingPathToFeature(ratingPath)
+            commonPath != null -> PathGeoJsonMapper.commonPathToFeature(commonPath)
+            else -> null
+        }
+        if (feature == null) return
+
+        source.setGeoJson(feature)
+        currentFocusedPathId = pathId
+    }
+
+    private fun installHaloLayer(style: Style) {
+        if (style.getSource(SOURCE_FOCUSED_HALO) != null) return
+        style.addSource(
+            GeoJsonSource(SOURCE_FOCUSED_HALO, FeatureCollection.fromFeatures(emptyArray()))
+        )
+        val layer = LineLayer(LAYER_FOCUSED_HALO, SOURCE_FOCUSED_HALO).withProperties(
+            PropertyFactory.lineWidth(lineWidth * 2f),
+            PropertyFactory.lineColor(Color.parseColor("#FFFFFF")),
+            PropertyFactory.lineOpacity(0.9f),
+            PropertyFactory.lineCap(Property.LINE_CAP_ROUND),
+            PropertyFactory.lineJoin(Property.LINE_JOIN_ROUND),
+        )
+        style.addLayerBelow(layer, LAYER_SAVED_COMMON)
     }
 
     private data class RatingPayload(val feature: Feature?, val stops: List<GradientStop>)
@@ -319,9 +381,11 @@ class MapLibrePathController(
         private const val SOURCE_SAVED_RATING_PREFIX = "wt-saved-rating-source-"
         private const val SOURCE_SAVED_COMMON = "wt-saved-common-source"
         private const val SOURCE_CURRENT = "wt-current-source"
+        private const val SOURCE_FOCUSED_HALO = "wt-focused-halo-source"
         private const val LAYER_SAVED_RATING_PREFIX = "wt-saved-rating-layer-"
         private const val LAYER_SAVED_COMMON = "wt-saved-common-layer"
         private const val LAYER_CURRENT = "wt-current-layer"
+        private const val LAYER_FOCUSED_HALO = "wt-focused-halo-layer"
 
         // Viewport expansion ratio for culling (fraction of viewport span on each side).
         // 0.5 means user can pan up to ~half a viewport before an off-screen path

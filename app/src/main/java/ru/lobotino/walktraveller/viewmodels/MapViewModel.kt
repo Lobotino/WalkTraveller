@@ -87,6 +87,8 @@ class MapViewModel(
         MutableSharedFlow<MapPoint>(1, 0, BufferOverflow.DROP_OLDEST)
     private val fitCameraToBoundsFlow =
         MutableSharedFlow<PathBounds>(1, 0, BufferOverflow.DROP_OLDEST)
+    private val focusedPathFlow =
+        MutableSharedFlow<Long?>(1, 0, BufferOverflow.DROP_OLDEST)
 
     private val newConfirmDialogChannel = Channel<ConfirmDialogType>()
     private val userErrorChannel = Channel<String>()
@@ -106,6 +108,7 @@ class MapViewModel(
     val observeHidePath: Flow<PathsToAction> = hidePathFlow
     val observeNewCurrentUserLocation: Flow<MapPoint> = newCurrentUserLocationFlow
     val observeFitCameraToBounds: Flow<PathBounds> = fitCameraToBoundsFlow
+    val observeFocusedPath: Flow<Long?> = focusedPathFlow
     val observeWritingPathNow: Flow<Boolean> = writingPathNowState
     val observeNewConfirmDialog: Flow<ConfirmDialogType> = newConfirmDialogChannel.consumeAsFlow()
     val observeNewUserError: Flow<String> = userErrorChannel.consumeAsFlow()
@@ -364,6 +367,10 @@ class MapViewModel(
 
     fun fitCameraToBounds(bounds: PathBounds) {
         fitCameraToBoundsFlow.tryEmit(bounds)
+    }
+
+    fun setFocusedPathOnMap(pathId: Long?) {
+        focusedPathFlow.tryEmit(pathId)
     }
 
     private fun startBackgroundCachingPaths() {
