@@ -43,7 +43,7 @@ class TrackRecordingAnimationView @JvmOverloads constructor(
     private val keyRect = RectF()
 
     private val whiteColor = ContextCompat.getColor(context, android.R.color.white)
-    private val inactiveKeyColor = ContextCompat.getColor(context, R.color.rating_unknown)
+    private val inactiveKeyColor = ContextCompat.getColor(context, R.color.welcome_volume_key_inactive)
 
     private val ratingColors: Map<SegmentRating, Int> = mapOf(
         SegmentRating.BADLY to ContextCompat.getColor(context, R.color.rating_badly),
