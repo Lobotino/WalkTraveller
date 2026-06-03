@@ -11,7 +11,7 @@ class WelcomeTrackGeometryTest {
     private val sut = WelcomeTrackGeometry
 
     @Test
-    fun ratingForSegmentCyclesThroughPaletteAndNeverNone() {
+    fun `ratingForSegment cycles through palette and never returns NONE`() {
         // given
         val ratings = (0 until 8).map { sut.ratingForSegment(it) }
 
@@ -25,16 +25,18 @@ class WelcomeTrackGeometryTest {
     }
 
     @Test
-    fun visibleSegmentCountClampsToBounds() {
+    fun `visibleSegmentCount clamps progress and scales between 0 and segmentCount`() {
         // then
         assertEquals(0, sut.visibleSegmentCount(0f))
         assertEquals(0, sut.visibleSegmentCount(-1f))
         assertEquals(sut.segmentCount, sut.visibleSegmentCount(1f))
         assertEquals(sut.segmentCount, sut.visibleSegmentCount(2f))
+        assertTrue(sut.visibleSegmentCount(0.5f) > 0)
+        assertTrue(sut.visibleSegmentCount(0.5f) < sut.segmentCount)
     }
 
     @Test
-    fun headPositionMovesFromFirstToLastPoint() {
+    fun `headPosition moves from first to last point`() {
         // given
         val start = sut.headPosition(0f)
         val end = sut.headPosition(1f)
@@ -48,7 +50,7 @@ class WelcomeTrackGeometryTest {
     }
 
     @Test
-    fun trackHasManySegments() {
+    fun `track has many segments`() {
         // then: "add more segments" — track must be visually dense
         assertTrue("expected a dense track", sut.segmentCount >= 10)
     }
