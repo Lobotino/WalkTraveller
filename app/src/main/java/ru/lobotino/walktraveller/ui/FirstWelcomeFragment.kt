@@ -105,6 +105,8 @@ class FirstWelcomeFragment : Fragment() {
     }
 
     private fun buildDots() {
+        dots.clear()
+        dotsContainer.removeAllViews()
         val size = (8 * resources.displayMetrics.density).toInt()
         val margin = (4 * resources.displayMetrics.density).toInt()
         for (i in pages.indices) {
@@ -138,7 +140,7 @@ class FirstWelcomeFragment : Fragment() {
                         if (pager.currentItem == pages.lastIndex) {
                             applyConsentButtonState(state)
                         }
-                    }.launchIn(lifecycleScope)
+                    }.launchIn(viewLifecycleOwner.lifecycleScope)
 
                     onContinueListener = {
                         navigateTo(AppScreen.MAP_SCREEN, arguments?.getParcelable(EXTRA_DATA_URI))
