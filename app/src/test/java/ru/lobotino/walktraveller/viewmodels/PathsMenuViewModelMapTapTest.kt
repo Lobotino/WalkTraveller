@@ -243,4 +243,43 @@ class PathsMenuViewModelMapTapTest {
             assertTrue(after.none { it is MapEvent.SetFocusedPath })
             assertTrue(after.none { it is MapEvent.ScrollListToPath })
         }
+
+    @Test
+    fun `map-tap on shown OUTER path with OUTER menu open emits ScrollListToPath OUTER`() =
+        runTest(testDispatcher) {
+            // given
+            givenShownOuterPathInOpenOuterMenu(7L)
+            val collected = mutableListOf<MapEvent>()
+            val job = launch { sut.observeNewMapEvent.toList(collected) }
+            advanceUntilIdle()
+            val snapshot = collected.size
+
+            // when
+            sut.onPathTappedOnMap(7L)
+            advanceUntilIdle()
+            job.cancel()
+
+            // then
+            val after = collected.drop(snapshot)
+            val focusEvent = after.filterIsInstance<MapEvent.SetFocusedPath>().single()
+            val scrollEvent = after.filterIsInstance<MapEvent.ScrollListToPath>().single()
+            assertEquals(7L, focusEvent.pathId)
+            assertEquals(PathsMenuType.OUTER_PATHS, scrollEvent.pathsMenuType)
+            assertEquals(7L, scrollEvent.pathId)
+        }
+
+    /** Opens OUTER_PATHS_MENU via shared-uri flow and marks `pathId` as shown. */
+    private fun TestScope.givenShownOuterPathInOpenOuterMenu(pathId: Long) {
+        val sharedUri = mockk<android.net.Uri>()
+        coEvery { outerPathsInteractor.getAllPaths(sharedUri) } returns emptyList()
+        sut.onResume(sharedUri)
+        advanceUntilIdle()
+        every { outerPathsInteractor.getCachedOuterPath(pathId) } returns ratingPath(pathId)
+        sut.onPathInListButtonClicked(
+            pathId,
+            PathItemButtonType.Show(PathInfoItemShowButtonState.DEFAULT),
+            PathsMenuType.OUTER_PATHS,
+        )
+        advanceUntilIdle()
+    }
 }
