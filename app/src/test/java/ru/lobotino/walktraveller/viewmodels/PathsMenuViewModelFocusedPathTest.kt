@@ -1,5 +1,6 @@
 package ru.lobotino.walktraveller.viewmodels
 
+import android.net.Uri
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
@@ -25,6 +26,7 @@ import ru.lobotino.walktraveller.model.map.MapPathSegment
 import ru.lobotino.walktraveller.model.map.MapPoint
 import ru.lobotino.walktraveller.model.map.MapRatingPath
 import ru.lobotino.walktraveller.repositories.interfaces.IPathsSaverRepository
+import ru.lobotino.walktraveller.ui.model.BottomMenuState
 import ru.lobotino.walktraveller.ui.model.MapEvent
 import ru.lobotino.walktraveller.ui.model.PathInfoItemShowButtonState
 import ru.lobotino.walktraveller.ui.model.PathItemButtonType
@@ -325,6 +327,64 @@ class PathsMenuViewModelFocusedPathTest {
             val focusIds = after.filterIsInstance<MapEvent.SetFocusedPath>()
                 .map { it.pathId }
             assertEquals(listOf<Long?>(7L), focusIds) // only OUTER focus event
+        }
+
+    @Test
+    fun `transitioning to BottomMenuState DEFAULT clears focus in MY_PATHS`() =
+        runTest(testDispatcher) {
+            // given: MY_PATHS focused
+            givenShownRatingPath(42L)
+            sut.onPathInListShortTap(42L, PathsMenuType.MY_PATHS)
+            advanceUntilIdle()
+            val collected = mutableListOf<MapEvent>()
+            val job = launch { sut.observeNewMapEvent.toList(collected) }
+            advanceUntilIdle()
+            val snapshot = collected.size
+
+            // when: collapse MY_PATHS menu (back button → DEFAULT)
+            sut.onPathsMenuBackButtonClicked()
+            advanceUntilIdle()
+            job.cancel()
+
+            // then
+            val after = collected.drop(snapshot)
+            val focusEvents = after.filterIsInstance<MapEvent.SetFocusedPath>()
+            assertEquals(listOf<Long?>(null), focusEvents.map { it.pathId })
+            assertTrue(
+                "Expected BottomMenuStateChange(DEFAULT) after clearing focus",
+                after.any { it is MapEvent.BottomMenuStateChange && it.newBottomMenuState == BottomMenuState.DEFAULT },
+            )
+        }
+
+    @Test
+    fun `switching from MY_PATHS to OUTER_PATHS clears MY_PATHS focus`() =
+        runTest(testDispatcher) {
+            // given: MY_PATHS focused
+            givenShownRatingPath(42L)
+            sut.onPathInListShortTap(42L, PathsMenuType.MY_PATHS)
+            advanceUntilIdle()
+            val sharedUri = mockk<Uri>()
+            coEvery { outerPathsInteractor.getAllPaths(sharedUri) } returns emptyList()
+            val collected = mutableListOf<MapEvent>()
+            val job = launch { sut.observeNewMapEvent.toList(collected) }
+            advanceUntilIdle()
+            val snapshot = collected.size
+
+            // when: a shared outer file triggers OUTER_PATHS_MENU
+            sut.onResume(sharedUri)
+            advanceUntilIdle()
+            job.cancel()
+
+            // then
+            val after = collected.drop(snapshot)
+            val focusEvents = after.filterIsInstance<MapEvent.SetFocusedPath>()
+            assertEquals(listOf<Long?>(null), focusEvents.map { it.pathId })
+            assertTrue(
+                "Expected BottomMenuStateChange(OUTER_PATHS_MENU) after clearing focus",
+                after.any {
+                    it is MapEvent.BottomMenuStateChange && it.newBottomMenuState == BottomMenuState.OUTER_PATHS_MENU
+                },
+            )
         }
 
     /**

@@ -133,6 +133,16 @@ class PathsMenuViewModel(
         newMapEventChannel.trySend(MapEvent.SetFocusedPath(newId))
     }
 
+    private fun emitBottomMenuStateChange(newState: BottomMenuState) {
+        val leavingMyPaths = focusedPathByMenu[PathsMenuType.MY_PATHS] != null &&
+            newState != BottomMenuState.MY_PATHS_MENU
+        val leavingOuter = focusedPathByMenu[PathsMenuType.OUTER_PATHS] != null &&
+            newState != BottomMenuState.OUTER_PATHS_MENU
+        if (leavingMyPaths) setFocusedPath(PathsMenuType.MY_PATHS, null)
+        if (leavingOuter) setFocusedPath(PathsMenuType.OUTER_PATHS, null)
+        newMapEventChannel.trySend(MapEvent.BottomMenuStateChange(newState))
+    }
+
     private fun updateMyPathsMenuState(
         showPathsButtonState: ShowPathsButtonState? = null,
         showPathsFilterButtonState: ShowPathsFilterButtonState? = null,
@@ -526,7 +536,7 @@ class PathsMenuViewModel(
         loadPathsJob?.cancel()
         selectedPathIdsInMenuList.clear()
 
-        newMapEventChannel.trySend(MapEvent.BottomMenuStateChange(BottomMenuState.MY_PATHS_MENU))
+        emitBottomMenuStateChange(BottomMenuState.MY_PATHS_MENU)
         updateMyPathsMenuState(inSelectMode = false, pathsInfoListState = MyPathsInfoListState.LOADING)
 
         downloadAllPathsInfoJob = viewModelScope.launch {
@@ -564,7 +574,7 @@ class PathsMenuViewModel(
             showPathsFilterButtonState = ShowPathsFilterButtonState.GONE
         )
 
-        newMapEventChannel.trySend(MapEvent.BottomMenuStateChange(BottomMenuState.DEFAULT))
+        emitBottomMenuStateChange(BottomMenuState.DEFAULT)
     }
 
     fun onPathInListButtonClicked(
@@ -903,7 +913,7 @@ class PathsMenuViewModel(
 
         updateOuterPathsMenuState(outerPathsInfoListState = OuterPathsInfoListState.LOADING, inSelectMode = false)
 
-        newMapEventChannel.trySend(MapEvent.BottomMenuStateChange(BottomMenuState.OUTER_PATHS_MENU))
+        emitBottomMenuStateChange(BottomMenuState.OUTER_PATHS_MENU)
 
         viewModelScope.launch {
             val outerPathsInfo = outerPathsInteractor.getAllPaths(sharedFileUri)
@@ -939,7 +949,7 @@ class PathsMenuViewModel(
             inSelectMode = false
         )
 
-        newMapEventChannel.trySend(MapEvent.BottomMenuStateChange(BottomMenuState.DEFAULT))
+        emitBottomMenuStateChange(BottomMenuState.DEFAULT)
     }
 
     fun onSelectAllPathsButtonClicked(pathsMenuType: PathsMenuType, pathsIdsInList: List<Long>) {
