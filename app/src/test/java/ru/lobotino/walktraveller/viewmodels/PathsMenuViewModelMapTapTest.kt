@@ -195,4 +195,52 @@ class PathsMenuViewModelMapTapTest {
             assertEquals(1, scrollEvents.size)
             assertEquals(43L, scrollEvents.single().pathId)
         }
+
+    @Test
+    fun `map-tap on path that is not shown in active menu is no-op`() =
+        runTest(testDispatcher) {
+            // given: MY menu open, no shown paths
+            sut.onShowPathsMenuButtonClick()
+            advanceUntilIdle()
+            val collected = mutableListOf<MapEvent>()
+            val job = launch { sut.observeNewMapEvent.toList(collected) }
+            advanceUntilIdle()
+            val snapshot = collected.size
+
+            // when
+            sut.onPathTappedOnMap(99L)
+            advanceUntilIdle()
+            job.cancel()
+
+            // then
+            val after = collected.drop(snapshot)
+            assertTrue(after.none { it is MapEvent.SetFocusedPath })
+            assertTrue(after.none { it is MapEvent.ScrollListToPath })
+        }
+
+    @Test
+    fun `map-tap on path shown only in OUTER while MY menu open is no-op`() =
+        runTest(testDispatcher) {
+            // given: MY menu open with one shown MY path; an OUTER path with id 7
+            // was previously shown but OUTER menu is not currently open.
+            sut.onShowPathsMenuButtonClick()
+            advanceUntilIdle()
+            // Make pathId 7 known to OUTER (would be shown if its menu were open).
+            every { outerPathsInteractor.getCachedOuterPath(7L) } returns ratingPath(7L)
+
+            val collected = mutableListOf<MapEvent>()
+            val job = launch { sut.observeNewMapEvent.toList(collected) }
+            advanceUntilIdle()
+            val snapshot = collected.size
+
+            // when: user taps the position of an outer path
+            sut.onPathTappedOnMap(7L)
+            advanceUntilIdle()
+            job.cancel()
+
+            // then
+            val after = collected.drop(snapshot)
+            assertTrue(after.none { it is MapEvent.SetFocusedPath })
+            assertTrue(after.none { it is MapEvent.ScrollListToPath })
+        }
 }
