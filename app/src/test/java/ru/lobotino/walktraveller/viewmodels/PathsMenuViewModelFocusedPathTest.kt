@@ -219,6 +219,33 @@ class PathsMenuViewModelFocusedPathTest {
         }
 
     @Test
+    fun `hiding focused OUTER_PATHS path emits SetFocusedPath null`() =
+        runTest(testDispatcher) {
+            // given: focused 7 in OUTER_PATHS
+            givenShownOuterPath(7L)
+            sut.onPathInListShortTap(7L, PathsMenuType.OUTER_PATHS)
+            advanceUntilIdle()
+            val collected = mutableListOf<MapEvent>()
+            val job = launch { sut.observeNewMapEvent.toList(collected) }
+            advanceUntilIdle()
+            val snapshot = collected.size
+
+            // when: hide path 7 in OUTER_PATHS via its show button
+            sut.onPathInListButtonClicked(
+                7L,
+                PathItemButtonType.Show(PathInfoItemShowButtonState.HIDE),
+                PathsMenuType.OUTER_PATHS,
+            )
+            advanceUntilIdle()
+            job.cancel()
+
+            // then
+            val after = collected.drop(snapshot)
+            val focusEvents = after.filterIsInstance<MapEvent.SetFocusedPath>()
+            assertEquals(listOf<Long?>(null), focusEvents.map { it.pathId })
+        }
+
+    @Test
     fun `hiding a non-focused path does not emit SetFocusedPath`() =
         runTest(testDispatcher) {
             // given: path 42 is focused, path 43 is shown but not focused

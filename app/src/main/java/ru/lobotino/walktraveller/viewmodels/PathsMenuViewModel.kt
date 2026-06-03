@@ -133,6 +133,15 @@ class PathsMenuViewModel(
         newMapEventChannel.trySend(MapEvent.SetFocusedPath(newId))
     }
 
+    private fun clearFocusIfMatches(type: PathsMenuType, id: Long) {
+        if (focusedPathByMenu[type] == id) setFocusedPath(type, null)
+    }
+
+    private fun clearFocusIfAnyOf(type: PathsMenuType, ids: Collection<Long>) {
+        val focused = focusedPathByMenu[type]
+        if (focused != null && focused in ids) setFocusedPath(type, null)
+    }
+
     private fun emitBottomMenuStateChange(newState: BottomMenuState) {
         val leavingMyPaths = focusedPathByMenu[PathsMenuType.MY_PATHS] != null &&
             newState != BottomMenuState.MY_PATHS_MENU
@@ -300,16 +309,13 @@ class PathsMenuViewModel(
             PathsToAction.Multiple(selectedPathIds)
         }
 
-        val focused = focusedPathByMenu[pathsMenuType]
-        if (focused != null) {
-            val focusedIsBeingHidden = when (pathsToHide) {
-                PathsToAction.All -> true
-                is PathsToAction.Multiple -> focused in pathsToHide.pathIds
-                is PathsToAction.Single -> focused == pathsToHide.pathId
-            }
-            if (focusedIsBeingHidden) {
-                setFocusedPath(pathsMenuType, null)
-            }
+        when (pathsToHide) {
+            PathsToAction.All -> clearFocusIfAnyOf(
+                pathsMenuType,
+                shownPathIdsByMenu[pathsMenuType] ?: emptySet(),
+            )
+            is PathsToAction.Multiple -> clearFocusIfAnyOf(pathsMenuType, pathsToHide.pathIds)
+            is PathsToAction.Single -> clearFocusIfMatches(pathsMenuType, pathsToHide.pathId)
         }
 
         when (pathsToHide) {
@@ -596,9 +602,7 @@ class PathsMenuViewModel(
             is PathItemButtonType.Show -> {
                 when (clickedButtonType.currentState) {
                     PathInfoItemShowButtonState.LOADING, PathInfoItemShowButtonState.HIDE -> {
-                        if (focusedPathByMenu[PathsMenuType.MY_PATHS] == pathId) {
-                            setFocusedPath(PathsMenuType.MY_PATHS, null)
-                        }
+                        clearFocusIfMatches(PathsMenuType.MY_PATHS, pathId)
                         markPathHidden(PathsMenuType.MY_PATHS, listOf(pathId))
                         newMapEventChannel.trySend(MapEvent.HidePath(PathsToAction.Single(pathId)))
                         newPathInfoListItemStateFlow.tryEmit(
@@ -668,9 +672,7 @@ class PathsMenuViewModel(
             is PathItemButtonType.Show -> {
                 when (clickedButtonType.currentState) {
                     PathInfoItemShowButtonState.LOADING, PathInfoItemShowButtonState.HIDE -> {
-                        if (focusedPathByMenu[PathsMenuType.OUTER_PATHS] == tempPathId) {
-                            setFocusedPath(PathsMenuType.OUTER_PATHS, null)
-                        }
+                        clearFocusIfMatches(PathsMenuType.OUTER_PATHS, tempPathId)
                         markPathHidden(PathsMenuType.OUTER_PATHS, listOf(tempPathId))
                         newMapEventChannel.trySend(MapEvent.HidePath(PathsToAction.Single(tempPathId)))
                         newPathInfoListItemStateFlow.tryEmit(
@@ -797,9 +799,7 @@ class PathsMenuViewModel(
     }
 
     fun onConfirmMyPathDelete(pathId: Long) {
-        if (focusedPathByMenu[PathsMenuType.MY_PATHS] == pathId) {
-            setFocusedPath(PathsMenuType.MY_PATHS, null)
-        }
+        clearFocusIfMatches(PathsMenuType.MY_PATHS, pathId)
         markPathHidden(PathsMenuType.MY_PATHS, listOf(pathId))
         MainScope().launch {
             pathRedactor.deletePath(pathId)
@@ -813,9 +813,7 @@ class PathsMenuViewModel(
     }
 
     fun onConfirmMyPathListDelete(pathIds: List<Long>) {
-        if (pathIds.contains(focusedPathByMenu[PathsMenuType.MY_PATHS])) {
-            setFocusedPath(PathsMenuType.MY_PATHS, null)
-        }
+        clearFocusIfAnyOf(PathsMenuType.MY_PATHS, pathIds)
         markPathHidden(PathsMenuType.MY_PATHS, pathIds)
         MainScope().launch {
             pathRedactor.deletePaths(pathIds)
@@ -831,9 +829,7 @@ class PathsMenuViewModel(
     }
 
     private fun deleteOuterPathFromList(tempPathId: Long) {
-        if (focusedPathByMenu[PathsMenuType.OUTER_PATHS] == tempPathId) {
-            setFocusedPath(PathsMenuType.OUTER_PATHS, null)
-        }
+        clearFocusIfMatches(PathsMenuType.OUTER_PATHS, tempPathId)
         markPathHidden(PathsMenuType.OUTER_PATHS, listOf(tempPathId))
         outerPathsInteractor.removeCachedPath(tempPathId)
         newMapEventChannel.trySend(MapEvent.HidePath(PathsToAction.Single(tempPathId)))
@@ -853,9 +849,7 @@ class PathsMenuViewModel(
 
     private fun deleteSelectedOuterPathsFromList() {
         val selectedPathIds = selectedPathIdsInMenuList.toList()
-        if (selectedPathIds.contains(focusedPathByMenu[PathsMenuType.OUTER_PATHS])) {
-            setFocusedPath(PathsMenuType.OUTER_PATHS, null)
-        }
+        clearFocusIfAnyOf(PathsMenuType.OUTER_PATHS, selectedPathIds)
         markPathHidden(PathsMenuType.OUTER_PATHS, selectedPathIds)
 
         for (pathId in selectedPathIds) {
