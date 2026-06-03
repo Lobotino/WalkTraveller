@@ -11,6 +11,7 @@ import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Button
@@ -41,6 +42,8 @@ import ru.lobotino.walktraveller.repositories.permissions.NotificationsPermissio
 import ru.lobotino.walktraveller.ui.model.SettingsUiState
 import ru.lobotino.walktraveller.usecases.TileSourceInteractor
 import ru.lobotino.walktraveller.utils.ResourceManager
+import ru.lobotino.walktraveller.ui.dialog.PrivacyPolicyDialog
+import ru.lobotino.walktraveller.ui.dialog.TermsOfUseDialog
 import ru.lobotino.walktraveller.utils.ext.openNavigationMenu
 import ru.lobotino.walktraveller.viewmodels.SettingsViewModel
 
@@ -212,6 +215,20 @@ class SettingsFragment : Fragment() {
             }
 
         mainView = view.findViewById(R.id.main_view)
+
+        view.findViewById<Button>(R.id.privacy_policy_button).setOnClickListener {
+            PrivacyPolicyDialog(requireContext()).apply {
+                show()
+                window?.setLayout(MATCH_PARENT, MATCH_PARENT)
+            }
+        }
+
+        view.findViewById<Button>(R.id.terms_of_use_button).setOnClickListener {
+            TermsOfUseDialog(requireContext()).apply {
+                show()
+                window?.setLayout(MATCH_PARENT, MATCH_PARENT)
+            }
+        }
     }
 
     private fun showSnackbar(message: String, duration: Int = Snackbar.LENGTH_SHORT) {
