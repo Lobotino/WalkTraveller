@@ -168,4 +168,31 @@ class PathsMenuViewModelMapTapTest {
                 after.none { it is MapEvent.ScrollListToPath },
             )
         }
+
+    @Test
+    fun `map-tap on second shown path swaps focus and scrolls to new`() =
+        runTest(testDispatcher) {
+            // given: path 42 focused, path 43 shown
+            givenShownRatingPathInOpenMyMenu(42L)
+            givenShownRatingPathInOpenMyMenu(43L)
+            sut.onPathTappedOnMap(42L)
+            advanceUntilIdle()
+            val collected = mutableListOf<MapEvent>()
+            val job = launch { sut.observeNewMapEvent.toList(collected) }
+            advanceUntilIdle()
+            val snapshot = collected.size
+
+            // when
+            sut.onPathTappedOnMap(43L)
+            advanceUntilIdle()
+            job.cancel()
+
+            // then
+            val after = collected.drop(snapshot)
+            val focusEvents = after.filterIsInstance<MapEvent.SetFocusedPath>()
+            assertEquals(listOf<Long?>(43L), focusEvents.map { it.pathId })
+            val scrollEvents = after.filterIsInstance<MapEvent.ScrollListToPath>()
+            assertEquals(1, scrollEvents.size)
+            assertEquals(43L, scrollEvents.single().pathId)
+        }
 }
