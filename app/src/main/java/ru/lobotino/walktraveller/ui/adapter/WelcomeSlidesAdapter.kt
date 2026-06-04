@@ -17,11 +17,10 @@ import ru.lobotino.walktraveller.R
 import ru.lobotino.walktraveller.ui.dialog.PrivacyPolicyDialog
 import ru.lobotino.walktraveller.ui.dialog.TermsOfUseDialog
 import ru.lobotino.walktraveller.ui.model.WelcomePage
-import ru.lobotino.walktraveller.ui.view.TrackRecordingAnimationView
 
 /**
- * Pages for the first-launch onboarding pager: tutorial slides (animated track)
- * and a final consent slide. Animations start/stop with page attach/detach.
+ * Pages for the first-launch onboarding pager: tutorial slides (static
+ * illustration) and a final consent slide.
  */
 class WelcomeSlidesAdapter(
     private val pages: List<WelcomePage>,
@@ -59,24 +58,11 @@ class WelcomeSlidesAdapter(
         }
     }
 
-    override fun onViewAttachedToWindow(holder: RecyclerView.ViewHolder) {
-        super.onViewAttachedToWindow(holder)
-        if (holder is TutorialViewHolder) holder.animationView.startAnimation()
-    }
-
-    override fun onViewDetachedFromWindow(holder: RecyclerView.ViewHolder) {
-        super.onViewDetachedFromWindow(holder)
-        if (holder is TutorialViewHolder) holder.animationView.stopAnimation()
-    }
-
     class TutorialViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val animationView: TrackRecordingAnimationView =
-            view.findViewById(R.id.welcome_animation_view)
         private val title: TextView = view.findViewById(R.id.welcome_slide_title)
         private val subtitle: TextView = view.findViewById(R.id.welcome_slide_subtitle)
 
         fun bind(page: WelcomePage.Tutorial) {
-            animationView.mode = page.mode
             title.setText(page.titleRes)
             subtitle.setText(page.subtitleRes)
         }

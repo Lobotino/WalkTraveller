@@ -31,8 +31,6 @@
     <string name="welcome_slide_record_subtitle">Your route is drawn automatically as you walk — no need to do anything by hand.</string>
     <string name="welcome_slide_rate_title">Rate the route as you go</string>
     <string name="welcome_slide_rate_subtitle">Mark each part of the path with a color: from bad (red) to perfect (green).</string>
-    <string name="welcome_slide_volume_title">Without taking out your phone</string>
-    <string name="welcome_slide_volume_subtitle">Set the rating with the volume buttons: up is better, down is worse.</string>
     <string name="settings_privacy_policy_button">Privacy policy</string>
     <string name="settings_terms_of_use_button">Terms of use</string>
     <string name="privacy_policy_title">Privacy policy</string>

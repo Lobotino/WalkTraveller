@@ -12,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -21,7 +22,6 @@ import ru.lobotino.walktraveller.analytics.AnalyticsEvent
 import ru.lobotino.walktraveller.repositories.UserInfoRepository
 import ru.lobotino.walktraveller.repositories.interfaces.AppScreen
 import ru.lobotino.walktraveller.ui.adapter.WelcomeSlidesAdapter
-import ru.lobotino.walktraveller.ui.model.TrackAnimationMode
 import ru.lobotino.walktraveller.ui.model.WelcomeContinueButtonState
 import ru.lobotino.walktraveller.ui.model.WelcomePage
 import ru.lobotino.walktraveller.utils.ext.navigateTo
@@ -40,19 +40,12 @@ class FirstWelcomeFragment : Fragment() {
 
     private val pages: List<WelcomePage> = listOf(
         WelcomePage.Tutorial(
-            TrackAnimationMode.RECORD,
             R.string.welcome_slide_record_title,
             R.string.welcome_slide_record_subtitle,
         ),
         WelcomePage.Tutorial(
-            TrackAnimationMode.RATE,
             R.string.welcome_slide_rate_title,
             R.string.welcome_slide_rate_subtitle,
-        ),
-        WelcomePage.Tutorial(
-            TrackAnimationMode.VOLUME,
-            R.string.welcome_slide_volume_title,
-            R.string.welcome_slide_volume_subtitle,
         ),
         WelcomePage.Consent,
     )
@@ -84,6 +77,7 @@ class FirstWelcomeFragment : Fragment() {
         pager.adapter = WelcomeSlidesAdapter(pages) { isChecked ->
             viewModel?.onPrivacyPolicyCheckedChanged(isChecked)
         }
+        setupStaticIllustrationTransformer()
         pager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
                 updateForPage(position)
@@ -101,6 +95,24 @@ class FirstWelcomeFragment : Fragment() {
             } else {
                 viewModel?.onContinueButtonClick()
             }
+        }
+    }
+
+    /**
+     * Neighbouring tutorial slides show the same illustration, so while swiping
+     * between two of them we keep the illustration pinned to the screen centre
+     * (counter-translating it against the page scroll) and let only the text
+     * slide. Swipes that border a non-tutorial page (the consent slide) keep the
+     * default behaviour where the whole page, illustration included, slides.
+     */
+    private fun setupStaticIllustrationTransformer() {
+        val innerRecycler = pager.getChildAt(0) as RecyclerView
+        pager.setPageTransformer { page, position ->
+            val image = page.findViewById<View>(R.id.welcome_illustration) ?: return@setPageTransformer
+            val index = innerRecycler.getChildAdapterPosition(page)
+            val partner = if (position >= 0f) pages.getOrNull(index - 1) else pages.getOrNull(index + 1)
+            val pinToCenter = partner is WelcomePage.Tutorial && position >= -1f && position <= 1f
+            image.translationX = if (pinToCenter) -position * page.width else 0f
         }
     }
 

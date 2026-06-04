@@ -6,14 +6,18 @@
     android:orientation="vertical"
     android:gravity="center_horizontal">
 
-    <ru.lobotino.walktraveller.ui.view.TrackRecordingAnimationView
-        android:id="@+id/welcome_animation_view"
+    <ImageView
+        android:id="@+id/welcome_illustration"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
         android:layout_marginStart="24dp"
         android:layout_marginTop="32dp"
-        android:layout_marginEnd="24dp" />
+        android:layout_marginEnd="24dp"
+        android:adjustViewBounds="true"
+        android:scaleType="fitCenter"
+        android:src="@drawable/onboarding_illustration"
+        android:contentDescription="@null" />
 
     <TextView
         android:id="@+id/welcome_slide_title"

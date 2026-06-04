@@ -31,8 +31,6 @@
     <string name="welcome_slide_record_subtitle">Маршрут рисуется сам, пока вы идёте — ничего не нужно делать вручную.</string>
     <string name="welcome_slide_rate_title">Оценивайте маршрут на ходу</string>
     <string name="welcome_slide_rate_subtitle">Отмечайте участки пути цветом: от плохого (красный) до отличного (зелёный).</string>
-    <string name="welcome_slide_volume_title">Не доставая телефон</string>
-    <string name="welcome_slide_volume_subtitle">Ставьте оценку кнопками громкости: выше — лучше, ниже — хуже.</string>
     <string name="settings_privacy_policy_button">Политика конфиденциальности</string>
     <string name="settings_terms_of_use_button">Условия пользования</string>
     <string name="privacy_policy_title">Политика конфиденциальности</string>

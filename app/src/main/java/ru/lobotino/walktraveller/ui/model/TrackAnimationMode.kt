@@ -1,5 +1,0 @@
-package ru.lobotino.walktraveller.ui.model
-
-enum class TrackAnimationMode {
-    RECORD, RATE, VOLUME
-}
